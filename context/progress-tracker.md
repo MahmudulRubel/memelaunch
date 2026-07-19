@@ -51,5 +51,7 @@ Update this file after every meaningful implementation change.
 - Completed Templates Directory & Launch Integration. Built `/templates` route displaying weekly highlight templates, active usage counts, dynamic lightbox details, and connected launches. Added URL parameter listener to `/launch` to support seamless template selection. Verified successful production compile.
 - Fixed template meme images by replacing Supabase-style storage URLs with correct InsForge storage URLs in the templates table and SQL migration seeding script. Verified that template page, database rows, and production build are fully functional.
 - Fixed a client-side `Network request failed: Failed to fetch` console error when triggering reactions. The error was caused by browser preflight/CORS/DNS restrictions on the direct Deno subhosting domain (`*.functions.insforge.app`). Resolved this by configuring `functionsUrl` to use the main API base proxy path (`${baseUrl}/functions`) during InsForge client initialization in `lib/insforge.ts`. This routes edge function invocations securely through the main proxy path where CORS is pre-configured.
+- Fixed build-time crash due to missing InsForge environment variables during prerendering on Vercel. Updated `lib/insforge.ts` to log a warning instead of throwing an error at import evaluation time, and provided fallback placeholder settings to allow static page compiler paths to resolve successfully without active environment variables.
+
 
 
