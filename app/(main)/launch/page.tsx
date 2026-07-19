@@ -170,6 +170,18 @@ function LaunchForm() {
     }
   }, [remixParentId, loadingTemplates, templates]);
 
+  // Pre-select template from query parameter if applicable
+  const templateQueryId = searchParams.get('template');
+  useEffect(() => {
+    if (templateQueryId && templates.length > 0) {
+      const matched = templates.find((t) => t.id === templateQueryId);
+      if (matched) {
+        setSelectedTemplate(matched);
+        setImageSource('template');
+      }
+    }
+  }, [templateQueryId, templates]);
+
   // Redirect to login if unauthenticated
   useEffect(() => {
     if (!authLoading && !user) {
@@ -260,25 +272,37 @@ function LaunchForm() {
       });
 
       if (!image?.data?.[0]?.b64_json) {
+        if (image?.data?.[0]?.content) {
+          throw new Error(image.data[0].content);
+        }
         throw new Error('Image generation response is missing image data.');
       }
 
       const b64Json = image.data[0].b64_json;
-      
-      // Convert base64 to Blob & File
-      const byteCharacters = atob(b64Json);
-      const byteArrays = [];
-      for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-        const slice = byteCharacters.slice(offset, offset + 512);
-        const byteNumbers = new Array(slice.length);
-        for (let i = 0; i < slice.length; i++) {
-          byteNumbers[i] = slice.charCodeAt(i);
+      let file: File;
+
+      if (b64Json.startsWith('http://') || b64Json.startsWith('https://')) {
+        const response = await fetch(b64Json);
+        const blob = await response.blob();
+        file = new File([blob], 'ai-meme.png', { type: blob.type || 'image/png' });
+      } else {
+        // Clean base64 string of whitespace characters
+        const cleanB64 = b64Json.replace(/\s/g, '');
+        // Convert base64 to Blob & File
+        const byteCharacters = atob(cleanB64);
+        const byteArrays = [];
+        for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+          const slice = byteCharacters.slice(offset, offset + 512);
+          const byteNumbers = new Array(slice.length);
+          for (let i = 0; i < slice.length; i++) {
+            byteNumbers[i] = slice.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          byteArrays.push(byteArray);
         }
-        const byteArray = new Uint8Array(byteNumbers);
-        byteArrays.push(byteArray);
+        const blob = new Blob(byteArrays, { type: 'image/png' });
+        file = new File([blob], 'ai-meme.png', { type: 'image/png' });
       }
-      const blob = new Blob(byteArrays, { type: 'image/png' });
-      const file = new File([blob], 'ai-meme.png', { type: 'image/png' });
 
       // Revoke old blob URL if exists
       if (memePreview && memePreview.startsWith('blob:')) {
@@ -496,8 +520,8 @@ function LaunchForm() {
       setStatusMessage('');
       setSuccessMessage(
         remixParentId
-          ? '🎉 Meme remixed successfully! Redirecting back to feed...'
-          : '🎉 Product launched successfully! Redirecting back to feed...'
+          ? '🎉 Meme remixed successfully! It will go live after admin approval. Redirecting back...'
+          : '🎉 Product launched successfully! It will go live after admin approval. Redirecting back...'
       );
 
       // Redirect home after brief delay

@@ -39,6 +39,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!isNoToken) {
           console.error('Error fetching current user:', error);
         }
+        // Clear invalid tokens from SDK
+        await insforge.auth.signOut().catch(() => {});
         setUser(null);
       } else {
         setUser(data?.user as AuthUser | null);
@@ -48,6 +50,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!isNoToken) {
         console.error('Auth check failed:', err);
       }
+      // Clear invalid tokens from SDK
+      await insforge.auth.signOut().catch(() => {});
       setUser(null);
     } finally {
       setIsLoading(false);

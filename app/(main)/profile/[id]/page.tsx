@@ -87,10 +87,16 @@ export default function ProfilePage() {
       setEditAvatar(profileData.avatar || '');
 
       // 2. Fetch launches with reaction, comment, and remix counts
-      const { data: launchesData, error: launchesErr } = await insforge.database
+      let launchesQuery = insforge.database
         .from('launches')
         .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id), remixes!original_launch_id(id)')
-        .eq('user_id', profileId)
+        .eq('user_id', profileId);
+
+      if (user?.id !== profileId) {
+        launchesQuery = launchesQuery.eq('is_approved', true);
+      }
+
+      const { data: launchesData, error: launchesErr } = await launchesQuery
         .order('created_at', { ascending: false });
 
       if (launchesErr) {

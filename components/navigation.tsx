@@ -128,7 +128,7 @@ export function Navigation() {
                           </p>
                         </div>
 
-                        <Link
+                         <Link
                           href={`/profile/${user.id}`}
                           onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2 w-full px-3 py-2 text-sm text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800/50 rounded-xl transition-colors"

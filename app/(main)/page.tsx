@@ -34,7 +34,7 @@ export default function HomePage() {
   const observerTarget = useRef<HTMLDivElement>(null);
 
   // Fetch launches function
-  const fetchLaunches = async (showSilently = false) => {
+  const fetchLaunches = async (showSilently = false, isRetry = false) => {
     if (!showSilently) {
       setIsLoading(true);
     }
@@ -43,16 +43,61 @@ export default function HomePage() {
       const { data, error } = await insforge.database
         .from('launches')
         .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id), remixes!original_launch_id(id)')
+        .eq('is_approved', true)
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching launches:', error);
-        setErrorMsg('Failed to load product launches. Please try again.');
+        console.error('Error fetching launches details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+          error
+        });
+
+        // Check if this is an authentication / token error
+        const isAuthError = 
+          error.message?.toLowerCase().includes('token') || 
+          error.message?.toLowerCase().includes('unauthorized') || 
+          error.message?.toLowerCase().includes('jwt') ||
+          error.code === 'PGRST301';
+
+        if (isAuthError && !isRetry) {
+          console.warn('Auth error detected on public feed fetch. Clearing session and retrying...');
+          try {
+            await insforge.auth.signOut();
+          } catch (e) {
+            // Force clear token locally if signOut fails
+            insforge.getHttpClient().setAuthToken(null);
+          }
+          // Retry fetching launches as anonymous user
+          await fetchLaunches(showSilently, true);
+          return;
+        }
+
+        setErrorMsg(`Failed to load product launches. Error: ${error.message || 'Unknown'}`);
       } else {
         setLaunches((data || []) as Launch[]);
       }
     } catch (err: any) {
       console.error('Failed to fetch from DB:', err);
+
+      const isAuthError = 
+        err?.message?.toLowerCase().includes('token') || 
+        err?.message?.toLowerCase().includes('unauthorized') || 
+        err?.message?.toLowerCase().includes('jwt');
+
+      if (isAuthError && !isRetry) {
+        console.warn('Auth error thrown on public feed fetch. Clearing session and retrying...');
+        try {
+          await insforge.auth.signOut();
+        } catch (e) {
+          insforge.getHttpClient().setAuthToken(null);
+        }
+        await fetchLaunches(showSilently, true);
+        return;
+      }
+
       setErrorMsg('An unexpected error occurred while fetching launches.');
     } finally {
       if (!showSilently) {

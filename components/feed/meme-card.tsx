@@ -36,6 +36,7 @@ export interface Launch {
   category: string;
   template_id: string | null;
   created_at: string;
+  is_approved?: boolean;
   users?: UserProfile;
   reactions?: Reaction[];
   comments?: Comment[];
@@ -134,6 +135,12 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
       {/* Aspect Ratio Box for Meme */}
       <div className="relative aspect-square w-full bg-zinc-950 border-b border-zinc-800/60 overflow-hidden flex items-center justify-center">
         <div className="absolute inset-0 bg-radial-gradient from-lime-400/5 to-transparent opacity-40 pointer-events-none" />
+        
+        {launch.is_approved === false && (
+          <div className="absolute top-2 left-2 z-10 px-2.5 py-0.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-zinc-950 font-mono text-[9px] font-extrabold uppercase tracking-wider shadow-md select-none">
+            Pending Approval
+          </div>
+        )}
         
         {/* Meme Image */}
         {launch.meme_image_url ? (
