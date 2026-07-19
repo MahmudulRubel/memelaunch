@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/components/auth-provider';
 import { insforge } from '@/lib/insforge';
 import { MemeCard, type Launch } from '@/components/feed/meme-card';
+import { ProductModal } from '@/components/product/product-modal';
 import {
   Flame,
   Clock,
@@ -26,36 +27,42 @@ export default function HomePage() {
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [selectedLaunchId, setSelectedLaunchId] = useState<string | null>(null);
 
   // Pagination / Infinite scroll state
   const [visibleCount, setVisibleCount] = useState(9);
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // Fetch launches on mount
-  useEffect(() => {
-    async function fetchLaunches() {
+  // Fetch launches function
+  const fetchLaunches = async (showSilently = false) => {
+    if (!showSilently) {
       setIsLoading(true);
-      setErrorMsg(null);
-      try {
-        const { data, error } = await insforge.database
-          .from('launches')
-          .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id), remixes!original_launch_id(id)')
-          .order('created_at', { ascending: false });
+    }
+    setErrorMsg(null);
+    try {
+      const { data, error } = await insforge.database
+        .from('launches')
+        .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id), remixes!original_launch_id(id)')
+        .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error('Error fetching launches:', error);
-          setErrorMsg('Failed to load product launches. Please try again.');
-        } else {
-          setLaunches((data || []) as Launch[]);
-        }
-      } catch (err: any) {
-        console.error('Failed to fetch from DB:', err);
-        setErrorMsg('An unexpected error occurred while fetching launches.');
-      } finally {
+      if (error) {
+        console.error('Error fetching launches:', error);
+        setErrorMsg('Failed to load product launches. Please try again.');
+      } else {
+        setLaunches((data || []) as Launch[]);
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch from DB:', err);
+      setErrorMsg('An unexpected error occurred while fetching launches.');
+    } finally {
+      if (!showSilently) {
         setIsLoading(false);
       }
     }
+  };
 
+  // Fetch launches on mount
+  useEffect(() => {
     fetchLaunches();
   }, []);
 
@@ -307,7 +314,11 @@ export default function HomePage() {
         /* Masonry Grid */
         <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
           {paginatedLaunches.map((launch) => (
-            <MemeCard key={launch.id} launch={launch} />
+            <MemeCard
+              key={launch.id}
+              launch={launch}
+              onSelect={(selected) => setSelectedLaunchId(selected.id)}
+            />
           ))}
         </div>
       )}
@@ -317,6 +328,15 @@ export default function HomePage() {
         <div ref={observerTarget} className="flex justify-center py-8">
           <div className="h-8 w-8 border-4 border-lime-400 border-t-transparent rounded-full animate-spin" />
         </div>
+      )}
+
+      {/* Product Detailed Modal Overlay */}
+      {selectedLaunchId && (
+        <ProductModal
+          launchId={selectedLaunchId}
+          onClose={() => setSelectedLaunchId(null)}
+          onRefreshFeed={() => fetchLaunches(true)}
+        />
       )}
     </div>
   );

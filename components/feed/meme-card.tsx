@@ -95,34 +95,18 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
     }
 
     try {
-      if (userReacted) {
-        // Delete reaction from database
-        const { error } = await insforge.database
-          .from('reactions')
-          .delete()
-          .eq('launch_id', launch.id)
-          .eq('user_id', user.id)
-          .eq('emoji_type', emoji);
+      const { data, error } = await insforge.functions.invoke('toggle-reaction', {
+        body: {
+          launchId: launch.id,
+          emojiType: emoji,
+        },
+      });
 
-        if (error) {
-          console.error('Failed to remove reaction:', error);
-          setReactions(previousReactions);
-        }
-      } else {
-        // Insert reaction to database
-        const { error } = await insforge.database
-          .from('reactions')
-          .insert([
-            {
-              launch_id: launch.id,
-              user_id: user.id,
-              emoji_type: emoji,
-            },
-          ]);
-
-        if (error) {
-          console.error('Failed to add reaction:', error);
-          setReactions(previousReactions);
+      if (error) {
+        console.error('Failed to toggle reaction via Edge Function:', error);
+        setReactions(previousReactions);
+        if (error.message?.includes('429') || error.message?.toLowerCase().includes('too many requests')) {
+          alert('Whoa, slow down! You are reacting too fast.');
         }
       }
     } catch (err) {
@@ -262,8 +246,12 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
           {/* User metadata & other stats */}
           <div className="flex items-center justify-between text-xs text-zinc-500">
             {/* Author */}
-            <div className="flex items-center gap-2">
-              <div className="h-5 w-5 rounded-full bg-zinc-800 border border-zinc-700 overflow-hidden flex items-center justify-center text-[10px] text-zinc-300 font-extrabold uppercase font-mono">
+            <Link
+              href={`/profile/${launch.user_id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-2 group/author cursor-pointer"
+            >
+              <div className="h-5 w-5 rounded-full bg-zinc-800 border border-zinc-700 overflow-hidden flex items-center justify-center text-[10px] text-zinc-300 font-extrabold uppercase font-mono group-hover/author:border-lime-400/50 transition-colors">
                 {launch.users?.avatar ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -275,10 +263,10 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
                   launch.users?.name ? launch.users.name[0] : '?'
                 )}
               </div>
-              <span className="hover:text-zinc-300 transition-colors truncate max-w-[80px]">
+              <span className="text-zinc-400 group-hover/author:text-lime-400 transition-colors truncate max-w-[80px]">
                 @{launch.users?.name || 'founder'}
               </span>
-            </div>
+            </Link>
 
             {/* Comments & Remixes Counts */}
             <div className="flex items-center gap-3 font-mono text-[11px]">
