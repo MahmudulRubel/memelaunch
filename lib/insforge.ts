@@ -7,4 +7,8 @@ if (!baseUrl || !anonKey) {
   throw new Error('Missing InsForge environment variables.');
 }
 
-export const insforge = createClient({ baseUrl, anonKey });
+export const insforge = createClient({
+  baseUrl,
+  anonKey,
+  functionsUrl: `${baseUrl}/functions`,
+});

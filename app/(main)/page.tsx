@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/components/auth-provider';
 import { insforge } from '@/lib/insforge';
 import { MemeCard, type Launch } from '@/components/feed/meme-card';
+import { ProductModal } from '@/components/product/product-modal';
 import {
   Flame,
   Clock,
@@ -26,36 +27,87 @@ export default function HomePage() {
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [selectedLaunchId, setSelectedLaunchId] = useState<string | null>(null);
 
   // Pagination / Infinite scroll state
   const [visibleCount, setVisibleCount] = useState(9);
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // Fetch launches on mount
-  useEffect(() => {
-    async function fetchLaunches() {
+  // Fetch launches function
+  const fetchLaunches = async (showSilently = false, isRetry = false) => {
+    if (!showSilently) {
       setIsLoading(true);
-      setErrorMsg(null);
-      try {
-        const { data, error } = await insforge.database
-          .from('launches')
-          .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id), remixes!original_launch_id(id)')
-          .order('created_at', { ascending: false });
+    }
+    setErrorMsg(null);
+    try {
+      const { data, error } = await insforge.database
+        .from('launches')
+        .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id), remixes!original_launch_id(id)')
+        .eq('is_approved', true)
+        .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error('Error fetching launches:', error);
-          setErrorMsg('Failed to load product launches. Please try again.');
-        } else {
-          setLaunches((data || []) as Launch[]);
+      if (error) {
+        console.error('Error fetching launches details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+          error
+        });
+
+        // Check if this is an authentication / token error
+        const isAuthError = 
+          error.message?.toLowerCase().includes('token') || 
+          error.message?.toLowerCase().includes('unauthorized') || 
+          error.message?.toLowerCase().includes('jwt') ||
+          error.code === 'PGRST301';
+
+        if (isAuthError && !isRetry) {
+          console.warn('Auth error detected on public feed fetch. Clearing session and retrying...');
+          try {
+            await insforge.auth.signOut();
+          } catch (e) {
+            // Force clear token locally if signOut fails
+            insforge.getHttpClient().setAuthToken(null);
+          }
+          // Retry fetching launches as anonymous user
+          await fetchLaunches(showSilently, true);
+          return;
         }
-      } catch (err: any) {
-        console.error('Failed to fetch from DB:', err);
-        setErrorMsg('An unexpected error occurred while fetching launches.');
-      } finally {
+
+        setErrorMsg(`Failed to load product launches. Error: ${error.message || 'Unknown'}`);
+      } else {
+        setLaunches((data || []) as Launch[]);
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch from DB:', err);
+
+      const isAuthError = 
+        err?.message?.toLowerCase().includes('token') || 
+        err?.message?.toLowerCase().includes('unauthorized') || 
+        err?.message?.toLowerCase().includes('jwt');
+
+      if (isAuthError && !isRetry) {
+        console.warn('Auth error thrown on public feed fetch. Clearing session and retrying...');
+        try {
+          await insforge.auth.signOut();
+        } catch (e) {
+          insforge.getHttpClient().setAuthToken(null);
+        }
+        await fetchLaunches(showSilently, true);
+        return;
+      }
+
+      setErrorMsg('An unexpected error occurred while fetching launches.');
+    } finally {
+      if (!showSilently) {
         setIsLoading(false);
       }
     }
+  };
 
+  // Fetch launches on mount
+  useEffect(() => {
     fetchLaunches();
   }, []);
 
@@ -307,7 +359,11 @@ export default function HomePage() {
         /* Masonry Grid */
         <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
           {paginatedLaunches.map((launch) => (
-            <MemeCard key={launch.id} launch={launch} />
+            <MemeCard
+              key={launch.id}
+              launch={launch}
+              onSelect={(selected) => setSelectedLaunchId(selected.id)}
+            />
           ))}
         </div>
       )}
@@ -317,6 +373,15 @@ export default function HomePage() {
         <div ref={observerTarget} className="flex justify-center py-8">
           <div className="h-8 w-8 border-4 border-lime-400 border-t-transparent rounded-full animate-spin" />
         </div>
+      )}
+
+      {/* Product Detailed Modal Overlay */}
+      {selectedLaunchId && (
+        <ProductModal
+          launchId={selectedLaunchId}
+          onClose={() => setSelectedLaunchId(null)}
+          onRefreshFeed={() => fetchLaunches(true)}
+        />
       )}
     </div>
   );

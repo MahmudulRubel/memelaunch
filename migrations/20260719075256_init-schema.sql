@@ -180,7 +180,7 @@ CREATE TRIGGER on_auth_user_created
 
 -- Seed initial templates
 INSERT INTO public.templates (name, thumbnail_url, active_week, usage_count) VALUES
-('Drake Hotline Bling', 'https://fw47aqh3.ap-southeast.insforge.app/storage/v1/object/public/templates/drake.jpg', 29, 0),
-('Distracted Boyfriend', 'https://fw47aqh3.ap-southeast.insforge.app/storage/v1/object/public/templates/boyfriend.jpg', 29, 0),
-('Two Buttons', 'https://fw47aqh3.ap-southeast.insforge.app/storage/v1/object/public/templates/buttons.jpg', 29, 0)
+('Drake Hotline Bling', 'https://fw47aqh3.ap-southeast.insforge.app/api/storage/buckets/templates/objects/drake.jpg', 29, 0),
+('Distracted Boyfriend', 'https://fw47aqh3.ap-southeast.insforge.app/api/storage/buckets/templates/objects/boyfriend.jpg', 29, 0),
+('Two Buttons', 'https://fw47aqh3.ap-southeast.insforge.app/api/storage/buckets/templates/objects/buttons.jpg', 29, 0)
 ON CONFLICT DO NOTHING;
