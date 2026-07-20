@@ -20,6 +20,7 @@ import {
   Plus
 } from 'lucide-react';
 import type { Launch } from '@/components/feed/meme-card';
+import { parseCaption, getCaptionText } from '@/lib/meme';
 
 interface Screenshot {
   id: string;
@@ -381,7 +382,7 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={launch.meme_image_url}
-                        alt={launch.caption}
+                        alt={getCaptionText(launch.caption)}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -389,11 +390,39 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                     )}
 
                     {/* Impact Overlay Caption */}
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950 via-zinc-950/70 to-transparent p-4 pt-12 flex flex-col justify-end">
-                      <p className="text-lg sm:text-2xl font-impact uppercase tracking-wider text-zinc-100 drop-shadow-[0_2px_5px_rgba(0,0,0,0.9)] text-center leading-snug">
-                        {launch.caption}
-                      </p>
-                    </div>
+                    {(() => {
+                      const captionData = parseCaption(launch.caption);
+                      return (
+                        <>
+                          {(captionData.position === 'above' || captionData.position === 'both') && captionData.textAbove && (
+                            <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950 via-zinc-950/70 to-transparent p-4 pb-12 flex flex-col justify-start z-10">
+                              <p 
+                                className="font-impact uppercase tracking-wider text-center leading-snug drop-shadow-[0_2px_5px_rgba(0,0,0,0.9)]"
+                                style={{
+                                  color: captionData.color,
+                                  fontSize: `${captionData.size}px`,
+                                }}
+                              >
+                                {captionData.textAbove}
+                              </p>
+                            </div>
+                          )}
+                          {(captionData.position === 'below' || captionData.position === 'both') && captionData.textBelow && (
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950 via-zinc-950/70 to-transparent p-4 pt-12 flex flex-col justify-end z-10">
+                              <p 
+                                className="font-impact uppercase tracking-wider text-center leading-snug drop-shadow-[0_2px_5px_rgba(0,0,0,0.9)]"
+                                style={{
+                                  color: captionData.color,
+                                  fontSize: `${captionData.size}px`,
+                                }}
+                              >
+                                {captionData.textBelow}
+                              </p>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
 
                     <div className="absolute top-2 right-3 text-[9px] font-mono text-zinc-400/30 tracking-widest uppercase">
                       MEMELAUNCH
@@ -619,7 +648,7 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                       Launch Pitch
                     </span>
                     <p className="text-zinc-300 text-sm leading-relaxed">
-                      {launch.caption}. Launched under the category <strong className="text-lime-400">{launch.category}</strong> with pricing set as <strong className="text-zinc-100 uppercase text-xs font-mono">{launch.pricing}</strong>. Support the founder by checking out the link above.
+                      {getCaptionText(launch.caption)}. Launched under the category <strong className="text-lime-400">{launch.category}</strong> with pricing set as <strong className="text-zinc-100 uppercase text-xs font-mono">{launch.pricing}</strong>. Support the founder by checking out the link above.
                     </p>
                   </div>
 
@@ -639,7 +668,7 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                             className="p-3 bg-zinc-900/40 border border-zinc-800 hover:border-cyan-500/55 hover:bg-zinc-850/50 rounded-xl cursor-pointer transition-all group relative flex flex-col justify-between h-24"
                           >
                             <p className="text-xs font-bold text-zinc-200 line-clamp-2 uppercase font-impact tracking-wide">
-                              &ldquo;{rl.caption}&rdquo;
+                              &ldquo;{getCaptionText(rl.caption)}&rdquo;
                             </p>
                             <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono pt-2 border-t border-zinc-800/45">
                               <span className="truncate max-w-[80px]">@{rl.users?.name || 'founder'}</span>

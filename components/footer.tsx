@@ -14,7 +14,7 @@ export function Footer() {
               MemeLaunch
             </Link>
             <p className="text-zinc-500 text-xs mt-1">
-              Building the future of discovery, one meme at a time.
+              Building the future of discovery, one elite shitpost at a time.
             </p>
           </div>
 
@@ -36,7 +36,7 @@ export function Footer() {
           </div>
 
           <div className="text-xs text-zinc-500 font-mono">
-            © {new Date().getFullYear()} MemeLaunch. Built for giggles & gainz.
+            © {new Date().getFullYear()} MemeLaunch. Not responsible for lost VC funding or brain cells.
           </div>
         </div>
       </div>

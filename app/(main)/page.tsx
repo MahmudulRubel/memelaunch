@@ -17,6 +17,7 @@ import {
   Plus,
   Rocket
 } from 'lucide-react';
+import { getCaptionText } from '@/lib/meme';
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -47,12 +48,12 @@ export default function HomePage() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching launches details:', {
+        console.error('Error fetching launches details:', error.message || error);
+        console.debug('Error diagnostic details:', {
           message: error.message,
           details: error.details,
           hint: error.hint,
           code: error.code,
-          error
         });
 
         // Check if this is an authentication / token error
@@ -121,7 +122,7 @@ export default function HomePage() {
       result = result.filter(
         (l) =>
           l.product_name.toLowerCase().includes(query) ||
-          l.caption.toLowerCase().includes(query) ||
+          getCaptionText(l.caption).toLowerCase().includes(query) ||
           l.category.toLowerCase().includes(query)
       );
     }
@@ -219,15 +220,15 @@ export default function HomePage() {
         <div className="relative max-w-2xl space-y-5">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900/80 border border-zinc-800 text-xs font-mono text-lime-400">
             <Sparkles className="h-3 w-3 animate-pulse text-lime-400" />
-            <span>Meme-Native Product Discovery</span>
+            <span>Where SaaS Meets Shitposting</span>
           </div>
           
           <h1 className="font-impact text-4xl md:text-6xl uppercase tracking-tight text-zinc-50 leading-tight">
-            FUN HOOKS. <span className="text-lime-400">SERIOUS DETAILS.</span>
+            SHITPOST YOUR WAY <span className="text-lime-400">TO PRODUCT-MARKET FIT.</span>
           </h1>
           
           <p className="text-zinc-400 text-base md:text-lg max-w-lg leading-relaxed">
-            Every product launch is a single meme. Click a card to expand it into a clean, premium landing page with specs, pricing, and live discussions.
+            Ditch the boring 500-word launch pitches that nobody reads. On MemeLaunch, your product is a single meme. If your meme is fire, they'll open the hood to find a clean, high-fidelity landing page with specs, pricing, and zero corporate fluff.
           </p>
 
           <div className="pt-4 flex flex-wrap items-center justify-center md:justify-start gap-4">
@@ -237,7 +238,7 @@ export default function HomePage() {
                 className="px-6 py-3 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-extrabold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_20px_rgba(163,230,53,0.15)] hover:shadow-[0_0_35px_rgba(163,230,53,0.35)] active:scale-95 flex items-center gap-2"
               >
                 <Plus className="h-4 w-4 stroke-[3]" />
-                <span>Launch Your Product</span>
+                <span>Launch a Shitpost</span>
               </Link>
             ) : (
               <>
@@ -246,13 +247,13 @@ export default function HomePage() {
                   className="px-6 py-3 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-extrabold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_20px_rgba(163,230,53,0.15)] hover:shadow-[0_0_35px_rgba(163,230,53,0.35)] active:scale-95 flex items-center gap-2"
                 >
                   <Rocket className="h-4 w-4" />
-                  <span>Join the Chaos</span>
+                  <span>Enter the Arena</span>
                 </Link>
                 <Link
                   href="/login"
                   className="px-6 py-3 bg-zinc-900/60 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-zinc-50 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors"
                 >
-                  Learn More
+                  Tell Me More
                 </Link>
               </>
             )}
@@ -314,7 +315,7 @@ export default function HomePage() {
           </div>
 
           <div className="text-zinc-500 text-xs font-mono hidden sm:block">
-            Rotations reset every Sunday
+            Weekly rotations reset every Sunday. Don't let your memes be dreams.
           </div>
         </div>
       </div>
@@ -337,12 +338,12 @@ export default function HomePage() {
           
           <div className="space-y-2">
             <h3 className="text-2xl font-extrabold text-zinc-100 tracking-tight">
-              {searchQuery ? 'No results found' : 'The arena is empty!'}
+              {searchQuery ? 'Well, this is dry...' : 'The arena is dead quiet.'}
             </h3>
             <p className="text-zinc-400 text-sm max-w-md">
               {searchQuery
-                ? `No launches match the keyword "${searchQuery}". Try searching for something else.`
-                : 'No memes have been launched yet. Be the absolute legend to kick off the week!'}
+                ? `No launches match "${searchQuery}". Maybe search for something that actually exists?`
+                : 'No memes have been launched yet. Be the absolute legend to kick off the week with some elite slop!'}
             </p>
           </div>
 
@@ -351,7 +352,7 @@ export default function HomePage() {
               href={user ? '/launch' : '/login'}
               className="px-6 py-3 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-extrabold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_20px_rgba(163,230,53,0.15)]"
             >
-              Launch a Meme
+              Be the First Hero
             </Link>
           )}
         </div>

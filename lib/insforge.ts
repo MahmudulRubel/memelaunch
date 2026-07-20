@@ -14,5 +14,6 @@ export const insforge = createClient({
   baseUrl: baseUrl || 'https://placeholder.insforge.app',
   anonKey: anonKey || 'placeholder',
   functionsUrl: `${baseUrl || 'https://placeholder.insforge.app'}/functions`,
+  timeout: 10000, // Fail fast on slow networks/timeouts
 });
 
