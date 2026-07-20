@@ -9,7 +9,7 @@ async function run() {
   try {
     const { data, error } = await insforge.database
       .from('launches')
-      .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id), remixes!original_launch_id(id)')
+      .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id)')
       .eq('is_approved', true)
       .order('created_at', { ascending: false });
     

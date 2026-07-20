@@ -86,10 +86,10 @@ export default function ProfilePage() {
       setEditBio(profileData.bio || '');
       setEditAvatar(profileData.avatar || '');
 
-      // 2. Fetch launches with reaction, comment, and remix counts
+      // 2. Fetch launches with reaction and comment counts
       let launchesQuery = insforge.database
         .from('launches')
-        .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id), remixes!original_launch_id(id)')
+        .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id)')
         .eq('user_id', profileId);
 
       if (user?.id !== profileId) {
@@ -122,17 +122,14 @@ export default function ProfilePage() {
   const stats = useMemo(() => {
     const totalLaunches = launches.length;
     let totalReactions = 0;
-    let totalRemixes = 0;
 
     launches.forEach((launch) => {
       totalReactions += launch.reactions?.length || 0;
-      totalRemixes += launch.remixes?.length || 0;
     });
 
     return {
       totalLaunches,
       totalReactions,
-      totalRemixes,
     };
   }, [launches]);
 
@@ -166,15 +163,7 @@ export default function ProfilePage() {
         unlocked: stats.totalReactions >= 10,
         requirement: '10 Reactions received',
       },
-      {
-        id: 'remix-master',
-        title: 'Remix Master',
-        description: 'Spurred viral adaptation with 5+ remixes received.',
-        icon: Award,
-        color: 'text-purple-400 border-purple-400/30 bg-purple-950/10 shadow-[0_0_15px_rgba(192,132,252,0.1)]',
-        unlocked: stats.totalRemixes >= 5,
-        requirement: '5 Remixes received',
-      },
+
     ];
   }, [stats]);
 
@@ -415,9 +404,8 @@ export default function ProfilePage() {
         ctx.fillText(label.toUpperCase(), x + 90, 285);
       };
 
-      drawStat('Launches', stats.totalLaunches, 80);
-      drawStat('Vibe Reactions', stats.totalReactions, 310);
-      drawStat('Remixes Received', stats.totalRemixes, 540);
+      drawStat('Launches', stats.totalLaunches, 180);
+      drawStat('Vibe Reactions', stats.totalReactions, 440);
 
       // 5. Watermarks
       ctx.textAlign = 'left';
@@ -436,9 +424,8 @@ export default function ProfilePage() {
       // Determine Rank based on achievements
       const unlockedCount = achievements.filter((a) => a.unlocked).length;
       let rankName = 'Meme Recruit';
-      if (unlockedCount === 4) rankName = 'Meme Deity';
-      else if (unlockedCount === 3) rankName = 'Arena Master';
-      else if (unlockedCount === 2) rankName = 'Viral Captain';
+      if (unlockedCount === 3) rankName = 'Meme Deity';
+      else if (unlockedCount === 2) rankName = 'Arena Master';
       else if (unlockedCount === 1) rankName = 'Meme Pioneer';
 
       ctx.fillText(`RANK: ${rankName.toUpperCase()}`, 750, 385);
@@ -467,7 +454,7 @@ export default function ProfilePage() {
     else if (unlockedCount === 2) rankName = 'Viral Captain';
     else if (unlockedCount === 1) rankName = 'Meme Pioneer';
 
-    const text = `Check out my Founder Stats on @MemeLaunch! 🚀\n\n🎯 launches: ${stats.totalLaunches}\n🔥 reactions: ${stats.totalReactions}\n🌀 remixes: ${stats.totalRemixes}\n🏅 Rank: ${rankName}\n\nJoin the chaos of meme-native product discovery! 👾👇\n`;
+    const text = `Check out my Founder Stats on @MemeLaunch! 🚀\n\n🎯 launches: ${stats.totalLaunches}\n🔥 reactions: ${stats.totalReactions}\n🏅 Rank: ${rankName}\n\nJoin the chaos of meme-native product discovery! 👾👇\n`;
     
     // Fallback URL if window is undefined
     const shareUrl = typeof window !== 'undefined' ? window.location.href : `https://memelaunch.app/profile/${profileId}`;
@@ -680,7 +667,7 @@ export default function ProfilePage() {
       </section>
 
       {/* Stats Counter Cards Grid */}
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <section className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div className="p-5 bg-zinc-900/30 border border-zinc-800/80 rounded-2xl flex flex-col justify-between h-32 relative overflow-hidden group">
           <div className="absolute top-0 right-0 -mt-6 -mr-6 w-16 h-16 bg-lime-400/5 rounded-full blur-xl pointer-events-none group-hover:scale-150 transition-transform duration-500" />
           <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
@@ -704,19 +691,6 @@ export default function ProfilePage() {
               {stats.totalReactions}
             </span>
             <span className="text-xs text-zinc-500 font-mono">votes</span>
-          </div>
-        </div>
-
-        <div className="p-5 bg-zinc-900/30 border border-zinc-800/80 rounded-2xl flex flex-col justify-between h-32 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 -mt-6 -mr-6 w-16 h-16 bg-cyan-500/5 rounded-full blur-xl pointer-events-none group-hover:scale-150 transition-transform duration-500" />
-          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
-            Spin-off Remixes Received
-          </span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-extrabold text-cyan-455 font-mono">
-              {stats.totalRemixes}
-            </span>
-            <span className="text-xs text-zinc-500 font-mono">replies</span>
           </div>
         </div>
       </section>

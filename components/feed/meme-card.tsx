@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { insforge } from '@/lib/insforge';
-import { MessageSquare, Repeat, ExternalLink, Globe, Tag } from 'lucide-react';
+import { MessageSquare, ExternalLink, Globe, Tag } from 'lucide-react';
 import { parseCaption, getCaptionText } from '@/lib/meme';
 
 interface UserProfile {
@@ -22,10 +22,6 @@ interface Comment {
   id: string;
 }
 
-interface Remix {
-  id: string;
-}
-
 export interface Launch {
   id: string;
   user_id: string;
@@ -38,10 +34,11 @@ export interface Launch {
   template_id: string | null;
   created_at: string;
   is_approved?: boolean;
+  product_description?: string;
+  product_logo_url?: string;
   users?: UserProfile;
   reactions?: Reaction[];
   comments?: Comment[];
-  remixes?: Remix[];
 }
 
 interface MemeCardProps {
@@ -203,15 +200,28 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
       {/* Product Details Bar */}
       <div className="p-4 flex-1 flex flex-col justify-between space-y-4">
         <div className="space-y-2">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="font-extrabold text-lg text-zinc-100 group-hover:text-lime-400 transition-colors truncate">
-              {launch.product_name}
-            </h3>
-            
-            {/* Pricing Badge */}
-            <span className={`px-2 py-0.5 rounded-full border text-[10px] font-mono uppercase font-bold tracking-wider ${pricingColors[launch.pricing]}`}>
-              {launch.pricing}
-            </span>
+          <div className="flex items-center gap-3">
+            {launch.product_logo_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={launch.product_logo_url}
+                alt={`${launch.product_name} logo`}
+                className="h-8 w-8 rounded-lg object-cover border border-zinc-800 bg-zinc-950 shrink-0"
+                loading="lazy"
+              />
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-extrabold text-base text-zinc-100 group-hover:text-lime-400 transition-colors truncate">
+                  {launch.product_name}
+                </h3>
+                
+                {/* Pricing Badge */}
+                <span className={`px-2 py-0.5 rounded-full border text-[10px] font-mono uppercase font-bold tracking-wider shrink-0 ${pricingColors[launch.pricing]}`}>
+                  {launch.pricing}
+                </span>
+              </div>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
@@ -305,12 +315,8 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
               </span>
             </Link>
 
-            {/* Comments & Remixes Counts */}
+            {/* Comments Count */}
             <div className="flex items-center gap-3 font-mono text-[11px]">
-              <span className="flex items-center gap-1" title="Remixes">
-                <Repeat className="h-3.5 w-3.5 text-cyan-500/70" />
-                <span>{launch.remixes?.length || 0}</span>
-              </span>
               <span className="flex items-center gap-1" title="Comments">
                 <MessageSquare className="h-3.5 w-3.5 text-zinc-500" />
                 <span>{launch.comments?.length || 0}</span>

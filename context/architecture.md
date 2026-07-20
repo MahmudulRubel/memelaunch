@@ -34,7 +34,6 @@
 - **launches**: ID, user_id (FK), meme_image_url, caption, product_name, product_url, pricing, category, template_id (FK), created_at.
 - **launch_screenshots**: ID, launch_id (FK), image_url, order.
 - **reactions**: ID, launch_id (FK), user_id (FK), emoji_type (enum: 😂, 🔥, 🤔), created_at.
-- **remixes**: ID, original_launch_id (FK), remix_launch_id (FK), created_at.
 - **templates**: ID, name, thumbnail_url, active_week, usage_count.
 - **comments**: ID, launch_id (FK), user_id (FK), body, created_at.
 
@@ -47,8 +46,8 @@
 
 - **Authentication**: JWT-based session token managed by `@insforge/sdk`. Authenticated routes redirect to sign-in if no session exists.
 - **Data Access Control (RLS)**:
-  - Read: All launches, templates, reactions, remixes, and comments are publicly readable.
-  - Write: Users can only insert comments, reactions, and remixes under their own authenticated `user_id`.
+  - Read: All launches, templates, reactions, and comments are publicly readable.
+  - Write: Users can only insert comments and reactions under their own authenticated `user_id`.
   - Mutation: Only the launching founder can edit their launch metadata, and only before a grace period (e.g., 24 hours).
 - **Abuse Prevention**: Direct reaction updates do not write straight to the database from the client. Instead, reactions go through an InsForge Edge Function that verifies token rate-limits to prevent bot voting.
 

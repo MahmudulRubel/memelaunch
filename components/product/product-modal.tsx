@@ -11,7 +11,6 @@ import {
   Globe,
   Tag,
   MessageSquare,
-  Repeat,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -62,8 +61,7 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
   const [screenshots, setScreenshots] = useState<Screenshot[]>([]);
   const [comments, setComments] = useState<DBComment[]>([]);
   const [reactions, setReactions] = useState<Reaction[]>([]);
-  const [remixLaunches, setRemixLaunches] = useState<Launch[]>([]);
-  const [parentLink, setParentLink] = useState<{ id: string; name: string } | null>(null);
+
   
   // UI Loading States
   const [isLoading, setIsLoading] = useState(true);
@@ -130,52 +128,7 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
           setReactions(reactionsData as Reaction[]);
         }
 
-        // 5. Fetch remixes linking to this launch
-        const { data: remixesRows } = await insforge.database
-          .from('remixes')
-          .select('remix_launch_id')
-          .eq('original_launch_id', currentLaunchId);
 
-        if (remixesRows && remixesRows.length > 0) {
-          const ids = remixesRows.map((r: any) => r.remix_launch_id);
-          const { data: remixLaunchesData } = await insforge.database
-            .from('launches')
-            .select('*, users(name)')
-            .in('id', ids);
-          if (remixLaunchesData) {
-            setRemixLaunches(remixLaunchesData as any[]);
-          } else {
-            setRemixLaunches([]);
-          }
-        } else {
-          setRemixLaunches([]);
-        }
-
-        // 6. Check if this launch is a remix of another launch
-        const { data: parentLinkData } = await insforge.database
-          .from('remixes')
-          .select('original_launch_id')
-          .eq('remix_launch_id', currentLaunchId);
-
-        if (parentLinkData && parentLinkData.length > 0) {
-          const originalId = parentLinkData[0].original_launch_id;
-          const { data: originalLaunchData } = await insforge.database
-            .from('launches')
-            .select('product_name')
-            .eq('id', originalId)
-            .single();
-
-          if (originalLaunchData) {
-            setParentLink({
-              id: originalId,
-              name: originalLaunchData.product_name,
-            });
-          } else {
-            setParentLink(null);
-          }
-        } else {
-          setParentLink(null);
-        }
 
       } catch (err: any) {
         console.error('Error fetching launch modal details:', err);
@@ -432,40 +385,33 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
 
                 {/* Specs Panel (5 cols) */}
                 <div className="md:col-span-5 space-y-6">
-                  {parentLink && (
-                    <div className="p-3 bg-cyan-950/20 border border-cyan-800/35 rounded-xl flex items-center justify-between text-xs text-cyan-400">
-                      <span className="flex items-center gap-1.5 font-mono">
-                        <Repeat className="h-3.5 w-3.5 animate-pulse" />
-                        <span>Remixed from:</span>
-                      </span>
-                      <button
-                        onClick={() => {
-                          setCurrentLaunchId(parentLink.id);
-                          setActiveScreenshotIdx(0);
-                        }}
-                        className="font-bold hover:underline cursor-pointer flex items-center gap-0.5 text-cyan-300"
-                      >
-                        <span>{parentLink.name}</span>
-                        <ChevronRight className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  )}
-                  {/* Name and Pricing */}
-                  <div className="space-y-3">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <h1 className="font-extrabold text-2xl sm:text-3xl text-zinc-100 tracking-tight leading-none">
-                        {launch.product_name}
-                      </h1>
-                      <span className={`px-2.5 py-0.5 rounded-full border text-[10px] font-mono uppercase font-bold tracking-wider ${pricingColors[launch.pricing]}`}>
-                        {launch.pricing}
-                      </span>
-                    </div>
 
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1 text-zinc-400 bg-zinc-900/60 border border-zinc-800/80 px-2 py-0.5 rounded-md text-xs">
-                        <Tag className="h-3 w-3 text-zinc-500" />
-                        <span>{launch.category}</span>
-                      </span>
+                  {/* Name and Pricing */}
+                  <div className="flex items-start gap-4">
+                    {launch.product_logo_url && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={launch.product_logo_url}
+                        alt={`${launch.product_name} logo`}
+                        className="h-12 w-12 rounded-xl object-cover border border-zinc-800 bg-zinc-900 shrink-0 shadow-md"
+                      />
+                    )}
+                    <div className="space-y-2.5 min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h1 className="font-extrabold text-2xl sm:text-3xl text-zinc-100 tracking-tight leading-none truncate">
+                          {launch.product_name}
+                        </h1>
+                        <span className={`px-2.5 py-0.5 rounded-full border text-[10px] font-mono uppercase font-bold tracking-wider shrink-0 ${pricingColors[launch.pricing]}`}>
+                          {launch.pricing}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 text-zinc-400 bg-zinc-900/60 border border-zinc-800/80 px-2 py-0.5 rounded-md text-xs">
+                          <Tag className="h-3 w-3 text-zinc-500" />
+                          <span>{launch.category}</span>
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -547,30 +493,19 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                   </div>
 
                   {/* Primary Links / Actions */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <div className="grid grid-cols-1 gap-3 pt-2">
                     {launch.product_url && (
                       <a
                         href={launch.product_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-4 py-3 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-extrabold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_15px_rgba(163,230,53,0.1)] hover:shadow-[0_0_25px_rgba(163,230,53,0.3)] active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                        className="w-full px-4 py-3 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-extrabold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_15px_rgba(163,230,53,0.1)] hover:shadow-[0_0_25px_rgba(163,230,53,0.3)] active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <Globe className="h-4 w-4" />
                         <span>Visit Website</span>
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     )}
-
-                    <button
-                      onClick={() => {
-                        onClose();
-                        router.push(`/launch?remix=${launch.id}`);
-                      }}
-                      className="px-4 py-3 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 hover:border-zinc-700 text-zinc-200 font-bold uppercase text-xs tracking-wider rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <Repeat className="h-4 w-4 text-cyan-400" />
-                      <span>Remix Meme</span>
-                    </button>
                   </div>
 
                 </div>
@@ -642,45 +577,28 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                     </div>
                   )}
 
-                  {/* Detailed Description/Overview if any (we display standard copy here since description is in caption) */}
-                  <div className="space-y-2 p-4 bg-zinc-900/20 border border-zinc-900 rounded-2xl">
-                    <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block">
-                      Launch Pitch
-                    </span>
-                    <p className="text-zinc-300 text-sm leading-relaxed">
-                      {getCaptionText(launch.caption)}. Launched under the category <strong className="text-lime-400">{launch.category}</strong> with pricing set as <strong className="text-zinc-100 uppercase text-xs font-mono">{launch.pricing}</strong>. Support the founder by checking out the link above.
-                    </p>
+                  {/* Detailed Description/Overview */}
+                  <div className="space-y-3 p-4 bg-zinc-900/20 border border-zinc-900 rounded-2xl">
+                    <div>
+                      <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block">
+                        Product Description
+                      </span>
+                      <p className="text-zinc-200 text-sm leading-relaxed whitespace-pre-line mt-1">
+                        {launch.product_description || 'No description provided.'}
+                      </p>
+                    </div>
+
+                    <div className="border-t border-zinc-900/60 pt-2.5 mt-2">
+                      <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block">
+                        Launch Pitch
+                      </span>
+                      <p className="text-zinc-400 text-xs leading-relaxed mt-1">
+                        {getCaptionText(launch.caption)}. Launched under the category <strong className="text-lime-400">{launch.category}</strong> with pricing set as <strong className="text-zinc-100 uppercase text-[10px] font-mono">{launch.pricing}</strong>.
+                      </p>
+                    </div>
                   </div>
 
-                  {remixLaunches.length > 0 && (
-                    <div className="space-y-3 pt-2">
-                      <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block">
-                        Spin-off Remixes ({remixLaunches.length})
-                      </span>
-                      <div className="grid grid-cols-2 gap-3 max-h-[220px] overflow-y-auto pr-1">
-                        {remixLaunches.map((rl) => (
-                          <div 
-                            key={rl.id}
-                            onClick={() => {
-                              setCurrentLaunchId(rl.id);
-                              setActiveScreenshotIdx(0);
-                            }}
-                            className="p-3 bg-zinc-900/40 border border-zinc-800 hover:border-cyan-500/55 hover:bg-zinc-850/50 rounded-xl cursor-pointer transition-all group relative flex flex-col justify-between h-24"
-                          >
-                            <p className="text-xs font-bold text-zinc-200 line-clamp-2 uppercase font-impact tracking-wide">
-                              &ldquo;{getCaptionText(rl.caption)}&rdquo;
-                            </p>
-                            <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono pt-2 border-t border-zinc-800/45">
-                              <span className="truncate max-w-[80px]">@{rl.users?.name || 'founder'}</span>
-                              <span className="text-cyan-400 font-bold flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                View <ChevronRight className="h-3 w-3" />
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+
                 </div>
 
                 {/* Right Side: Live Comments Section (5 cols) */}
