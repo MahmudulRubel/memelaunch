@@ -90,12 +90,12 @@ export default function AdminPage() {
       const [pendingRes, approvedRes] = await Promise.all([
         insforge.database
           .from('launches')
-          .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id), remixes!original_launch_id(id)')
+          .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id)')
           .eq('is_approved', false)
           .order('created_at', { ascending: false }),
         insforge.database
           .from('launches')
-          .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id), remixes!original_launch_id(id)')
+          .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id)')
           .eq('is_approved', true)
           .order('created_at', { ascending: false })
       ]);

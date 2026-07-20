@@ -9,7 +9,6 @@ import { ProductModal } from '@/components/product/product-modal';
 import {
   Flame,
   Clock,
-  Repeat,
   Sparkles,
   TrendingUp,
   Search,
@@ -21,7 +20,7 @@ import { getCaptionText } from '@/lib/meme';
 
 export default function HomePage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'trending' | 'new' | 'remixed'>('trending');
+  const [activeTab, setActiveTab] = useState<'trending' | 'new'>('trending');
   const [searchQuery, setSearchQuery] = useState('');
   
   // Database state
@@ -43,7 +42,7 @@ export default function HomePage() {
     try {
       const { data, error } = await insforge.database
         .from('launches')
-        .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id), remixes!original_launch_id(id)')
+        .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id)')
         .eq('is_approved', true)
         .order('created_at', { ascending: false });
 
@@ -132,27 +131,13 @@ export default function HomePage() {
       // Already sorted by created_at descending from database
       return result;
     } else if (activeTab === 'trending') {
-      // Popularity score = total reactions + remixes * 2
+      // Popularity score = total reactions
       return result.sort((a, b) => {
-        const aReactions = a.reactions?.length || 0;
-        const bReactions = b.reactions?.length || 0;
-        const aRemixes = a.remixes?.length || 0;
-        const bRemixes = b.remixes?.length || 0;
-        
-        const aScore = aReactions + aRemixes * 2;
-        const bScore = bReactions + bRemixes * 2;
+        const aScore = a.reactions?.length || 0;
+        const bScore = b.reactions?.length || 0;
         
         if (bScore !== aScore) return bScore - aScore;
         // Fallback to fresh if scores are equal
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
-    } else if (activeTab === 'remixed') {
-      // Sort by remixes count
-      return result.sort((a, b) => {
-        const aRemixes = a.remixes?.length || 0;
-        const bRemixes = b.remixes?.length || 0;
-        
-        if (bRemixes !== aRemixes) return bRemixes - aRemixes;
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
     }
@@ -287,17 +272,7 @@ export default function HomePage() {
             <Clock className="h-3.5 w-3.5" />
             <span>Fresh</span>
           </button>
-          <button
-            onClick={() => setActiveTab('remixed')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-              activeTab === 'remixed'
-                ? 'bg-lime-400 text-zinc-950 shadow-md font-extrabold'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <Repeat className="h-3.5 w-3.5" />
-            <span>Most Remixed</span>
-          </button>
+
         </div>
 
         {/* Search Input & Info */}

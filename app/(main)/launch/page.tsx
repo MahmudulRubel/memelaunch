@@ -30,11 +30,27 @@ interface Template {
   usage_count: number;
 }
 
+const CATEGORIES = [
+  'SaaS',
+  'Developer Tools',
+  'AI & Machine Learning',
+  'Mobile Apps',
+  'Web Utilities',
+  'Design & Creative',
+  'Marketing & Sales',
+  'Productivity',
+  'Crypto & Web3',
+  'E-Commerce',
+  'Hardware',
+  'Other'
+];
+
 const launchFormSchema = z.object({
   productName: z.string().min(2, 'Product name must be at least 2 characters'),
-  category: z.string().min(2, 'Category must be at least 2 characters'),
+  category: z.string().min(2, 'Please select a product category'),
   pricing: z.enum(['free', 'paid', 'freemium']),
   productUrl: z.string().url('Please enter a valid product URL (e.g. https://example.com)'),
+  productDescription: z.string().min(10, 'Product description must be at least 10 characters').max(500, 'Product description must be 500 characters or less'),
 });
 
 export default function LaunchPage() {
@@ -63,6 +79,10 @@ function LaunchForm() {
   const [category, setCategory] = useState('');
   const [pricing, setPricing] = useState<'free' | 'paid' | 'freemium'>('free');
   const [productUrl, setProductUrl] = useState('');
+  const [productDescription, setProductDescription] = useState('');
+  const [productLogoFile, setProductLogoFile] = useState<File | null>(null);
+  const [productLogoPreview, setProductLogoPreview] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [captionPosition, setCaptionPosition] = useState<'above' | 'below' | 'both'>('below');
   const [textAbove, setTextAbove] = useState('');
   const [textBelow, setTextBelow] = useState('');
@@ -93,9 +113,6 @@ function LaunchForm() {
 
   // Remix mechanics
   const searchParams = useSearchParams();
-  const remixParentId = searchParams.get('remix');
-  const [parentLaunch, setParentLaunch] = useState<any | null>(null);
-  const [loadingParent, setLoadingParent] = useState(false);
 
   // Fetch Templates
   useEffect(() => {
@@ -123,55 +140,7 @@ function LaunchForm() {
     fetchTemplates();
   }, []);
 
-  // Fetch parent launch for remix if applicable
-  useEffect(() => {
-    if (!remixParentId) return;
 
-    async function fetchParentLaunch() {
-      setLoadingParent(true);
-      try {
-        const { data: parentData, error: parentErr } = await insforge.database
-          .from('launches')
-          .select('*, users(name)')
-          .eq('id', remixParentId)
-          .single();
-
-        if (!parentErr && parentData) {
-          setParentLaunch(parentData);
-          setProductName(parentData.product_name || '');
-          setCategory(parentData.category || '');
-          setPricing(parentData.pricing || 'free');
-          setProductUrl(parentData.product_url || '');
-
-          if (parentData.template_id && templates.length > 0) {
-            const matchedTemplate = templates.find(t => t.id === parentData.template_id);
-            if (matchedTemplate) setSelectedTemplate(matchedTemplate);
-          }
-
-          // Fetch screenshots
-          const { data: screensData, error: screensErr } = await insforge.database
-            .from('launch_screenshots')
-            .select('*')
-            .eq('launch_id', remixParentId)
-            .order('order', { ascending: true });
-
-          if (!screensErr && screensData) {
-            const urls = screensData.map((s: any) => s.image_url);
-            setScreenshotPreviews(urls);
-            setScreenshotFiles(urls.map(() => null));
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load parent launch for remix:', err);
-      } finally {
-        setLoadingParent(false);
-      }
-    }
-
-    if (!loadingTemplates) {
-      fetchParentLaunch();
-    }
-  }, [remixParentId, loadingTemplates, templates]);
 
   // Pre-select template from query parameter if applicable
   const templateQueryId = searchParams.get('template');
@@ -198,13 +167,16 @@ function LaunchForm() {
       if (memePreview && memePreview.startsWith('blob:')) {
         URL.revokeObjectURL(memePreview);
       }
+      if (productLogoPreview && productLogoPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(productLogoPreview);
+      }
       screenshotPreviews.forEach((preview) => {
         if (preview.startsWith('blob:')) {
           URL.revokeObjectURL(preview);
         }
       });
     };
-  }, [memePreview, screenshotPreviews]);
+  }, [memePreview, productLogoPreview, screenshotPreviews]);
 
   // Handle meme file change
   const handleMemeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -218,6 +190,23 @@ function LaunchForm() {
       setFormErrors((prev) => {
         const copy = { ...prev };
         delete copy.meme;
+        return copy;
+      });
+    }
+  };
+
+  // Handle logo file change
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (productLogoPreview && productLogoPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(productLogoPreview);
+      }
+      setProductLogoFile(file);
+      setProductLogoPreview(URL.createObjectURL(file));
+      setFormErrors((prev) => {
+        const copy = { ...prev };
+        delete copy.productLogo;
         return copy;
       });
     }
@@ -342,6 +331,7 @@ function LaunchForm() {
       category,
       pricing,
       productUrl,
+      productDescription,
     };
 
     const validationResult = launchFormSchema.safeParse(fieldsToValidate);
@@ -378,16 +368,18 @@ function LaunchForm() {
     }
 
     // 2. Custom validation for files
-    if (!remixParentId) {
-      if (imageSource === 'upload' && !memeFile) {
-        errors.meme = 'Please upload a meme image';
-      }
-      if (imageSource === 'ai' && !memeFile) {
-        errors.meme = 'Please generate a meme image using AI';
-      }
-      if (imageSource === 'template' && !selectedTemplate) {
-        errors.meme = 'Please select a template';
-      }
+    if (!productLogoFile) {
+      errors.productLogo = 'Please upload a product logo';
+    }
+
+    if (imageSource === 'upload' && !memeFile) {
+      errors.meme = 'Please upload a meme image';
+    }
+    if (imageSource === 'ai' && !memeFile) {
+      errors.meme = 'Please generate a meme image using AI';
+    }
+    if (imageSource === 'template' && !selectedTemplate) {
+      errors.meme = 'Please select a template';
     }
 
     if (screenshotPreviews.length < 2) {
@@ -413,11 +405,33 @@ function LaunchForm() {
     setIsSubmitting(true);
 
     try {
+      // Step A0: Compress and Upload Product Logo
+      let logoUrl = '';
+      if (productLogoFile) {
+        setStatusMessage('Compressing product logo...');
+        const compressedLogoBlob = await compressImage(productLogoFile, 400, 0.8);
+        const compressedLogoFile = new File([compressedLogoBlob], productLogoFile.name, {
+          type: 'image/jpeg',
+        });
+
+        setStatusMessage('Uploading product logo to S3...');
+        const logoExtension = productLogoFile.name.split('.').pop() || 'jpg';
+        const logoPath = `${user.id}/${Date.now()}_logo.${logoExtension}`;
+
+        const { data: logoUploadData, error: logoUploadError } = await insforge.storage
+          .from('memes')
+          .upload(logoPath, compressedLogoFile);
+
+        if (logoUploadError || !logoUploadData) {
+          throw new Error(logoUploadError?.message || 'Logo upload failed.');
+        }
+
+        logoUrl = logoUploadData.url;
+      }
+
       // Step A: Compress and Upload Meme Image
       let memeImageUrl = '';
-      if (remixParentId && parentLaunch) {
-        memeImageUrl = parentLaunch.meme_image_url;
-      } else if ((imageSource === 'upload' || imageSource === 'ai') && memeFile) {
+      if ((imageSource === 'upload' || imageSource === 'ai') && memeFile) {
         setStatusMessage('Compressing meme image...');
         const compressedMemeBlob = await compressImage(memeFile, 1200, 0.8);
         const compressedMemeFile = new File([compressedMemeBlob], memeFile.name, {
@@ -496,9 +510,9 @@ function LaunchForm() {
             product_url: productUrl.trim(),
             pricing: pricing,
             category: category.trim(),
-            template_id: remixParentId && parentLaunch
-              ? parentLaunch.template_id
-              : (imageSource === 'template' && selectedTemplate ? selectedTemplate.id : null),
+            template_id: (imageSource === 'template' && selectedTemplate ? selectedTemplate.id : null),
+            product_description: productDescription.trim(),
+            product_logo_url: logoUrl,
           },
         ])
         .select();
@@ -509,22 +523,7 @@ function LaunchForm() {
 
       const launchId = launchData[0].id;
 
-      // Step C-2: Link Remix in database (if applicable)
-      if (remixParentId) {
-        setStatusMessage('Linking remix to parent launch...');
-        const { error: remixLinkError } = await insforge.database
-          .from('remixes')
-          .insert([
-            {
-              original_launch_id: remixParentId,
-              remix_launch_id: launchId,
-            },
-          ]);
 
-        if (remixLinkError) {
-          throw new Error(remixLinkError.message || 'Failed to link remix in database.');
-        }
-      }
 
       // Step D: Insert into Launch Screenshots table
       setStatusMessage('Linking screenshots...');
@@ -543,7 +542,7 @@ function LaunchForm() {
       }
 
       // Step E: Update Template Usage (if applicable)
-      if (!remixParentId && imageSource === 'template' && selectedTemplate) {
+      if (imageSource === 'template' && selectedTemplate) {
         await insforge.database
           .from('templates')
           .update({ usage_count: (selectedTemplate.usage_count || 0) + 1 })
@@ -552,9 +551,7 @@ function LaunchForm() {
 
       setStatusMessage('');
       setSuccessMessage(
-        remixParentId
-          ? '🎉 Meme remixed successfully! It will go live after admin approval. Redirecting back...'
-          : '🎉 Product launched successfully! It will go live after admin approval. Redirecting back...'
+        '🎉 Product launched successfully! It will go live after admin approval. Redirecting back...'
       );
 
       // Redirect home after brief delay
@@ -580,36 +577,23 @@ function LaunchForm() {
   }
 
   // Previews calculated for card layout preview on the left side
-  const memePreviewSource = remixParentId && parentLaunch
-    ? parentLaunch.meme_image_url
-    : imageSource === 'template' && selectedTemplate 
-      ? selectedTemplate.thumbnail_url 
-      : memePreview;
+  const memePreviewSource = imageSource === 'template' && selectedTemplate 
+    ? selectedTemplate.thumbnail_url 
+    : memePreview;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800/80 pb-6">
         <div>
-          {remixParentId && parentLaunch ? (
-            <>
-              <h1 className="font-impact text-3xl md:text-5xl uppercase tracking-tight text-zinc-50">
-                REMIX MEME FOR <span className="text-cyan-400">{parentLaunch.product_name}</span>
-              </h1>
-              <p className="text-zinc-400 text-sm mt-1">
-                You are about to out-meme @{parentLaunch.users?.name || 'founder'}&apos;s product launch. Bring your A-game.
-              </p>
-            </>
-          ) : (
-            <>
-              <h1 className="font-impact text-3xl md:text-5xl uppercase tracking-tight text-zinc-50">
-                LAUNCH <span className="text-lime-400">YOUR PRODUCT</span>
-              </h1>
-              <p className="text-zinc-400 text-sm mt-1">
-                Craft a viral meme, tuck the tech specs underneath, and launch it to the world. Took you longer to read this than it will to launch.
-              </p>
-            </>
-          )}
+          <>
+            <h1 className="font-impact text-3xl md:text-5xl uppercase tracking-tight text-zinc-50">
+              LAUNCH <span className="text-lime-400">YOUR PRODUCT</span>
+            </h1>
+            <p className="text-zinc-400 text-sm mt-1">
+              Craft a viral meme, tuck the tech specs underneath, and launch it to the world. Took you longer to read this than it will to launch.
+            </p>
+          </>
         </div>
       </div>
 
@@ -687,13 +671,29 @@ function LaunchForm() {
 
                 {/* Details Bar Mockup */}
                 <div className="p-4 bg-zinc-900/40 space-y-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-extrabold text-base text-zinc-100 truncate">
-                      {productName || 'Product Name'}
-                    </h3>
-                    <span className="px-2 py-0.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-[10px] font-mono uppercase font-bold tracking-wider">
-                      {pricing}
-                    </span>
+                  <div className="flex items-center gap-3">
+                    {productLogoPreview ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={productLogoPreview}
+                        alt="Logo preview"
+                        className="h-9 w-9 rounded-xl object-cover border border-zinc-850 bg-zinc-950 shrink-0 shadow-md"
+                      />
+                    ) : (
+                      <div className="h-9 w-9 rounded-xl border border-dashed border-zinc-800 bg-zinc-950 flex items-center justify-center text-zinc-650 font-mono text-[10px] uppercase tracking-wider font-extrabold shrink-0">
+                        Logo
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-extrabold text-base text-zinc-100 truncate">
+                          {productName || 'Product Name'}
+                        </h3>
+                        <span className="px-2 py-0.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-[10px] font-mono uppercase font-bold tracking-wider shrink-0">
+                          {pricing}
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex flex-wrap gap-2 text-xs text-zinc-500">
@@ -742,17 +742,7 @@ function LaunchForm() {
           {/* RIGHT COLUMN: FIELDS & UPLOADS (7 Cols) */}
           <div className="lg:col-span-7 bg-zinc-900/30 border border-zinc-800/80 rounded-2xl p-6 md:p-8 space-y-8">
             
-            {remixParentId && parentLaunch && (
-              <div className="p-4 bg-cyan-950/40 border border-cyan-800/50 rounded-2xl flex gap-3 text-cyan-400 text-sm">
-                <Repeat className="h-5 w-5 shrink-0 text-cyan-400" />
-                <div className="space-y-1">
-                  <p className="font-bold">Meme Remix Mode</p>
-                  <p className="text-xs text-cyan-350/90">
-                    You are remixing the meme for <strong>{parentLaunch.product_name}</strong> launched by <strong>@{parentLaunch.users?.name || 'founder'}</strong>. Product details and screenshots are pre-populated and locked.
-                  </p>
-                </div>
-              </div>
-            )}
+
             
             {/* Section 1: Meme Content */}
             <div className="space-y-6">
@@ -983,32 +973,9 @@ function LaunchForm() {
               {/* Image Source Selection */}
               <div className="space-y-3" id="err-meme">
                 <label className="block text-sm font-bold text-zinc-300">
-                  {remixParentId ? 'Meme Background' : 'Meme Image Source'}
+                  Meme Image Source
                 </label>
-                
-                {remixParentId ? (
-                  <div className="p-4 bg-zinc-950 border border-zinc-800 rounded-2xl flex flex-col items-center justify-center gap-3 text-center">
-                    {parentLaunch?.meme_image_url ? (
-                      <div className="relative aspect-square w-32 bg-zinc-900 border border-zinc-850 rounded-xl overflow-hidden shadow-inner">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={parentLaunch.meme_image_url}
-                          alt="Inherited meme background"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <Loader2 className="h-6 w-6 text-lime-400 animate-spin" />
-                    )}
-                    <div className="space-y-1">
-                      <p className="text-xs font-bold text-zinc-300">Meme Background Inherited</p>
-                      <p className="text-[11px] font-mono text-zinc-500">
-                        Remixes inherit the original meme layout. Type your own caption above!
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <>
+                <>
                     {/* Source Selection Tabs */}
                     <div className="grid grid-cols-3 gap-1 bg-zinc-950 border border-zinc-800 p-1 rounded-xl">
                       <button
@@ -1184,7 +1151,6 @@ function LaunchForm() {
                       </p>
                     )}
                   </>
-                )}
               </div>
             </div>
 
@@ -1194,6 +1160,48 @@ function LaunchForm() {
                 <Tag className="h-5 w-5 text-lime-400" />
                 <span>Specs (Hidden Underneath)</span>
               </h2>
+
+              {/* Product Logo Upload */}
+              <div className="space-y-2" id="err-productLogo">
+                <label className="block text-sm font-bold text-zinc-300">
+                  Product Logo
+                </label>
+                <div className="flex items-center gap-4">
+                  <div 
+                    onClick={() => logoInputRef.current?.click()}
+                    className={`flex-1 border-2 border-dashed ${formErrors.productLogo ? 'border-rose-500/50 bg-rose-950/5' : 'border-zinc-800 hover:border-zinc-700 bg-zinc-950/20'} rounded-2xl p-4 text-center cursor-pointer transition-all hover:bg-zinc-950/40`}
+                  >
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      id="logo-upload"
+                      accept="image/*"
+                      onChange={handleLogoChange}
+                      className="hidden"
+                    />
+                    <Upload className="h-5 w-5 text-zinc-500 mx-auto mb-1 stroke-[1.5]" />
+                    <p className="text-xs font-semibold text-zinc-305">
+                      {productLogoFile ? productLogoFile.name : 'Upload logo image (1:1 aspect recommended)'}
+                    </p>
+                  </div>
+                  {productLogoPreview && (
+                    <div className="relative h-16 w-16 rounded-2xl overflow-hidden border border-zinc-850 shrink-0 bg-zinc-950 shadow-md">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={productLogoPreview}
+                        alt="Logo preview"
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+                {formErrors.productLogo && (
+                  <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {formErrors.productLogo}
+                  </p>
+                )}
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Product Name */}
@@ -1205,11 +1213,10 @@ function LaunchForm() {
                     id="productName"
                     type="text"
                     required
-                    disabled={!!remixParentId}
                     placeholder="MemeLaunch"
                     value={productName}
                     onChange={(e) => setProductName(e.target.value)}
-                    className={`w-full px-4 py-2.5 bg-zinc-950 border ${formErrors.productName ? 'border-rose-500/60' : 'border-zinc-800'} rounded-xl text-sm focus:outline-none focus:border-lime-500 text-zinc-100 placeholder-zinc-650 transition-colors disabled:opacity-60 disabled:cursor-not-allowed`}
+                    className={`w-full px-4 py-2.5 bg-zinc-950 border ${formErrors.productName ? 'border-rose-500/60' : 'border-zinc-800'} rounded-xl text-sm focus:outline-none focus:border-lime-500 text-zinc-100 placeholder-zinc-650 transition-colors`}
                   />
                   {formErrors.productName && (
                     <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
@@ -1219,21 +1226,32 @@ function LaunchForm() {
                   )}
                 </div>
 
-                {/* Category */}
+                {/* Category Dropdown */}
                 <div className="space-y-1.5" id="err-category">
                   <label htmlFor="category" className="block text-sm font-bold text-zinc-300">
-                    Category Tag
+                    Category
                   </label>
-                  <input
-                    id="category"
-                    type="text"
-                    required
-                    disabled={!!remixParentId}
-                    placeholder="SaaS / Developer Tools"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className={`w-full px-4 py-2.5 bg-zinc-950 border ${formErrors.category ? 'border-rose-500/60' : 'border-zinc-800'} rounded-xl text-sm focus:outline-none focus:border-lime-500 text-zinc-100 placeholder-zinc-650 transition-colors disabled:opacity-60 disabled:cursor-not-allowed`}
-                  />
+                  <div className="relative">
+                    <select
+                      id="category"
+                      required
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className={`w-full px-4 py-2.5 bg-zinc-950 border ${formErrors.category ? 'border-rose-500/60' : 'border-zinc-800'} rounded-xl text-sm focus:outline-none focus:border-lime-500 text-zinc-100 placeholder-zinc-650 transition-colors cursor-pointer appearance-none`}
+                    >
+                      <option value="" disabled className="text-zinc-600">Select a category</option>
+                      {CATEGORIES.map((cat) => (
+                        <option key={cat} value={cat} className="bg-zinc-950 text-zinc-150">
+                          {cat}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-500">
+                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                      </svg>
+                    </div>
+                  </div>
                   {formErrors.category && (
                     <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" />
@@ -1254,17 +1272,53 @@ function LaunchForm() {
                     id="productUrl"
                     type="url"
                     required
-                    disabled={!!remixParentId}
                     placeholder="https://memelaunch.dev"
                     value={productUrl}
                     onChange={(e) => setProductUrl(e.target.value)}
-                    className={`w-full pl-10 pr-4 py-2.5 bg-zinc-950 border ${formErrors.productUrl ? 'border-rose-500/60' : 'border-zinc-800'} rounded-xl text-sm focus:outline-none focus:border-lime-500 text-zinc-100 placeholder-zinc-650 transition-colors disabled:opacity-60 disabled:cursor-not-allowed`}
+                    className={`w-full pl-10 pr-4 py-2.5 bg-zinc-950 border ${formErrors.productUrl ? 'border-rose-500/60' : 'border-zinc-800'} rounded-xl text-sm focus:outline-none focus:border-lime-500 text-zinc-100 placeholder-zinc-650 transition-colors`}
                   />
                 </div>
                 {formErrors.productUrl && (
                   <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
                     {formErrors.productUrl}
+                  </p>
+                )}
+              </div>
+
+              {/* Product Description */}
+              <div className="space-y-1.5" id="err-productDescription">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="productDescription" className="block text-sm font-bold text-zinc-300">
+                    Product Description
+                  </label>
+                  <span className={`text-[11px] font-mono ${productDescription.length > 500 ? 'text-rose-400' : 'text-zinc-500'}`}>
+                    {productDescription.length}/500 chars
+                  </span>
+                </div>
+                <textarea
+                  id="productDescription"
+                  rows={3}
+                  maxLength={500}
+                  required
+                  placeholder="Tell us what your product does. Keep it punchy, clear, and direct."
+                  value={productDescription}
+                  onChange={(e) => {
+                    setProductDescription(e.target.value);
+                    if (formErrors.productDescription) {
+                      setFormErrors((prev) => {
+                        const copy = { ...prev };
+                        delete copy.productDescription;
+                        return copy;
+                      });
+                    }
+                  }}
+                  className={`w-full px-4 py-2.5 bg-zinc-950 border ${formErrors.productDescription ? 'border-rose-500/60' : 'border-zinc-800'} rounded-xl text-sm focus:outline-none focus:border-lime-500 text-zinc-100 placeholder-zinc-650 transition-colors resize-none`}
+                />
+                {formErrors.productDescription && (
+                  <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {formErrors.productDescription}
                   </p>
                 )}
               </div>
@@ -1286,9 +1340,8 @@ function LaunchForm() {
                       <button
                         key={item.id}
                         type="button"
-                        disabled={!!remixParentId}
-                        onClick={() => !remixParentId && setPricing(item.id as any)}
-                        className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all gap-1 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed ${
+                        onClick={() => setPricing(item.id as any)}
+                        className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all gap-1 cursor-pointer ${
                           isSelected 
                             ? 'bg-zinc-850/50 border-lime-400 text-lime-400 font-extrabold shadow-[0_0_15px_rgba(163,230,53,0.1)]' 
                             : 'bg-zinc-950 border-zinc-850 text-zinc-400 hover:border-zinc-700'
@@ -1311,14 +1364,13 @@ function LaunchForm() {
                   <span>Product Screenshots</span>
                 </h2>
                 <span className="text-xs font-mono text-zinc-500">
-                  {remixParentId ? `${screenshotPreviews.length}/3 cloned` : `${screenshotPreviews.length}/3 uploaded (2 required)`}
+                  {`${screenshotPreviews.length}/3 uploaded (2 required)`}
                 </span>
               </div>
 
               {/* Previews & Drop Area */}
               <div className="space-y-4" id="err-screenshots">
-                {/* Upload Picker Trigger (if less than 3 and not remix) */}
-                {!remixParentId && screenshotPreviews.length < 3 && (
+                {screenshotPreviews.length < 3 && (
                   <div 
                     onClick={() => screenshotInputRef.current?.click()}
                     className={`border-2 border-dashed ${formErrors.screenshots ? 'border-rose-500/50 bg-rose-950/5' : 'border-zinc-800 hover:border-zinc-700 bg-zinc-950/20'} rounded-2xl p-6 text-center cursor-pointer transition-all hover:bg-zinc-950/40`}
@@ -1352,7 +1404,6 @@ function LaunchForm() {
                           alt={`Screenshot ${index + 1}`}
                           className="w-full h-full object-cover"
                         />
-                        {!remixParentId && (
                           <button
                             type="button"
                             onClick={() => removeScreenshot(index)}
@@ -1361,7 +1412,6 @@ function LaunchForm() {
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
-                        )}
                         <div className="absolute bottom-1 left-2 bg-zinc-950/80 px-1.5 py-0.5 rounded font-mono text-[9px] text-zinc-400 border border-zinc-800">
                           #{index + 1}
                         </div>
@@ -1384,20 +1434,16 @@ function LaunchForm() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`px-6 py-3 font-extrabold uppercase text-xs tracking-wider rounded-xl transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
-                  remixParentId
-                    ? 'bg-cyan-400 hover:bg-cyan-300 text-zinc-950 shadow-[0_0_20px_rgba(34,211,238,0.15)] hover:shadow-[0_0_35px_rgba(34,211,238,0.3)]'
-                    : 'bg-lime-400 hover:bg-lime-300 text-zinc-950 shadow-[0_0_20px_rgba(163,230,53,0.15)] hover:shadow-[0_0_35px_rgba(163,230,53,0.3)]'
-                }`}
+                className="px-6 py-3 font-extrabold uppercase text-xs tracking-wider rounded-xl transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-lime-400 hover:bg-lime-300 text-zinc-950 shadow-[0_0_20px_rgba(163,230,53,0.15)] hover:shadow-[0_0_35px_rgba(163,230,53,0.3)]"
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin stroke-[2.5]" />
-                    <span>{remixParentId ? 'Remixing...' : 'Launching...'}</span>
+                    <span>Launching...</span>
                   </>
                 ) : (
                   <>
-                    <span>{remixParentId ? 'Publish Remix' : 'Publish Launch'}</span>
+                    <span>Publish Launch</span>
                     <ArrowRight className="h-4 w-4 stroke-[2.5]" />
                   </>
                 )}
