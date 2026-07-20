@@ -35,7 +35,6 @@ const launchFormSchema = z.object({
   category: z.string().min(2, 'Category must be at least 2 characters'),
   pricing: z.enum(['free', 'paid', 'freemium']),
   productUrl: z.string().url('Please enter a valid product URL (e.g. https://example.com)'),
-  caption: z.string().min(3, 'Caption must be at least 3 characters').max(100, 'Caption must be 100 characters or less'),
 });
 
 export default function LaunchPage() {
@@ -64,7 +63,11 @@ function LaunchForm() {
   const [category, setCategory] = useState('');
   const [pricing, setPricing] = useState<'free' | 'paid' | 'freemium'>('free');
   const [productUrl, setProductUrl] = useState('');
-  const [caption, setCaption] = useState('');
+  const [captionPosition, setCaptionPosition] = useState<'above' | 'below' | 'both'>('below');
+  const [textAbove, setTextAbove] = useState('');
+  const [textBelow, setTextBelow] = useState('');
+  const [textColor, setTextColor] = useState('#ffffff');
+  const [textSize, setTextSize] = useState(24);
 
   // Image states
   const [imageSource, setImageSource] = useState<'upload' | 'template' | 'ai'>('upload');
@@ -339,7 +342,6 @@ function LaunchForm() {
       category,
       pricing,
       productUrl,
-      caption,
     };
 
     const validationResult = launchFormSchema.safeParse(fieldsToValidate);
@@ -351,6 +353,28 @@ function LaunchForm() {
           errors[err.path[0] as string] = err.message;
         }
       });
+    }
+
+    // Validate caption above
+    if (captionPosition === 'above' || captionPosition === 'both') {
+      if (!textAbove.trim()) {
+        errors.textAbove = 'Caption above is required';
+      } else if (textAbove.length < 3) {
+        errors.textAbove = 'Caption above must be at least 3 characters';
+      } else if (textAbove.length > 100) {
+        errors.textAbove = 'Caption above must be 100 characters or less';
+      }
+    }
+
+    // Validate caption below
+    if (captionPosition === 'below' || captionPosition === 'both') {
+      if (!textBelow.trim()) {
+        errors.textBelow = 'Caption below is required';
+      } else if (textBelow.length < 3) {
+        errors.textBelow = 'Caption below must be at least 3 characters';
+      } else if (textBelow.length > 100) {
+        errors.textBelow = 'Caption below must be 100 characters or less';
+      }
     }
 
     // 2. Custom validation for files
@@ -450,6 +474,15 @@ function LaunchForm() {
         }
       }
 
+      // Compile final JSON caption
+      const finalCaptionJson = JSON.stringify({
+        textAbove: captionPosition === 'below' ? '' : textAbove.trim(),
+        textBelow: captionPosition === 'above' ? '' : textBelow.trim(),
+        position: captionPosition,
+        color: textColor,
+        size: textSize,
+      });
+
       // Step C: Insert into Launches table
       setStatusMessage('Publishing launch details...');
       const { data: launchData, error: launchError } = await insforge.database
@@ -458,7 +491,7 @@ function LaunchForm() {
           {
             user_id: user.id,
             meme_image_url: memeImageUrl,
-            caption: caption.trim(),
+            caption: finalCaptionJson,
             product_name: productName.trim(),
             product_url: productUrl.trim(),
             pricing: pricing,
@@ -564,7 +597,7 @@ function LaunchForm() {
                 REMIX MEME FOR <span className="text-cyan-400">{parentLaunch.product_name}</span>
               </h1>
               <p className="text-zinc-400 text-sm mt-1">
-                You are posting a linked remix to @{parentLaunch.users?.name || 'founder'}&apos;s product launch.
+                You are about to out-meme @{parentLaunch.users?.name || 'founder'}&apos;s product launch. Bring your A-game.
               </p>
             </>
           ) : (
@@ -573,7 +606,7 @@ function LaunchForm() {
                 LAUNCH <span className="text-lime-400">YOUR PRODUCT</span>
               </h1>
               <p className="text-zinc-400 text-sm mt-1">
-                Publish a meme hook, and pack the specs page underneath. Ready in 2 minutes.
+                Craft a viral meme, tuck the tech specs underneath, and launch it to the world. Took you longer to read this than it will to launch.
               </p>
             </>
           )}
@@ -622,12 +655,34 @@ function LaunchForm() {
                     MEMELAUNCH
                   </div>
 
-                  {/* Caption Overlay */}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent p-4 pt-10 flex flex-col justify-end">
-                    <p className="text-lg font-impact uppercase tracking-wider text-zinc-100 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] text-center line-clamp-3 leading-snug">
-                      {caption || 'YOUR MEME CAPTION HERE'}
-                    </p>
-                  </div>
+                  {/* Dynamic Caption Overlays */}
+                  {(captionPosition === 'above' || captionPosition === 'both') && (
+                    <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950 via-zinc-950/60 to-transparent p-4 pb-10 flex flex-col justify-start z-10">
+                      <p 
+                        className="font-impact uppercase tracking-wider text-center break-words drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] leading-snug"
+                        style={{
+                          color: textColor,
+                          fontSize: `${textSize}px`,
+                        }}
+                      >
+                        {textAbove || 'YOUR ABOVE CAPTION HERE'}
+                      </p>
+                    </div>
+                  )}
+
+                  {(captionPosition === 'below' || captionPosition === 'both') && (
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent p-4 pt-10 flex flex-col justify-end z-10">
+                      <p 
+                        className="font-impact uppercase tracking-wider text-center break-words drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] leading-snug"
+                        style={{
+                          color: textColor,
+                          fontSize: `${textSize}px`,
+                        }}
+                      >
+                        {textBelow || 'YOUR BELOW CAPTION HERE'}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Details Bar Mockup */}
@@ -705,33 +760,224 @@ function LaunchForm() {
                 <Sparkles className="h-5 w-5 text-lime-400" />
                 <span>Meme Setup</span>
               </h2>
-
-              {/* Caption field */}
-              <div className="space-y-1.5" id="err-caption">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="caption" className="block text-sm font-bold text-zinc-300">
-                    Meme Caption
-                  </label>
-                  <span className={`text-[11px] font-mono ${caption.length > 100 ? 'text-rose-400' : 'text-zinc-500'}`}>
-                    {caption.length}/100 chars
-                  </span>
+                    {/* Caption Position Selection */}
+              <div className="space-y-2">
+                <label className="block text-sm font-bold text-zinc-300">
+                  Caption Layout
+                </label>
+                <div className="grid grid-cols-3 gap-1 bg-zinc-950 border border-zinc-800 p-1 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCaptionPosition('above');
+                      setFormErrors((prev) => {
+                        const copy = { ...prev };
+                        delete copy.textAbove;
+                        return copy;
+                      });
+                    }}
+                    className={`py-2 rounded-lg text-xs font-bold uppercase transition-all ${
+                      captionPosition === 'above' ? 'bg-zinc-800 text-lime-400 font-extrabold' : 'text-zinc-400 hover:text-zinc-300'
+                    }`}
+                  >
+                    Above Only
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCaptionPosition('below');
+                      setFormErrors((prev) => {
+                        const copy = { ...prev };
+                        delete copy.textBelow;
+                        return copy;
+                      });
+                    }}
+                    className={`py-2 rounded-lg text-xs font-bold uppercase transition-all ${
+                      captionPosition === 'below' ? 'bg-zinc-800 text-lime-400 font-extrabold' : 'text-zinc-400 hover:text-zinc-300'
+                    }`}
+                  >
+                    Below Only
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCaptionPosition('both');
+                      setFormErrors((prev) => {
+                        const copy = { ...prev };
+                        delete copy.textAbove;
+                        delete copy.textBelow;
+                        return copy;
+                      });
+                    }}
+                    className={`py-2 rounded-lg text-xs font-bold uppercase transition-all ${
+                      captionPosition === 'both' ? 'bg-zinc-800 text-lime-400 font-extrabold' : 'text-zinc-400 hover:text-zinc-300'
+                    }`}
+                  >
+                    Both
+                  </button>
                 </div>
-                <input
-                  id="caption"
-                  type="text"
-                  maxLength={100}
-                  required
-                  placeholder="When the backend compiles on the first try..."
-                  value={caption}
-                  onChange={(e) => setCaption(e.target.value)}
-                  className={`w-full px-4 py-2.5 bg-zinc-950 border ${formErrors.caption ? 'border-rose-500/60' : 'border-zinc-800'} rounded-xl text-sm focus:outline-none focus:border-lime-500 text-zinc-100 placeholder-zinc-600 transition-colors`}
-                />
-                {formErrors.caption && (
-                  <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {formErrors.caption}
-                  </p>
-                )}
+              </div>
+
+              {/* Text Above Input */}
+              {(captionPosition === 'above' || captionPosition === 'both') && (
+                <div className="space-y-1.5" id="err-textAbove">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="textAbove" className="block text-sm font-bold text-zinc-300">
+                      Caption Above (Top text)
+                    </label>
+                    <span className={`text-[11px] font-mono ${textAbove.length > 100 ? 'text-rose-400' : 'text-zinc-500'}`}>
+                      {textAbove.length}/100 chars
+                    </span>
+                  </div>
+                  <input
+                    id="textAbove"
+                    type="text"
+                    maxLength={100}
+                    required
+                    placeholder="ME:"
+                    value={textAbove}
+                    onChange={(e) => {
+                      setTextAbove(e.target.value);
+                      if (formErrors.textAbove) {
+                        setFormErrors((prev) => {
+                          const copy = { ...prev };
+                          delete copy.textAbove;
+                          return copy;
+                        });
+                      }
+                    }}
+                    className={`w-full px-4 py-2.5 bg-zinc-950 border ${formErrors.textAbove ? 'border-rose-500/60' : 'border-zinc-800'} rounded-xl text-sm focus:outline-none focus:border-lime-500 text-zinc-100 placeholder-zinc-600 transition-colors`}
+                  />
+                  {formErrors.textAbove && (
+                    <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {formErrors.textAbove}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Text Below Input */}
+              {(captionPosition === 'below' || captionPosition === 'both') && (
+                <div className="space-y-1.5" id="err-textBelow">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="textBelow" className="block text-sm font-bold text-zinc-300">
+                      Caption Below (Bottom text)
+                    </label>
+                    <span className={`text-[11px] font-mono ${textBelow.length > 100 ? 'text-rose-400' : 'text-zinc-500'}`}>
+                      {textBelow.length}/100 chars
+                    </span>
+                  </div>
+                  <input
+                    id="textBelow"
+                    type="text"
+                    maxLength={100}
+                    required
+                    placeholder="When the backend compiles on the first try..."
+                    value={textBelow}
+                    onChange={(e) => {
+                      setTextBelow(e.target.value);
+                      if (formErrors.textBelow) {
+                        setFormErrors((prev) => {
+                          const copy = { ...prev };
+                          delete copy.textBelow;
+                          return copy;
+                        });
+                      }
+                    }}
+                    className={`w-full px-4 py-2.5 bg-zinc-950 border ${formErrors.textBelow ? 'border-rose-500/60' : 'border-zinc-800'} rounded-xl text-sm focus:outline-none focus:border-lime-500 text-zinc-100 placeholder-zinc-600 transition-colors`}
+                  />
+                  {formErrors.textBelow && (
+                    <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {formErrors.textBelow}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Caption Customizations Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                {/* Color Selector */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-zinc-300">
+                    Text Color
+                  </label>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {[
+                      { hex: '#ffffff', name: 'White' },
+                      { hex: '#000000', name: 'Black' },
+                      { hex: '#facc15', name: 'Yellow' },
+                      { hex: '#a3e635', name: 'Lime' },
+                      { hex: '#22d3ee', name: 'Cyan' },
+                      { hex: '#f87171', name: 'Red' },
+                    ].map((col) => (
+                      <button
+                        key={col.hex}
+                        type="button"
+                        onClick={() => setTextColor(col.hex)}
+                        className={`w-8 h-8 rounded-full border transition-transform relative ${
+                          textColor === col.hex ? 'scale-110 border-lime-400 ring-2 ring-lime-400/20' : 'border-zinc-850 hover:scale-105'
+                        }`}
+                        style={{ backgroundColor: col.hex }}
+                        title={col.name}
+                      >
+                        {textColor === col.hex && (
+                          <span className={`absolute inset-0 flex items-center justify-center text-[10px] font-bold ${col.hex === '#ffffff' || col.hex === '#facc15' || col.hex === '#a3e635' || col.hex === '#22d3ee' || col.hex === '#f87171' ? 'text-zinc-950' : 'text-zinc-50'}`}>
+                            ✓
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                    {/* Custom Color Input */}
+                    <div className="relative w-8 h-8 rounded-full border border-zinc-800 overflow-hidden hover:scale-105 transition-transform flex items-center justify-center bg-zinc-900" title="Custom Color">
+                      <input
+                        type="color"
+                        value={textColor}
+                        onChange={(e) => setTextColor(e.target.value)}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <span className="text-xs font-bold text-zinc-400">+</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Text Size Selector */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-sm font-bold text-zinc-300">
+                      Font Size
+                    </label>
+                    <span className="text-xs font-mono text-lime-400 font-extrabold">
+                      {textSize}px
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setTextSize((prev) => Math.max(12, prev - 2))}
+                      className="w-8 h-8 rounded-lg bg-zinc-950 border border-zinc-850 hover:border-zinc-700 text-zinc-300 hover:text-zinc-50 flex items-center justify-center font-extrabold text-sm select-none transition-all active:scale-95 cursor-pointer"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="range"
+                      min={12}
+                      max={48}
+                      step={1}
+                      value={textSize}
+                      onChange={(e) => setTextSize(parseInt(e.target.value))}
+                      className="flex-1 accent-lime-400 bg-zinc-950 h-1.5 rounded-lg appearance-none cursor-pointer"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setTextSize((prev) => Math.min(48, prev + 2))}
+                      className="w-8 h-8 rounded-lg bg-zinc-950 border border-zinc-850 hover:border-zinc-700 text-zinc-300 hover:text-zinc-50 flex items-center justify-center font-extrabold text-sm select-none transition-all active:scale-95 cursor-pointer"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* Image Source Selection */}

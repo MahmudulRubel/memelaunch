@@ -789,13 +789,13 @@ export default function ProfilePage() {
 
         {launches.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 px-4 bg-zinc-900/10 border border-zinc-850 rounded-3xl text-center space-y-4 max-w-md mx-auto">
-            <p className="text-zinc-550 font-mono text-sm">This founder hasn&apos;t launched any meme products yet.</p>
+            <p className="text-zinc-550 font-mono text-sm">This founder has launched exactly 0 memes. The silent builder type.</p>
             {isOwnProfile && (
               <button
                 onClick={() => router.push('/launch')}
                 className="px-5 py-2.5 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-extrabold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_15px_rgba(163,230,53,0.1)] cursor-pointer"
               >
-                Launch Your First Meme
+                Deploy Your First Shitpost
               </button>
             )}
           </div>

@@ -36,22 +36,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await insforge.auth.getCurrentUser();
       if (error) {
         const isNoToken = error.message?.toLowerCase().includes('refresh token');
-        if (!isNoToken) {
+        const isNetworkOrTimeout = 
+          error.statusCode === 0 || 
+          error.statusCode === 408 || 
+          error.error === 'REQUEST_TIMEOUT' || 
+          error.error === 'NETWORK_ERROR' ||
+          error.message?.toLowerCase().includes('timeout') ||
+          error.message?.toLowerCase().includes('network');
+
+        if (!isNoToken && !isNetworkOrTimeout) {
           console.error('Error fetching current user:', error);
+          // Clear invalid tokens from SDK without awaiting to prevent blocking the UI
+          insforge.auth.signOut().catch(() => {});
+        } else if (isNetworkOrTimeout) {
+          console.warn('Network or timeout error during auth check. Retaining local session state.');
         }
-        // Clear invalid tokens from SDK
-        await insforge.auth.signOut().catch(() => {});
         setUser(null);
       } else {
         setUser(data?.user as AuthUser | null);
       }
     } catch (err: any) {
       const isNoToken = err?.message?.toLowerCase().includes('refresh token');
-      if (!isNoToken) {
+      const isNetworkOrTimeout = 
+        err?.statusCode === 0 || 
+        err?.statusCode === 408 || 
+        err?.error === 'REQUEST_TIMEOUT' || 
+        err?.error === 'NETWORK_ERROR' ||
+        err?.message?.toLowerCase().includes('timeout') ||
+        err?.message?.toLowerCase().includes('network');
+
+      if (!isNoToken && !isNetworkOrTimeout) {
         console.error('Auth check failed:', err);
+        insforge.auth.signOut().catch(() => {});
+      } else if (isNetworkOrTimeout) {
+        console.warn('Network or timeout error caught during auth check:', err.message);
       }
-      // Clear invalid tokens from SDK
-      await insforge.auth.signOut().catch(() => {});
       setUser(null);
     } finally {
       setIsLoading(false);

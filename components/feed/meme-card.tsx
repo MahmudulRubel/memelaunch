@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { insforge } from '@/lib/insforge';
 import { MessageSquare, Repeat, ExternalLink, Globe, Tag } from 'lucide-react';
+import { parseCaption, getCaptionText } from '@/lib/meme';
 
 interface UserProfile {
   name: string | null;
@@ -147,7 +148,7 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={launch.meme_image_url}
-            alt={launch.caption}
+            alt={getCaptionText(launch.caption)}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
           />
@@ -158,11 +159,40 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
         )}
 
         {/* Dynamic Overlaying Meme Caption */}
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent p-4 pt-10 flex flex-col justify-end">
-          <p className="text-lg font-impact uppercase tracking-wider text-zinc-100 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] text-center line-clamp-3 leading-snug">
-            {launch.caption}
-          </p>
-        </div>
+        {(() => {
+          const captionData = parseCaption(launch.caption);
+          const cardTextSize = Math.max(12, Math.min(captionData.size, 20));
+          return (
+            <>
+              {(captionData.position === 'above' || captionData.position === 'both') && captionData.textAbove && (
+                <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950 via-zinc-950/60 to-transparent p-3 pb-8 flex flex-col justify-start z-10">
+                  <p 
+                    className="font-impact uppercase tracking-wider text-center line-clamp-2 leading-snug drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.9)]"
+                    style={{
+                      color: captionData.color,
+                      fontSize: `${cardTextSize}px`,
+                    }}
+                  >
+                    {captionData.textAbove}
+                  </p>
+                </div>
+              )}
+              {(captionData.position === 'below' || captionData.position === 'both') && captionData.textBelow && (
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent p-3 pt-8 flex flex-col justify-end z-10">
+                  <p 
+                    className="font-impact uppercase tracking-wider text-center line-clamp-2 leading-snug drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.9)]"
+                    style={{
+                      color: captionData.color,
+                      fontSize: `${cardTextSize}px`,
+                    }}
+                  >
+                    {captionData.textBelow}
+                  </p>
+                </div>
+              )}
+            </>
+          );
+        })()}
 
         {/* Watermark in bottom right */}
         <div className="absolute top-2 right-3 text-[9px] font-mono text-zinc-400/40 tracking-widest uppercase">

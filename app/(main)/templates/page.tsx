@@ -17,6 +17,7 @@ import {
   Eye,
   Rocket
 } from 'lucide-react';
+import { getCaptionText } from '@/lib/meme';
 
 interface Template {
   id: string;
@@ -157,7 +158,7 @@ export default function TemplatesPage() {
             <span>Meme <span className="text-lime-400">Templates</span></span>
           </h1>
           <p className="text-zinc-400 text-sm mt-1 max-w-xl">
-            Select a template hook to jumpstart your submission. Weekly rotations receive special exposure on the main trending feed.
+            Stop staring at a blank canvas trying to be funny. Choose a template hook to kickstart your launch. Don't let your memes be dreams.
           </p>
         </div>
         <Link
@@ -175,7 +176,7 @@ export default function TemplatesPage() {
           <div className="absolute top-0 right-0 -mt-16 -mr-16 w-80 h-80 bg-lime-400/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-lime-400/15 border border-lime-400/20 text-[10px] font-mono font-extrabold text-lime-400 uppercase tracking-widest z-10 shadow-md">
             <Sparkles className="h-3 w-3 animate-spin text-lime-400" />
-            <span>Template of the Week</span>
+            <span>Weekly Certified GOAT</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center mt-6">
@@ -214,11 +215,11 @@ export default function TemplatesPage() {
               {/* Launches using this weekly template */}
               <div className="space-y-3">
                 <h4 className="text-xs font-mono text-zinc-400 uppercase tracking-widest text-left">
-                  Recent products launched with this template:
+                  Products that rode this template to glory:
                 </h4>
                 {getTemplateLaunches(weeklyPick.id).length === 0 ? (
                   <div className="p-4 bg-zinc-950/40 border border-zinc-850 rounded-xl text-left text-zinc-500 text-xs font-mono">
-                    Be the first to launch a product using this weekly template!
+                    Nobody has claimed this template yet this week. Be the absolute legend to use it first!
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -241,7 +242,7 @@ export default function TemplatesPage() {
                             {launch.product_name}
                           </h5>
                           <p className="text-[11px] text-zinc-400 truncate mt-0.5 animate-pulse">
-                            &ldquo;{launch.caption}&rdquo;
+                            &ldquo;{getCaptionText(launch.caption)}&rdquo;
                           </p>
                           <span className="text-[9px] font-mono text-zinc-500 block mt-1">
                             by @{launch.users?.name || 'founder'}
