@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
+import { resolveStorageUrl } from '@/lib/insforge';
 import { Menu, X, LogOut, User, Plus, Compass, Trophy, Settings } from 'lucide-react';
 
 export function Navigation() {
@@ -101,7 +102,7 @@ export function Navigation() {
                       {user.profile?.avatar_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img 
-                          src={user.profile.avatar_url} 
+                          src={resolveStorageUrl(user.profile.avatar_url)} 
                           alt={user.profile.name || 'User'} 
                           className="h-full w-full object-cover"
                         />

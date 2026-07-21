@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
-import { insforge } from '@/lib/insforge';
+import { insforge, resolveStorageUrl } from '@/lib/insforge';
 import { compressImage } from '@/lib/image';
 import { z } from 'zod';
 import {
@@ -88,6 +88,115 @@ function LaunchForm() {
   const [textBelow, setTextBelow] = useState('');
   const [textColor, setTextColor] = useState('#ffffff');
   const [textSize, setTextSize] = useState(24);
+  const [topAbove, setTopAbove] = useState(15);
+  const [leftAbove, setLeftAbove] = useState(50);
+  const [topBelow, setTopBelow] = useState(85);
+  const [leftBelow, setLeftBelow] = useState(50);
+  const [widthAbove, setWidthAbove] = useState(90);
+  const [widthBelow, setWidthBelow] = useState(90);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+
+  // Drag handler for caption positioning
+  const handleStartDrag = (type: 'above' | 'below', e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const container = previewContainerRef.current;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+
+    const handleMove = (clientX: number, clientY: number) => {
+      // Calculate percentage inside container (0 to 100)
+      const xPercent = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+      const yPercent = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
+
+      if (type === 'above') {
+        setLeftAbove(Math.round(xPercent));
+        setTopAbove(Math.round(yPercent));
+      } else {
+        setLeftBelow(Math.round(xPercent));
+        setTopBelow(Math.round(yPercent));
+      }
+    };
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      handleMove(moveEvent.clientX, moveEvent.clientY);
+    };
+
+    const onMouseUp = () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+
+    const onTouchMove = (touchEvent: TouchEvent) => {
+      if (touchEvent.touches[0]) {
+        handleMove(touchEvent.touches[0].clientX, touchEvent.touches[0].clientY);
+      }
+    };
+
+    const onTouchEnd = () => {
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+
+    if ('touches' in e) {
+      window.addEventListener('touchmove', onTouchMove, { passive: true });
+      window.addEventListener('touchend', onTouchEnd);
+    } else {
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    }
+  };
+
+  // Drag handler for edge pulling / length resizing
+  const handleStartResize = (type: 'above' | 'below', e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+    e.stopPropagation(); // Prevent drag-to-move trigger
+    e.preventDefault();
+    const container = previewContainerRef.current;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    const leftPercent = type === 'above' ? leftAbove : leftBelow;
+    const centerX = rect.left + (leftPercent / 100) * rect.width;
+
+    const handleMove = (clientX: number) => {
+      const deltaX = Math.abs(clientX - centerX);
+      const widthPercent = Math.max(15, Math.min(100, ((2 * deltaX) / rect.width) * 100));
+
+      if (type === 'above') {
+        setWidthAbove(Math.round(widthPercent));
+      } else {
+        setWidthBelow(Math.round(widthPercent));
+      }
+    };
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      handleMove(moveEvent.clientX);
+    };
+
+    const onMouseUp = () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+
+    const onTouchMove = (touchEvent: TouchEvent) => {
+      if (touchEvent.touches[0]) {
+        handleMove(touchEvent.touches[0].clientX);
+      }
+    };
+
+    const onTouchEnd = () => {
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+
+    if ('touches' in e) {
+      window.addEventListener('touchmove', onTouchMove, { passive: true });
+      window.addEventListener('touchend', onTouchEnd);
+    } else {
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    }
+  };
 
   // Image states
   const [imageSource, setImageSource] = useState<'upload' | 'template' | 'ai'>('upload');
@@ -495,6 +604,12 @@ function LaunchForm() {
         position: captionPosition,
         color: textColor,
         size: textSize,
+        topAbove,
+        leftAbove,
+        topBelow,
+        leftBelow,
+        widthAbove,
+        widthBelow,
       });
 
       // Step C: Insert into Launches table
@@ -617,33 +732,48 @@ function LaunchForm() {
               {/* Meme Card Mockup */}
               <div className="relative flex flex-col bg-zinc-900/60 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl">
                 {/* Aspect ratio block for image preview */}
-                <div className="relative aspect-square w-full bg-zinc-950 flex items-center justify-center overflow-hidden border-b border-zinc-800/60">
+                <div 
+                  ref={previewContainerRef}
+                  className="relative aspect-square w-full bg-zinc-950 flex items-center justify-center overflow-hidden border-b border-zinc-800/60"
+                >
                   <div className="absolute inset-0 bg-radial-gradient from-lime-400/5 to-transparent opacity-40 pointer-events-none" />
                   
                   {memePreviewSource ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={memePreviewSource}
+                      src={resolveStorageUrl(memePreviewSource)}
                       alt="Meme preview"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover select-none pointer-events-none"
                     />
                   ) : (
-                    <div className="p-8 text-center space-y-2 text-zinc-600">
+                    <div className="p-8 text-center space-y-2 text-zinc-600 pointer-events-none">
                       <ImageIcon className="h-12 w-12 mx-auto stroke-[1.2]" />
                       <p className="font-mono text-xs">Meme preview will appear here</p>
                     </div>
                   )}
 
                   {/* Watermark */}
-                  <div className="absolute top-2 right-3 text-[9px] font-mono text-zinc-400/30 tracking-widest uppercase">
+                  <div className="absolute top-2 right-3 text-[9px] font-mono text-zinc-400/30 tracking-widest uppercase pointer-events-none">
                     MEMELAUNCH
                   </div>
 
                   {/* Dynamic Caption Overlays */}
                   {(captionPosition === 'above' || captionPosition === 'both') && (
-                    <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950 via-zinc-950/60 to-transparent p-4 pb-10 flex flex-col justify-start z-10">
+                    <div 
+                      onMouseDown={(e) => handleStartDrag('above', e)}
+                      onTouchStart={(e) => handleStartDrag('above', e)}
+                      className="absolute group/caption select-none cursor-grab active:cursor-grabbing z-20 border border-transparent hover:border-lime-400/50 hover:bg-lime-400/5 rounded p-1.5 transition-all text-center"
+                      style={{
+                        left: `${leftAbove}%`,
+                        top: `${topAbove}%`,
+                        transform: 'translate(-50%, -50%)',
+                        width: `${widthAbove}%`,
+                        maxWidth: '100%',
+                        touchAction: 'none',
+                      }}
+                    >
                       <p 
-                        className="font-impact uppercase tracking-wider text-center break-words drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] leading-snug"
+                        className="font-impact uppercase tracking-wider text-center break-words drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] leading-snug select-none pointer-events-none"
                         style={{
                           color: textColor,
                           fontSize: `${textSize}px`,
@@ -651,13 +781,45 @@ function LaunchForm() {
                       >
                         {textAbove || 'YOUR ABOVE CAPTION HERE'}
                       </p>
+                      
+                      {/* Left Resize Handle */}
+                      <div 
+                        onMouseDown={(e) => handleStartResize('above', e)}
+                        onTouchStart={(e) => handleStartResize('above', e)}
+                        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 bg-lime-400 border-2 border-zinc-950 rounded-full cursor-ew-resize opacity-0 group-hover/caption:opacity-100 transition-opacity z-30 shadow-md hover:scale-125"
+                        title="Drag to adjust width"
+                      />
+                      
+                      {/* Right Resize Handle */}
+                      <div 
+                        onMouseDown={(e) => handleStartResize('above', e)}
+                        onTouchStart={(e) => handleStartResize('above', e)}
+                        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3 h-3 bg-lime-400 border-2 border-zinc-950 rounded-full cursor-ew-resize opacity-0 group-hover/caption:opacity-100 transition-opacity z-30 shadow-md hover:scale-125"
+                        title="Drag to adjust width"
+                      />
+
+                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-zinc-950/90 border border-zinc-800 text-[9px] text-lime-400 px-1.5 py-0.5 rounded font-mono opacity-0 group-hover/caption:opacity-100 transition-opacity whitespace-nowrap pointer-events-none uppercase">
+                        Drag to move / Pull edges to resize
+                      </div>
                     </div>
                   )}
 
                   {(captionPosition === 'below' || captionPosition === 'both') && (
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent p-4 pt-10 flex flex-col justify-end z-10">
+                    <div 
+                      onMouseDown={(e) => handleStartDrag('below', e)}
+                      onTouchStart={(e) => handleStartDrag('below', e)}
+                      className="absolute group/caption select-none cursor-grab active:cursor-grabbing z-20 border border-transparent hover:border-lime-400/50 hover:bg-lime-400/5 rounded p-1.5 transition-all text-center"
+                      style={{
+                        left: `${leftBelow}%`,
+                        top: `${topBelow}%`,
+                        transform: 'translate(-50%, -50%)',
+                        width: `${widthBelow}%`,
+                        maxWidth: '100%',
+                        touchAction: 'none',
+                      }}
+                    >
                       <p 
-                        className="font-impact uppercase tracking-wider text-center break-words drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] leading-snug"
+                        className="font-impact uppercase tracking-wider text-center break-words drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] leading-snug select-none pointer-events-none"
                         style={{
                           color: textColor,
                           fontSize: `${textSize}px`,
@@ -665,6 +827,26 @@ function LaunchForm() {
                       >
                         {textBelow || 'YOUR BELOW CAPTION HERE'}
                       </p>
+
+                      {/* Left Resize Handle */}
+                      <div 
+                        onMouseDown={(e) => handleStartResize('below', e)}
+                        onTouchStart={(e) => handleStartResize('below', e)}
+                        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 bg-lime-400 border-2 border-zinc-950 rounded-full cursor-ew-resize opacity-0 group-hover/caption:opacity-100 transition-opacity z-30 shadow-md hover:scale-125"
+                        title="Drag to adjust width"
+                      />
+                      
+                      {/* Right Resize Handle */}
+                      <div 
+                        onMouseDown={(e) => handleStartResize('below', e)}
+                        onTouchStart={(e) => handleStartResize('below', e)}
+                        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3 h-3 bg-lime-400 border-2 border-zinc-950 rounded-full cursor-ew-resize opacity-0 group-hover/caption:opacity-100 transition-opacity z-30 shadow-md hover:scale-125"
+                        title="Drag to adjust width"
+                      />
+
+                      <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 bg-zinc-950/90 border border-zinc-800 text-[9px] text-lime-400 px-1.5 py-0.5 rounded font-mono opacity-0 group-hover/caption:opacity-100 transition-opacity whitespace-nowrap pointer-events-none uppercase">
+                        Drag to move / Pull edges to resize
+                      </div>
                     </div>
                   )}
                 </div>
@@ -970,6 +1152,27 @@ function LaunchForm() {
                 </div>
               </div>
 
+              {/* Drag Position Controls Reset */}
+              <div className="flex items-center justify-between p-3.5 bg-zinc-950/40 border border-zinc-850 rounded-2xl">
+                <span className="text-xs text-zinc-400 font-mono">
+                  💡 Hint: Drag text inside the live preview window to place it anywhere, or pull its edges to resize!
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTopAbove(15);
+                    setLeftAbove(50);
+                    setTopBelow(85);
+                    setLeftBelow(50);
+                    setWidthAbove(90);
+                    setWidthBelow(90);
+                  }}
+                  className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-850 text-[10px] font-mono font-extrabold text-lime-400 border border-zinc-800 rounded-xl hover:border-zinc-700 transition-all uppercase tracking-wider cursor-pointer active:scale-95"
+                >
+                  Reset Layout
+                </button>
+              </div>
+
               {/* Image Source Selection */}
               <div className="space-y-3" id="err-meme">
                 <label className="block text-sm font-bold text-zinc-300">
@@ -1077,7 +1280,7 @@ function LaunchForm() {
                                 >
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img
-                                    src={tpl.thumbnail_url}
+                                    src={resolveStorageUrl(tpl.thumbnail_url)}
                                     alt={tpl.name}
                                     className="w-full h-full object-cover"
                                   />

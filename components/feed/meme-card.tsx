@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
-import { insforge } from '@/lib/insforge';
+import { insforge, resolveStorageUrl } from '@/lib/insforge';
 import { MessageSquare, ExternalLink, Globe, Tag } from 'lucide-react';
 import { parseCaption, getCaptionText } from '@/lib/meme';
 
@@ -142,12 +143,13 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
         
         {/* Meme Image */}
         {launch.meme_image_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={launch.meme_image_url}
+          <Image
+            src={resolveStorageUrl(launch.meme_image_url)}
             alt={getCaptionText(launch.caption)}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            priority={false}
           />
         ) : (
           <div className="p-8 text-center bg-zinc-900/80 rounded-xl border border-zinc-800">
@@ -159,10 +161,22 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
         {(() => {
           const captionData = parseCaption(launch.caption);
           const cardTextSize = Math.max(12, Math.min(captionData.size, 20));
+          const isCustomAbove = typeof captionData.topAbove === 'number' && typeof captionData.leftAbove === 'number';
+          const isCustomBelow = typeof captionData.topBelow === 'number' && typeof captionData.leftBelow === 'number';
+
           return (
             <>
               {(captionData.position === 'above' || captionData.position === 'both') && captionData.textAbove && (
-                <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950 via-zinc-950/60 to-transparent p-3 pb-8 flex flex-col justify-start z-10">
+                <div 
+                  className={isCustomAbove ? "absolute z-10 text-center" : "absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950 via-zinc-950/60 to-transparent p-3 pb-8 flex flex-col justify-start z-10"}
+                  style={isCustomAbove ? {
+                    left: `${captionData.leftAbove}%`,
+                    top: `${captionData.topAbove}%`,
+                    transform: 'translate(-50%, -50%)',
+                    width: `${captionData.widthAbove ?? 90}%`,
+                    maxWidth: '100%',
+                  } : undefined}
+                >
                   <p 
                     className="font-impact uppercase tracking-wider text-center line-clamp-2 leading-snug drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.9)]"
                     style={{
@@ -175,7 +189,16 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
                 </div>
               )}
               {(captionData.position === 'below' || captionData.position === 'both') && captionData.textBelow && (
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent p-3 pt-8 flex flex-col justify-end z-10">
+                <div 
+                  className={isCustomBelow ? "absolute z-10 text-center" : "absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent p-3 pt-8 flex flex-col justify-end z-10"}
+                  style={isCustomBelow ? {
+                    left: `${captionData.leftBelow}%`,
+                    top: `${captionData.topBelow}%`,
+                    transform: 'translate(-50%, -50%)',
+                    width: `${captionData.widthBelow ?? 90}%`,
+                    maxWidth: '100%',
+                  } : undefined}
+                >
                   <p 
                     className="font-impact uppercase tracking-wider text-center line-clamp-2 leading-snug drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.9)]"
                     style={{
@@ -202,13 +225,15 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             {launch.product_logo_url && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={launch.product_logo_url}
-                alt={`${launch.product_name} logo`}
-                className="h-8 w-8 rounded-lg object-cover border border-zinc-800 bg-zinc-950 shrink-0"
-                loading="lazy"
-              />
+              <div className="relative h-8 w-8 rounded-lg overflow-hidden shrink-0 border border-zinc-800 bg-zinc-950">
+                <Image
+                  src={resolveStorageUrl(launch.product_logo_url)}
+                  alt={`${launch.product_name} logo`}
+                  fill
+                  sizes="32px"
+                  className="object-cover"
+                />
+              </div>
             )}
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-2">
@@ -300,11 +325,12 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
             >
               <div className="h-5 w-5 rounded-full bg-zinc-800 border border-zinc-700 overflow-hidden flex items-center justify-center text-[10px] text-zinc-300 font-extrabold uppercase font-mono group-hover/author:border-lime-400/50 transition-colors">
                 {launch.users?.avatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={launch.users.avatar}
+                  <Image
+                    src={resolveStorageUrl(launch.users.avatar)}
                     alt={launch.users.name || 'User'}
-                    className="h-full w-full object-cover"
+                    width={20}
+                    height={20}
+                    className="object-cover h-full w-full"
                   />
                 ) : (
                   launch.users?.name ? launch.users.name[0] : '?'
