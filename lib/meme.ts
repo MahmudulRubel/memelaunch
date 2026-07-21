@@ -4,6 +4,12 @@ export interface MemeCaptionData {
   position: 'above' | 'below' | 'both';
   color: string;
   size: number; // font size in px
+  topAbove?: number;
+  leftAbove?: number;
+  topBelow?: number;
+  leftBelow?: number;
+  widthAbove?: number;
+  widthBelow?: number;
 }
 
 export function parseCaption(captionStr: string): MemeCaptionData {
@@ -27,6 +33,12 @@ export function parseCaption(captionStr: string): MemeCaptionData {
         position: parsed.position || 'below',
         color: parsed.color || '#ffffff',
         size: typeof parsed.size === 'number' ? parsed.size : 20,
+        topAbove: typeof parsed.topAbove === 'number' ? parsed.topAbove : undefined,
+        leftAbove: typeof parsed.leftAbove === 'number' ? parsed.leftAbove : undefined,
+        topBelow: typeof parsed.topBelow === 'number' ? parsed.topBelow : undefined,
+        leftBelow: typeof parsed.leftBelow === 'number' ? parsed.leftBelow : undefined,
+        widthAbove: typeof parsed.widthAbove === 'number' ? parsed.widthAbove : undefined,
+        widthBelow: typeof parsed.widthBelow === 'number' ? parsed.widthBelow : undefined,
       };
     } catch (e) {
       // Ignore JSON parsing errors

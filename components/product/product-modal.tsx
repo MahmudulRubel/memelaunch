@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
-import { insforge } from '@/lib/insforge';
+import { insforge, resolveStorageUrl } from '@/lib/insforge';
 import {
   X,
   ExternalLink,
@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import type { Launch } from '@/components/feed/meme-card';
 import { parseCaption, getCaptionText } from '@/lib/meme';
+import Image from 'next/image';
 
 interface Screenshot {
   id: string;
@@ -83,12 +84,33 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
       setIsLoading(true);
       setErrorMsg(null);
       try {
-        // 1. Fetch launch with user
-        const { data: launchData, error: launchErr } = await insforge.database
-          .from('launches')
-          .select('*, users(name, avatar)')
-          .eq('id', currentLaunchId)
-          .single();
+        // Fetch launch details, screenshots, comments, and reactions in parallel
+        const [
+          { data: launchData, error: launchErr },
+          { data: screensData, error: screensErr },
+          { data: commentsData, error: commentsErr },
+          { data: reactionsData, error: reactionsErr }
+        ] = await Promise.all([
+          insforge.database
+            .from('launches')
+            .select('*, users(name, avatar)')
+            .eq('id', currentLaunchId)
+            .single(),
+          insforge.database
+            .from('launch_screenshots')
+            .select('*')
+            .eq('launch_id', currentLaunchId)
+            .order('order', { ascending: true }),
+          insforge.database
+            .from('comments')
+            .select('*, users(name, avatar)')
+            .eq('launch_id', currentLaunchId)
+            .order('created_at', { ascending: true }),
+          insforge.database
+            .from('reactions')
+            .select('emoji_type, user_id')
+            .eq('launch_id', currentLaunchId)
+        ]);
 
         if (launchErr || !launchData) {
           throw new Error(launchErr?.message || 'Failed to load product details.');
@@ -96,33 +118,13 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
 
         setLaunch(launchData as Launch);
 
-        // 2. Fetch screenshots
-        const { data: screensData, error: screensErr } = await insforge.database
-          .from('launch_screenshots')
-          .select('*')
-          .eq('launch_id', currentLaunchId)
-          .order('order', { ascending: true });
-
         if (!screensErr && screensData) {
           setScreenshots(screensData as Screenshot[]);
         }
 
-        // 3. Fetch comments joined with users
-        const { data: commentsData, error: commentsErr } = await insforge.database
-          .from('comments')
-          .select('*, users(name, avatar)')
-          .eq('launch_id', currentLaunchId)
-          .order('created_at', { ascending: true });
-
         if (!commentsErr && commentsData) {
           setComments(commentsData as DBComment[]);
         }
-
-        // 4. Fetch reactions
-        const { data: reactionsData, error: reactionsErr } = await insforge.database
-          .from('reactions')
-          .select('emoji_type, user_id')
-          .eq('launch_id', currentLaunchId);
 
         if (!reactionsErr && reactionsData) {
           setReactions(reactionsData as Reaction[]);
@@ -332,11 +334,12 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                     <div className="absolute inset-0 bg-radial-gradient from-lime-400/5 to-transparent opacity-30 pointer-events-none" />
                     
                     {launch.meme_image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={launch.meme_image_url}
+                      <Image
+                        src={resolveStorageUrl(launch.meme_image_url)}
                         alt={getCaptionText(launch.caption)}
-                        className="w-full h-full object-cover"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 420px"
+                        className="object-cover"
                       />
                     ) : (
                       <p className="text-zinc-600 font-mono text-xs">Meme missing</p>
@@ -345,10 +348,22 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                     {/* Impact Overlay Caption */}
                     {(() => {
                       const captionData = parseCaption(launch.caption);
+                      const isCustomAbove = typeof captionData.topAbove === 'number' && typeof captionData.leftAbove === 'number';
+                      const isCustomBelow = typeof captionData.topBelow === 'number' && typeof captionData.leftBelow === 'number';
+
                       return (
                         <>
                           {(captionData.position === 'above' || captionData.position === 'both') && captionData.textAbove && (
-                            <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950 via-zinc-950/70 to-transparent p-4 pb-12 flex flex-col justify-start z-10">
+                            <div 
+                              className={isCustomAbove ? "absolute z-10 text-center" : "absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950 via-zinc-950/70 to-transparent p-4 pb-12 flex flex-col justify-start z-10"}
+                              style={isCustomAbove ? {
+                                left: `${captionData.leftAbove}%`,
+                                top: `${captionData.topAbove}%`,
+                                transform: 'translate(-50%, -50%)',
+                                width: `${captionData.widthAbove ?? 90}%`,
+                                maxWidth: '100%',
+                              } : undefined}
+                            >
                               <p 
                                 className="font-impact uppercase tracking-wider text-center leading-snug drop-shadow-[0_2px_5px_rgba(0,0,0,0.9)]"
                                 style={{
@@ -361,7 +376,16 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                             </div>
                           )}
                           {(captionData.position === 'below' || captionData.position === 'both') && captionData.textBelow && (
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950 via-zinc-950/70 to-transparent p-4 pt-12 flex flex-col justify-end z-10">
+                            <div 
+                              className={isCustomBelow ? "absolute z-10 text-center" : "absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950 via-zinc-950/70 to-transparent p-4 pt-12 flex flex-col justify-end z-10"}
+                              style={isCustomBelow ? {
+                                left: `${captionData.leftBelow}%`,
+                                top: `${captionData.topBelow}%`,
+                                transform: 'translate(-50%, -50%)',
+                                width: `${captionData.widthBelow ?? 90}%`,
+                                maxWidth: '100%',
+                              } : undefined}
+                            >
                               <p 
                                 className="font-impact uppercase tracking-wider text-center leading-snug drop-shadow-[0_2px_5px_rgba(0,0,0,0.9)]"
                                 style={{
@@ -389,12 +413,15 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                   {/* Name and Pricing */}
                   <div className="flex items-start gap-4">
                     {launch.product_logo_url && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={launch.product_logo_url}
-                        alt={`${launch.product_name} logo`}
-                        className="h-12 w-12 rounded-xl object-cover border border-zinc-800 bg-zinc-900 shrink-0 shadow-md"
-                      />
+                      <div className="relative h-12 w-12 rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900 shrink-0 shadow-md">
+                        <Image
+                          src={resolveStorageUrl(launch.product_logo_url)}
+                          alt={`${launch.product_name} logo`}
+                          fill
+                          sizes="48px"
+                          className="object-cover"
+                        />
+                      </div>
                     )}
                     <div className="space-y-2.5 min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-3">
@@ -424,10 +451,11 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                     >
                       <div className="h-9 w-9 rounded-full bg-zinc-800 border border-zinc-700 overflow-hidden flex items-center justify-center text-xs font-mono font-extrabold uppercase group-hover/founder:border-lime-400/50 transition-colors">
                         {launch.users?.avatar ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={launch.users.avatar}
+                          <Image
+                            src={resolveStorageUrl(launch.users.avatar)}
                             alt={launch.users.name || 'Founder'}
+                            width={36}
+                            height={36}
                             className="h-full w-full object-cover"
                           />
                         ) : (
@@ -530,11 +558,12 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
 
                       {/* Carousel Screen */}
                       <div className="relative aspect-video w-full bg-zinc-950 border border-zinc-900 rounded-2xl overflow-hidden group">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={screenshots[activeScreenshotIdx].image_url}
+                        <Image
+                          src={resolveStorageUrl(screenshots[activeScreenshotIdx].image_url)}
                           alt={`${launch.product_name} screenshot`}
-                          className="w-full h-full object-cover transition-opacity duration-300"
+                          fill
+                          sizes="(max-width: 1024px) 100vw, 800px"
+                          className="object-cover transition-opacity duration-300"
                         />
 
                         {/* Navigation Arrows */}
@@ -631,10 +660,11 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                             >
                               <div className="h-5 w-5 rounded-full bg-zinc-800 border border-zinc-700 overflow-hidden flex items-center justify-center text-[9px] font-mono uppercase font-bold text-zinc-300 group-hover/author:border-lime-400/50 transition-colors">
                                 {comment.users?.avatar ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img
-                                    src={comment.users.avatar}
+                                  <Image
+                                    src={resolveStorageUrl(comment.users.avatar)}
                                     alt={comment.users.name || 'User'}
+                                    width={20}
+                                    height={20}
                                     className="h-full w-full object-cover"
                                   />
                                 ) : (
