@@ -10,7 +10,6 @@ import {
 import {
   Zap,
   X,
-  Twitter,
   UserCheck,
   Share2,
   Heart,
@@ -187,7 +186,9 @@ export function EarnPointsModal({
           <div className="flex items-center justify-between p-4 bg-zinc-950 border-2 border-black rounded-2xl shadow-brutal-sm hover:border-[#ffe600]/50 transition-all">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-cyan-400/10 border border-cyan-400/30 text-cyan-400 flex items-center justify-center shrink-0">
-                <Twitter className="h-5 w-5 fill-cyan-400" />
+                <svg className="h-4 w-4 fill-cyan-400" viewBox="0 0 24 24">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
               </div>
               <div>
                 <h4 className="font-black text-sm text-zinc-100 uppercase">Follow LaunchMeme on X</h4>
