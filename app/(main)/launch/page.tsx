@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { insforge, resolveStorageUrl } from '@/lib/insforge';
 import { compressImage } from '@/lib/image';
+import { getUserPoints, deductPointsForLaunch } from '@/lib/points';
+import { EarnPointsModal } from '@/components/points/earn-points-modal';
 import { z } from 'zod';
 import {
   Upload,
@@ -19,7 +21,8 @@ import {
   CheckCircle2,
   ArrowRight,
   Loader2,
-  Repeat
+  Repeat,
+  Zap
 } from 'lucide-react';
 
 interface Template {
@@ -199,10 +202,8 @@ function LaunchForm() {
   };
 
   // Image states
-  const [imageSource, setImageSource] = useState<'upload' | 'template' | 'ai'>('upload');
+  const [imageSource, setImageSource] = useState<'upload' | 'template'>('upload');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
-  const [aiPrompt, setAiPrompt] = useState('');
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   
   // Custom Meme upload
   const [memeFile, setMemeFile] = useState<File | null>(null);
@@ -219,6 +220,23 @@ function LaunchForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  // Points State
+  const [userPoints, setUserPoints] = useState<number>(0);
+  const [isEarnPointsModalOpen, setIsEarnPointsModalOpen] = useState(false);
+
+  // Check user points on mount
+  useEffect(() => {
+    if (!user) return;
+    async function checkPoints() {
+      const pts = await getUserPoints(user!.id);
+      setUserPoints(pts);
+      if (pts < 15) {
+        setIsEarnPointsModalOpen(true);
+      }
+    }
+    checkPoints();
+  }, [user]);
 
   // Remix mechanics
   const searchParams = useSearchParams();
@@ -355,74 +373,7 @@ function LaunchForm() {
     setScreenshotPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Handle AI image generation
-  const handleGenerateImage = async () => {
-    if (!aiPrompt.trim() || isGeneratingImage) return;
 
-    setIsGeneratingImage(true);
-    setFormErrors((prev) => {
-      const copy = { ...prev };
-      delete copy.meme;
-      return copy;
-    });
-
-    try {
-      const image = await insforge.ai.images.generate({
-        model: 'google/gemini-3-pro-image-preview',
-        prompt: aiPrompt.trim(),
-      });
-
-      if (!image?.data?.[0]?.b64_json) {
-        if (image?.data?.[0]?.content) {
-          throw new Error(image.data[0].content);
-        }
-        throw new Error('Image generation response is missing image data.');
-      }
-
-      const b64Json = image.data[0].b64_json;
-      let file: File;
-
-      if (b64Json.startsWith('http://') || b64Json.startsWith('https://')) {
-        const response = await fetch(b64Json);
-        const blob = await response.blob();
-        file = new File([blob], 'ai-meme.png', { type: blob.type || 'image/png' });
-      } else {
-        // Clean base64 string of whitespace characters
-        const cleanB64 = b64Json.replace(/\s/g, '');
-        // Convert base64 to Blob & File
-        const byteCharacters = atob(cleanB64);
-        const byteArrays = [];
-        for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-          const slice = byteCharacters.slice(offset, offset + 512);
-          const byteNumbers = new Array(slice.length);
-          for (let i = 0; i < slice.length; i++) {
-            byteNumbers[i] = slice.charCodeAt(i);
-          }
-          const byteArray = new Uint8Array(byteNumbers);
-          byteArrays.push(byteArray);
-        }
-        const blob = new Blob(byteArrays, { type: 'image/png' });
-        file = new File([blob], 'ai-meme.png', { type: 'image/png' });
-      }
-
-      // Revoke old blob URL if exists
-      if (memePreview && memePreview.startsWith('blob:')) {
-        URL.revokeObjectURL(memePreview);
-      }
-
-      setMemeFile(file);
-      setMemePreview(URL.createObjectURL(file));
-
-    } catch (err: any) {
-      console.error('Image generation error:', err);
-      setFormErrors((prev) => ({
-        ...prev,
-        meme: err.message || 'Failed to generate image. Please try again.',
-      }));
-    } finally {
-      setIsGeneratingImage(false);
-    }
-  };
 
   // Submit form handler
   const handleSubmit = async (e: React.FormEvent) => {
@@ -484,9 +435,6 @@ function LaunchForm() {
     if (imageSource === 'upload' && !memeFile) {
       errors.meme = 'Please upload a meme image';
     }
-    if (imageSource === 'ai' && !memeFile) {
-      errors.meme = 'Please generate a meme image using AI';
-    }
     if (imageSource === 'template' && !selectedTemplate) {
       errors.meme = 'Please select a template';
     }
@@ -508,6 +456,13 @@ function LaunchForm() {
 
     if (!user) {
       router.push('/login');
+      return;
+    }
+
+    const currentPoints = await getUserPoints(user.id);
+    if (currentPoints < 15) {
+      setFormErrors({ submit: `Product launch requires 15 points. You currently have ${currentPoints} points.` });
+      setIsEarnPointsModalOpen(true);
       return;
     }
 
@@ -540,7 +495,7 @@ function LaunchForm() {
 
       // Step A: Compress and Upload Meme Image
       let memeImageUrl = '';
-      if ((imageSource === 'upload' || imageSource === 'ai') && memeFile) {
+      if (imageSource === 'upload' && memeFile) {
         setStatusMessage('Compressing meme image...');
         const compressedMemeBlob = await compressImage(memeFile, 1200, 0.8);
         const compressedMemeFile = new File([compressedMemeBlob], memeFile.name, {
@@ -664,6 +619,12 @@ function LaunchForm() {
           .eq('id', selectedTemplate.id);
       }
 
+      // Step F: Deduct 15 Points
+      setStatusMessage('Deducting 15 points for product launch...');
+      await deductPointsForLaunch(user.id);
+      const updatedPts = await getUserPoints(user.id);
+      setUserPoints(updatedPts);
+
       setStatusMessage('');
       setSuccessMessage(
         '🎉 Product launched successfully! It will go live after admin approval. Redirecting back...'
@@ -711,6 +672,45 @@ function LaunchForm() {
           </>
         </div>
       </div>
+
+      {/* Points Alert Banner */}
+      {userPoints < 15 ? (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#ffe600]/10 border-2 border-[#ffe600] rounded-2xl p-4 shadow-brutal-sm">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-[#ffe600] text-zinc-950 flex items-center justify-center font-black shrink-0 border border-black shadow">
+              <Zap className="h-5 w-5 fill-zinc-950" />
+            </div>
+            <div>
+              <h4 className="font-extrabold text-sm text-zinc-100 uppercase">15 Points Required to Publish</h4>
+              <p className="text-zinc-400 text-xs">
+                You currently have <span className="text-[#ffe600] font-bold">{userPoints} points</span>. Earn {15 - userPoints} more points to launch.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsEarnPointsModalOpen(true)}
+            className="px-4 py-2 bg-[#ffe600] text-zinc-950 font-black text-xs uppercase rounded-xl border-2 border-black shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all shrink-0 inline-flex items-center gap-1.5"
+          >
+            <span>Earn Points Now</span>
+            <Zap className="h-3.5 w-3.5 fill-zinc-950" />
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between bg-zinc-900 border-2 border-black rounded-2xl p-3 px-4 shadow-brutal-sm">
+          <div className="flex items-center gap-2 text-xs font-bold text-zinc-300 uppercase">
+            <Zap className="h-4 w-4 text-[#ffe600] fill-[#ffe600]" />
+            <span>Launch Fee: <strong className="text-[#ffe600]">15 Points</strong> (Your Balance: <strong>{userPoints} Pts</strong>)</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsEarnPointsModalOpen(true)}
+            className="text-xs text-zinc-400 hover:text-[#ffe600] font-bold uppercase transition-colors underline"
+          >
+            Earn More
+          </button>
+        </div>
+      )}
 
       {successMessage ? (
         <div className="flex flex-col items-center justify-center p-12 bg-zinc-900/40 border border-lime-400/20 rounded-3xl text-center space-y-4 max-w-xl mx-auto shadow-2xl">
@@ -1180,7 +1180,7 @@ function LaunchForm() {
                 </label>
                 <>
                     {/* Source Selection Tabs */}
-                    <div className="grid grid-cols-3 gap-1 bg-zinc-950 border border-zinc-800 p-1 rounded-xl">
+                    <div className="grid grid-cols-2 gap-1 bg-zinc-950 border border-zinc-800 p-1 rounded-xl">
                       <button
                         type="button"
                         onClick={() => setImageSource('upload')}
@@ -1201,24 +1201,6 @@ function LaunchForm() {
                       >
                         <ImageIcon className="h-3.5 w-3.5" />
                         <span>Templates</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setImageSource('ai');
-                          setFormErrors((prev) => {
-                            const copy = { ...prev };
-                            delete copy.meme;
-                            return copy;
-                          });
-                        }}
-                        className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold uppercase transition-all ${
-                          imageSource === 'ai' ? 'bg-zinc-800 text-lime-400 font-extrabold' : 'text-zinc-400 hover:text-zinc-300'
-                        }`}
-                      >
-                        <Sparkles className="h-3.5 w-3.5" />
-                        <span>AI Generate</span>
                       </button>
                     </div>
 
@@ -1295,57 +1277,7 @@ function LaunchForm() {
                       </div>
                     )}
 
-                    {/* AI Generate Form */}
-                    {imageSource === 'ai' && (
-                      <div className="space-y-4 p-4 bg-zinc-950 border border-zinc-800/80 rounded-2xl">
-                        <div className="space-y-1.5">
-                          <div className="flex justify-between items-center">
-                            <label htmlFor="ai-prompt" className="block text-xs font-bold font-mono text-zinc-400 uppercase tracking-wider">
-                              AI Image Prompt
-                            </label>
-                            <span className="text-[10px] font-mono text-zinc-500">
-                              Model: Gemini 3 Pro
-                            </span>
-                          </div>
-                          <textarea
-                            id="ai-prompt"
-                            rows={3}
-                            value={aiPrompt}
-                            onChange={(e) => setAiPrompt(e.target.value)}
-                            placeholder="e.g., A developer crying in front of a computer screen with 'Out of Memory' error, cartoon style"
-                            className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-lime-500 text-zinc-100 placeholder-zinc-650 transition-colors resize-none"
-                          />
-                        </div>
 
-                        <button
-                          type="button"
-                          disabled={isGeneratingImage || !aiPrompt.trim()}
-                          onClick={handleGenerateImage}
-                          className="w-full py-2.5 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-extrabold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_15px_rgba(163,230,53,0.1)] hover:shadow-[0_0_25px_rgba(163,230,53,0.2)] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                        >
-                          {isGeneratingImage ? (
-                            <>
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              <span>Generating Meme Image...</span>
-                            </>
-                          ) : (
-                            <>
-                              <Sparkles className="h-3.5 w-3.5" />
-                              <span>Generate Image</span>
-                            </>
-                          )}
-                        </button>
-
-                        {memePreview && (
-                          <div className="text-center pt-2 border-t border-zinc-900">
-                            <span className="inline-flex items-center gap-1.5 text-[10px] font-mono text-emerald-400">
-                              <CheckCircle2 className="h-3 w-3" />
-                              <span>Meme image generated successfully!</span>
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
                     
                     {formErrors.meme && (
                       <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
@@ -1656,6 +1588,13 @@ function LaunchForm() {
           </div>
         </form>
       )}
+
+      {/* Earn Points Modal Popup */}
+      <EarnPointsModal
+        isOpen={isEarnPointsModalOpen}
+        onClose={() => setIsEarnPointsModalOpen(false)}
+        onPointsUpdated={(newPts) => setUserPoints(newPts)}
+      />
     </div>
   );
 }

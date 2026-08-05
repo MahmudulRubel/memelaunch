@@ -4,10 +4,13 @@
   --color-background: #09090b;
   --color-foreground: #fafafa;
   
+  --color-main: #ffe600;
+  --color-main-hover: #facc15;
+
   --font-sans: var(--font-sans), var(--font-outfit), system-ui, sans-serif;
   --font-mono: var(--font-mono), monospace;
   --font-impact: "Impact", "Anton", "Arial Black", sans-serif;
-  
+
   --radius-card: 1.0rem;
   --radius-modal: 2.0rem;
 }
@@ -15,6 +18,8 @@
 :root {
   --background: #09090b;
   --foreground: #fafafa;
+  --main: #ffe600;
+  --border: #000000;
 }
 
 body {
@@ -22,4 +27,40 @@ body {
   color: var(--foreground);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
+
+/* Neo-Brutalist utility classes */
+.shadow-brutal {
+  box-shadow: 4px 4px 0px #000000;
+}
+
+.shadow-brutal-sm {
+  box-shadow: 2px 2px 0px #000000;
+}
+
+.shadow-brutal-lg {
+  box-shadow: 8px 8px 0px #000000;
+}
+
+.shadow-brutal-lime {
+  box-shadow: 4px 4px 0px #a3e635;
+}
+
+.shadow-brutal-yellow {
+  box-shadow: 4px 4px 0px #ffe600;
+}
+
+.hover-brutal {
+  transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.hover-brutal:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px #000000;
+}
+
+.hover-brutal:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #000000;
+}
+
 

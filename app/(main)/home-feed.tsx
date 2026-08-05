@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
-import { insforge } from '@/lib/insforge';
+import { insforge, resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
 import { MemeCard, type Launch } from '@/components/feed/meme-card';
-import { ProductModal } from '@/components/product/product-modal';
 import {
   Flame,
   Clock,
@@ -23,15 +23,22 @@ interface HomeFeedProps {
 }
 
 export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
+  const router = useRouter();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'trending' | 'new'>('trending');
   const [searchQuery, setSearchQuery] = useState('');
+  const [quickUrl, setQuickUrl] = useState('');
   
   // Database state initialized with server-side data
   const [launches, setLaunches] = useState<Launch[]>(initialLaunches || []);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [selectedLaunchId, setSelectedLaunchId] = useState<string | null>(null);
+
+  // Top featured launch for hero showcase
+  const topFeaturedLaunch = useMemo(() => {
+    if (!launches || launches.length === 0) return null;
+    return [...launches].sort((a, b) => (b.reactions?.length || 0) - (a.reactions?.length || 0))[0];
+  }, [launches]);
 
   // Pagination / Infinite scroll state
   const [visibleCount, setVisibleCount] = useState(9);
@@ -196,80 +203,187 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden rounded-[32px] border border-zinc-800/80 bg-gradient-to-br from-zinc-900/40 to-zinc-950 p-8 md:p-12 text-center md:text-left shadow-2xl">
-        <div className="absolute top-0 right-0 -mt-12 -mr-12 w-80 h-80 bg-lime-400/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 -mb-12 -ml-12 w-80 h-80 bg-cyan-400/5 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="relative max-w-2xl space-y-5">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900/80 border border-zinc-800 text-xs font-mono text-lime-400">
-            <Sparkles className="h-3 w-3 animate-pulse text-lime-400" />
-            <span>Where SaaS Meets Shitposting</span>
-          </div>
-          
-          <h1 className="font-impact text-4xl md:text-6xl uppercase tracking-tight text-zinc-50 leading-tight">
-            SHITPOST YOUR WAY <span className="text-lime-400">TO PRODUCT-MARKET FIT.</span>
-          </h1>
-          
-          <p className="text-zinc-400 text-base md:text-lg max-w-lg leading-relaxed">
-            Ditch the boring 500-word launch pitches that nobody reads. On MemeLaunch, your product is a single meme. If your meme is fire, they'll open the hood to find a clean, high-fidelity landing page with specs, pricing, and zero corporate fluff.
-          </p>
+    <div className="space-y-8 animate-in fade-in duration-300 relative">
+      {/* Background ambient blurs behind Hero */}
+      <div className="absolute -top-20 left-1/4 w-[500px] h-[500px] bg-lime-400/5 rounded-full blur-[120px] pointer-events-none -z-10" />
+      <div className="absolute -top-10 right-1/4 w-[400px] h-[400px] bg-rose-500/5 rounded-full blur-[100px] pointer-events-none -z-10" />
 
-          <div className="pt-4 flex flex-wrap items-center justify-center md:justify-start gap-4">
-            {user ? (
-              <Link
-                href="/launch"
-                className="px-6 py-3 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-extrabold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_20px_rgba(163,230,53,0.15)] hover:shadow-[0_0_35px_rgba(163,230,53,0.35)] active:scale-95 flex items-center gap-2"
+      {/* Hero Section - Unique 2-Column Split Layout */}
+      <section className="relative overflow-hidden rounded-3xl border-4 border-black bg-zinc-950 p-6 md:p-10 shadow-brutal-lg">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          
+          {/* Left Column: Headline, Copy, Trust Pills & Launch Form */}
+          <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left space-y-4">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900 border-2 border-black text-xs font-black text-[#ffe600] shadow-brutal-sm">
+              <Sparkles className="h-4 w-4 text-[#ffe600]" />
+              <span className="tracking-wider uppercase">🥊 THE WEEKLY INDIE BUILDER ARENA</span>
+            </div>
+            
+            <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-zinc-50 leading-none">
+              BUILD IN PUBLIC. <br className="hidden sm:inline" />
+              LAUNCH IN HUMOR.
+            </h1>
+
+            <p className="font-extrabold text-[#ffe600] relative inline-block text-xl sm:text-2xl md:text-3xl">
+              Where solo founders become viral legends 🏆
+              <svg className="text-[#ffe600] pointer-events-none absolute -bottom-2 left-0 h-3 w-full" viewBox="0 0 320 14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M3 9 C 60 2, 120 12, 180 6 S 280 11, 317 4"></path>
+              </svg>
+            </p>
+            
+            <p className="text-zinc-300 text-sm sm:text-base max-w-xl leading-relaxed font-medium pt-1">
+              Building in public is tough when nobody notices your tweets. MemeLaunch is the weekly battleground where indie hackers drop their funniest product memes, compete for top gold badges, and win real customers.
+            </p>
+
+            {/* Feature / Trust Badges */}
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 pt-1 text-xs font-extrabold text-zinc-300">
+              <span className="bg-zinc-900 border-2 border-black px-2.5 py-1 rounded-xl shadow-brutal-sm flex items-center gap-1">
+                <span className="text-[#ffe600]">◇</span> DR 68 Permanent Backlink
+              </span>
+              <span className="bg-zinc-900 border-2 border-black px-2.5 py-1 rounded-xl shadow-brutal-sm flex items-center gap-1">
+                <span className="text-[#ffe600]">◇</span> 100% Free Launch
+              </span>
+              <span className="bg-zinc-900 border-2 border-black px-2.5 py-1 rounded-xl shadow-brutal-sm flex items-center gap-1">
+                <span className="text-[#ffe600]">◇</span> Instant Eyeballs
+              </span>
+            </div>
+
+            {/* Quick Launch URL Form */}
+            <form 
+              className="border-2 border-black bg-zinc-900 shadow-brutal rounded-2xl mt-4 flex w-full max-w-md items-center gap-2 p-2" 
+              onSubmit={(e) => { 
+                e.preventDefault(); 
+                const url = quickUrl.trim();
+                const target = url ? `/launch?url=${encodeURIComponent(url)}` : '/launch';
+                router.push(user ? target : `/login?redirect=${encodeURIComponent(target)}`);
+              }}
+            >
+              <span aria-hidden="true" className="text-zinc-400 pl-2">🔗</span>
+              <input 
+                type="url" 
+                value={quickUrl}
+                onChange={(e) => setQuickUrl(e.target.value)}
+                placeholder="https://your-micro-saas.com" 
+                className="text-zinc-100 placeholder:text-zinc-500 min-w-0 flex-1 bg-transparent px-2 py-1 text-sm outline-none font-medium" 
+              />
+              <button 
+                type="submit"
+                className="rounded-xl border-2 border-black bg-[#ffe600] text-zinc-950 hover:-translate-x-0.5 hover:-translate-y-0.5 shrink-0 px-4 py-2 text-xs font-black uppercase tracking-wider transition-all shadow-brutal-sm inline-flex items-center gap-1 cursor-pointer"
               >
-                <Plus className="h-4 w-4 stroke-[3]" />
-                <span>Launch a Shitpost</span>
-              </Link>
+                <span>Enter The Arena 🥊</span>
+              </button>
+            </form>
+          </div>
+
+          {/* Right Column: Live Sample Meme Card Spotlight */}
+          <div className="lg:col-span-5 flex justify-center lg:justify-end">
+            {topFeaturedLaunch ? (
+              <div 
+                onClick={() => router.push(`/products/${encodeURIComponent(topFeaturedLaunch.product_name)}`)}
+                className="group relative w-full max-w-sm bg-zinc-950 border-2 border-black rounded-2xl p-3 shadow-brutal hover:rotate-0 transition-transform duration-300 rotate-2 cursor-pointer"
+              >
+                {/* Badge Pinned to top */}
+                <div className="flex items-center justify-between mb-3 border-b-2 border-black pb-2">
+                  <span className="bg-[#ffe600] text-zinc-950 font-black text-xs uppercase px-2.5 py-0.5 rounded-lg border-2 border-black shadow-brutal-sm flex items-center gap-1">
+                    <span>🥇</span> #1 MEME THIS WEEK
+                  </span>
+                  <span className="text-lime-400 font-mono text-[10px] font-extrabold uppercase animate-pulse">FEATURED HERO</span>
+                </div>
+
+                {/* Meme Visual Box */}
+                <div className="relative aspect-square w-full rounded-xl overflow-hidden border-2 border-black bg-zinc-900">
+                  {topFeaturedLaunch.meme_image_url && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={resolveStorageUrl(topFeaturedLaunch.meme_image_url)}
+                      alt={topFeaturedLaunch.product_name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  )}
+                  <div className="absolute top-2 right-2 text-[9px] font-mono text-zinc-400 font-extrabold tracking-widest uppercase bg-zinc-950/80 px-2 py-0.5 rounded border border-black">
+                    MEMELAUNCH
+                  </div>
+                </div>
+
+                {/* Sample Product Info Bar */}
+                <div className="mt-3 pt-2 border-t-2 border-black flex items-center justify-between">
+                  <div className="min-w-0 flex-1 pr-2">
+                    <h4 className="font-black text-sm text-zinc-100 truncate group-hover:text-[#ffe600] transition-colors">{topFeaturedLaunch.product_name}</h4>
+                    <p className="text-[10px] font-bold text-zinc-400 uppercase">◇ {topFeaturedLaunch.category} • {topFeaturedLaunch.pricing}</p>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs font-black bg-rose-400 text-zinc-950 border-2 border-black px-2.5 py-1 rounded-lg shadow-brutal-sm">
+                    <span>🔥</span>
+                    <span>{topFeaturedLaunch.reactions?.length || 0}</span>
+                  </div>
+                </div>
+              </div>
             ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="px-6 py-3 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-extrabold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_20px_rgba(163,230,53,0.15)] hover:shadow-[0_0_35px_rgba(163,230,53,0.35)] active:scale-95 flex items-center gap-2"
-                >
-                  <Rocket className="h-4 w-4" />
-                  <span>Enter the Arena</span>
-                </Link>
-                <Link
-                  href="/login"
-                  className="px-6 py-3 bg-zinc-900/60 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-zinc-50 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors"
-                >
-                  Tell Me More
-                </Link>
-              </>
+              <div className="relative w-full max-w-sm bg-zinc-950 border-2 border-black rounded-2xl p-3 shadow-brutal hover:rotate-0 transition-transform duration-300 rotate-2">
+                <div className="flex items-center justify-between mb-3 border-b-2 border-black pb-2">
+                  <span className="bg-[#ffe600] text-zinc-950 font-black text-xs uppercase px-2.5 py-0.5 rounded-lg border-2 border-black shadow-brutal-sm flex items-center gap-1">
+                    <span>🥇</span> #1 MEME THIS WEEK
+                  </span>
+                  <span className="text-zinc-400 font-mono text-[10px] font-extrabold uppercase">SPOTLIGHT</span>
+                </div>
+                <div className="relative aspect-square w-full rounded-xl overflow-hidden border-2 border-black bg-zinc-900">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img 
+                    src="https://i.imgflip.com/1g8my4.jpg" 
+                    alt="Drake Meme" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950/90 to-transparent p-3 text-center">
+                    <p className="font-impact text-zinc-100 uppercase text-xs sm:text-sm tracking-wider">
+                      BUILDING IN SECRET FOR 6 MONTHS
+                    </p>
+                  </div>
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950/90 to-transparent p-3 text-center">
+                    <p className="font-impact text-[#ffe600] uppercase text-xs sm:text-sm tracking-wider">
+                      LAUNCHING ON MEMELAUNCH TO 10K BUILDERS
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 pt-2 border-t-2 border-black flex items-center justify-between">
+                  <div>
+                    <h4 className="font-black text-sm text-zinc-100">LaunchDock Track</h4>
+                    <p className="text-[10px] font-bold text-zinc-400 uppercase">◇ SaaS • FREE</p>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs font-black bg-rose-400 text-zinc-950 border-2 border-black px-2.5 py-1 rounded-lg shadow-brutal-sm">
+                    <span>🔥</span>
+                    <span>342</span>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
+
         </div>
       </section>
 
       {/* Feed Filter & Search Row */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-zinc-800/80 pb-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-zinc-950 border-2 border-black p-4 rounded-2xl shadow-brutal">
         {/* Tabs */}
-        <div className="flex items-center gap-1 bg-zinc-900/60 border border-zinc-800/60 p-1 rounded-xl w-fit">
+        <div className="flex items-center gap-2 bg-zinc-900 border-2 border-black p-1.5 rounded-xl w-fit">
           <button
             onClick={() => setActiveTab('trending')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all border-2 border-black cursor-pointer ${
               activeTab === 'trending'
-                ? 'bg-lime-400 text-zinc-950 shadow-md font-extrabold'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-[#ffe600] text-zinc-950 shadow-brutal-sm'
+                : 'bg-transparent text-zinc-300 hover:text-white border-transparent'
             }`}
           >
-            <TrendingUp className="h-3.5 w-3.5" />
+            <TrendingUp className="h-4 w-4" />
             <span>Trending</span>
           </button>
           <button
             onClick={() => setActiveTab('new')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all border-2 border-black cursor-pointer ${
               activeTab === 'new'
-                ? 'bg-lime-400 text-zinc-950 shadow-md font-extrabold'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-[#ffe600] text-zinc-950 shadow-brutal-sm'
+                : 'bg-transparent text-zinc-300 hover:text-white border-transparent'
             }`}
           >
-            <Clock className="h-3.5 w-3.5" />
+            <Clock className="h-4 w-4" />
             <span>Fresh</span>
           </button>
         </div>
@@ -278,18 +392,18 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full md:w-auto">
           {/* Search bar */}
           <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search products, memes..."
-              className="w-full pl-10 pr-4 py-2 bg-zinc-900/50 border border-zinc-800/80 rounded-xl text-sm focus:outline-none focus:border-lime-500/50 text-zinc-100 placeholder-zinc-500 transition-colors"
+              className="w-full pl-10 pr-4 py-2 bg-zinc-900 border-2 border-black rounded-xl text-sm focus:outline-none focus:border-[#ffe600] text-zinc-100 placeholder-zinc-500 shadow-brutal-sm transition-all font-medium"
             />
           </div>
 
-          <div className="text-zinc-500 text-xs font-mono hidden sm:block">
-            Weekly rotations reset every Sunday. Don't let your memes be dreams.
+          <div className="text-zinc-400 text-xs font-mono font-bold uppercase hidden sm:block">
+            ◇ Weekly Rotations
           </div>
         </div>
       </div>
@@ -312,12 +426,12 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
           
           <div className="space-y-2">
             <h3 className="text-2xl font-extrabold text-zinc-100 tracking-tight">
-              {searchQuery ? 'Well, this is dry...' : 'The arena is dead quiet.'}
+              {searchQuery ? 'Well, this is dry...' : 'Did the founders go back to writing slide decks?'}
             </h3>
             <p className="text-zinc-400 text-sm max-w-md">
               {searchQuery
-                ? `No launches match "${searchQuery}". Maybe search for something that actually exists?`
-                : 'No memes have been launched yet. Be the absolute legend to kick off the week with some elite slop!'}
+                ? `No memes found matching "${searchQuery}". Maybe search for something that actually exists?`
+                : 'No memes have been launched yet. Be the absolute legend to kick off the week with some elite meme slop!'}
             </p>
           </div>
 
@@ -337,7 +451,6 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
             <MemeCard
               key={launch.id}
               launch={launch}
-              onSelect={(selected) => setSelectedLaunchId(selected.id)}
             />
           ))}
         </div>
@@ -348,15 +461,6 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
         <div ref={observerTarget} className="flex justify-center py-8">
           <div className="h-8 w-8 border-4 border-lime-400 border-t-transparent rounded-full animate-spin" />
         </div>
-      )}
-
-      {/* Product Detailed Modal Overlay */}
-      {selectedLaunchId && (
-        <ProductModal
-          launchId={selectedLaunchId}
-          onClose={() => setSelectedLaunchId(null)}
-          onRefreshFeed={() => fetchLaunches(true)}
-        />
       )}
     </div>
   );

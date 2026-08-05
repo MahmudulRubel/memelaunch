@@ -5,7 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
-import { insforge, resolveStorageUrl } from '@/lib/insforge';
+import { insforge, resolveStorageUrl, getAvatarGradient, getCategoryBadgeStyle } from '@/lib/insforge';
+import { rewardLike, revokeLike } from '@/lib/points';
 import { MessageSquare, ExternalLink, Globe, Tag } from 'lucide-react';
 import { parseCaption, getCaptionText } from '@/lib/meme';
 
@@ -108,6 +109,12 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
         if (error.message?.includes('429') || error.message?.toLowerCase().includes('too many requests')) {
           alert('Whoa, slow down! You are reacting too fast.');
         }
+      } else {
+        if (userReacted) {
+          revokeLike(user.id, launch.id);
+        } else {
+          rewardLike(user.id, launch.user_id, launch.id);
+        }
       }
     } catch (err) {
       console.error('Reaction toggle error:', err);
@@ -118,25 +125,28 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
   };
 
   const pricingColors = {
-    free: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    paid: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-    freemium: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    free: 'bg-emerald-400 text-zinc-950 border-2 border-black font-black',
+    paid: 'bg-rose-400 text-zinc-950 border-2 border-black font-black',
+    freemium: 'bg-[#ffe600] text-zinc-950 border-2 border-black font-black',
+  };
+
+  const handleCardClick = () => {
+    if (onSelect) {
+      onSelect(launch);
+    } else {
+      router.push(`/products/${encodeURIComponent(launch.product_name)}`);
+    }
   };
 
   return (
     <div
-      onClick={() => onSelect?.(launch)}
-      className="group relative flex flex-col bg-zinc-900/40 backdrop-blur-md border border-zinc-800/80 rounded-2xl overflow-hidden hover:border-zinc-700/80 hover:bg-zinc-900/60 hover:shadow-[0_8px_30px_rgb(0,0,0,0.4)] transition-all duration-300 cursor-pointer break-inside-avoid mb-6"
+      onClick={handleCardClick}
+      className="group relative flex flex-col bg-zinc-950 border-2 border-black rounded-2xl overflow-hidden shadow-brutal hover-brutal transition-all cursor-pointer break-inside-avoid mb-6"
     >
-      {/* Visual background glow on hover */}
-      <div className="absolute inset-0 bg-gradient-to-b from-lime-400/0 via-lime-400/0 to-lime-400/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-
       {/* Aspect Ratio Box for Meme */}
-      <div className="relative aspect-square w-full bg-zinc-950 border-b border-zinc-800/60 overflow-hidden flex items-center justify-center">
-        <div className="absolute inset-0 bg-radial-gradient from-lime-400/5 to-transparent opacity-40 pointer-events-none" />
-        
+      <div className="relative aspect-square w-full bg-zinc-900 border-b-2 border-black overflow-hidden flex items-center justify-center">
         {launch.is_approved === false && (
-          <div className="absolute top-2 left-2 z-10 px-2.5 py-0.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-zinc-950 font-mono text-[9px] font-extrabold uppercase tracking-wider shadow-md select-none">
+          <div className="absolute top-2 left-2 z-10 px-2.5 py-1 rounded-lg bg-[#ffe600] text-zinc-950 border-2 border-black font-black text-[10px] uppercase tracking-wider shadow-brutal-sm select-none">
             Pending Approval
           </div>
         )}
@@ -152,8 +162,8 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
             priority={false}
           />
         ) : (
-          <div className="p-8 text-center bg-zinc-900/80 rounded-xl border border-zinc-800">
-            <p className="text-zinc-600 font-mono text-xs">Meme missing</p>
+          <div className="p-8 text-center bg-zinc-900 rounded-xl border-2 border-black">
+            <p className="text-zinc-500 font-mono text-xs font-bold">Meme missing</p>
           </div>
         )}
 
@@ -215,7 +225,7 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
         })()}
 
         {/* Watermark in bottom right */}
-        <div className="absolute top-2 right-3 text-[9px] font-mono text-zinc-400/40 tracking-widest uppercase">
+        <div className="absolute top-2 right-3 text-[9px] font-mono text-zinc-400 font-extrabold tracking-widest uppercase bg-zinc-950/80 px-2 py-0.5 rounded border border-black">
           MEMELAUNCH
         </div>
       </div>
@@ -225,34 +235,34 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             {launch.product_logo_url && (
-              <div className="relative h-8 w-8 rounded-lg overflow-hidden shrink-0 border border-zinc-800 bg-zinc-950">
+              <div className="relative h-9 w-9 rounded-xl overflow-hidden shrink-0 border-2 border-black bg-zinc-900 shadow-brutal-sm">
                 <Image
                   src={resolveStorageUrl(launch.product_logo_url)}
                   alt={`${launch.product_name} logo`}
                   fill
-                  sizes="32px"
+                  sizes="36px"
                   className="object-cover"
                 />
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="font-extrabold text-base text-zinc-100 group-hover:text-lime-400 transition-colors truncate">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="font-black text-base text-zinc-50 group-hover:text-[#ffe600] transition-colors truncate">
                   {launch.product_name}
                 </h3>
                 
                 {/* Pricing Badge */}
-                <span className={`px-2 py-0.5 rounded-full border text-[10px] font-mono uppercase font-bold tracking-wider shrink-0 ${pricingColors[launch.pricing]}`}>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider shrink-0 ${pricingColors[launch.pricing]}`}>
                   {launch.pricing}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
-            {/* Category Tag */}
-            <span className="inline-flex items-center gap-1 text-zinc-500 bg-zinc-950/40 border border-zinc-800/60 px-2 py-0.5 rounded-md text-[11px]">
-              <Tag className="h-3 w-3 text-zinc-500" />
+          <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400 pt-1">
+            {/* Category Tag with ◇ bullet */}
+            <span className="inline-flex items-center gap-1.5 text-zinc-200 bg-zinc-900 border-2 border-black px-2.5 py-0.5 rounded-xl text-xs font-black uppercase shadow-brutal-sm">
+              <span className="text-[#ffe600]">◇</span>
               <span>{launch.category}</span>
             </span>
 
@@ -263,27 +273,27 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-zinc-500 hover:text-lime-400 bg-zinc-950/40 border border-zinc-800/60 hover:border-lime-500/30 px-2 py-0.5 rounded-md text-[11px] transition-colors"
+                className="inline-flex items-center gap-1 text-zinc-200 hover:text-zinc-950 hover:bg-[#ffe600] bg-zinc-900 border-2 border-black px-2.5 py-0.5 rounded-xl text-xs font-bold transition-all shadow-brutal-sm"
               >
-                <Globe className="h-3 w-3" />
+                <Globe className="h-3.5 w-3.5" />
                 <span>Visit</span>
-                <ExternalLink className="h-2.5 w-2.5" />
+                <ExternalLink className="h-3 w-3" />
               </a>
             )}
           </div>
         </div>
 
         {/* Reactions & Interaction stats */}
-        <div className="flex flex-col gap-3 pt-3 border-t border-zinc-800/40">
+        <div className="flex flex-col gap-3 pt-3 border-t-2 border-zinc-800">
           
           {/* Reaction Buttons */}
-          <div className="flex items-center justify-between gap-1.5 bg-zinc-950/30 border border-zinc-800/40 rounded-xl p-1">
+          <div className="flex items-center justify-between gap-1.5 bg-zinc-900 border-2 border-black rounded-xl p-1 shadow-brutal-sm">
             <button
               onClick={(e) => handleReaction('🔥', e)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-mono transition-all active:scale-95 ${
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-black transition-all border-2 active:translate-x-0.5 active:translate-y-0.5 ${
                 hasReacted('🔥')
-                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold shadow-[0_0_10px_rgba(244,63,94,0.1)]'
-                  : 'hover:bg-zinc-800/40 text-zinc-400 hover:text-zinc-200 border border-transparent'
+                  ? 'bg-rose-400 text-zinc-950 border-black shadow-brutal-sm'
+                  : 'bg-zinc-950 text-zinc-300 border-black hover:bg-rose-400/20'
               }`}
             >
               <span>🔥</span>
@@ -292,10 +302,10 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
 
             <button
               onClick={(e) => handleReaction('😂', e)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-mono transition-all active:scale-95 ${
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-black transition-all border-2 active:translate-x-0.5 active:translate-y-0.5 ${
                 hasReacted('😂')
-                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold shadow-[0_0_10px_rgba(245,158,11,0.1)]'
-                  : 'hover:bg-zinc-800/40 text-zinc-400 hover:text-zinc-200 border border-transparent'
+                  ? 'bg-[#ffe600] text-zinc-950 border-black shadow-brutal-sm'
+                  : 'bg-zinc-950 text-zinc-300 border-black hover:bg-[#ffe600]/20'
               }`}
             >
               <span>😂</span>
@@ -304,10 +314,10 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
 
             <button
               onClick={(e) => handleReaction('🤔', e)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-mono transition-all active:scale-95 ${
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-black transition-all border-2 active:translate-x-0.5 active:translate-y-0.5 ${
                 hasReacted('🤔')
-                  ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 font-bold shadow-[0_0_10px_rgba(99,102,241,0.1)]'
-                  : 'hover:bg-zinc-800/40 text-zinc-400 hover:text-zinc-200 border border-transparent'
+                  ? 'bg-cyan-400 text-zinc-950 border-black shadow-brutal-sm'
+                  : 'bg-zinc-950 text-zinc-300 border-black hover:bg-cyan-400/20'
               }`}
             >
               <span>🤔</span>
@@ -316,35 +326,35 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
           </div>
 
           {/* User metadata & other stats */}
-          <div className="flex items-center justify-between text-xs text-zinc-500">
+          <div className="flex items-center justify-between text-xs text-zinc-400 font-bold">
             {/* Author */}
             <Link
               href={`/profile/${launch.user_id}`}
               onClick={(e) => e.stopPropagation()}
               className="flex items-center gap-2 group/author cursor-pointer"
             >
-              <div className="h-5 w-5 rounded-full bg-zinc-800 border border-zinc-700 overflow-hidden flex items-center justify-center text-[10px] text-zinc-300 font-extrabold uppercase font-mono group-hover/author:border-lime-400/50 transition-colors">
+              <div className={`h-6 w-6 rounded-full border-2 border-black overflow-hidden flex items-center justify-center text-[10px] font-black uppercase font-mono group-hover/author:border-[#ffe600] transition-colors shrink-0 ${launch.users?.avatar ? 'bg-zinc-900' : getAvatarGradient(launch.users?.name || launch.user_id)}`}>
                 {launch.users?.avatar ? (
                   <Image
                     src={resolveStorageUrl(launch.users.avatar)}
                     alt={launch.users.name || 'User'}
-                    width={20}
-                    height={20}
+                    width={24}
+                    height={24}
                     className="object-cover h-full w-full"
                   />
                 ) : (
-                  launch.users?.name ? launch.users.name[0] : '?'
+                  <span>{launch.users?.name ? launch.users.name[0] : 'F'}</span>
                 )}
               </div>
-              <span className="text-zinc-400 group-hover/author:text-lime-400 transition-colors truncate max-w-[80px]">
+              <span className="text-zinc-300 group-hover/author:text-[#ffe600] transition-colors truncate max-w-[80px] font-extrabold">
                 @{launch.users?.name || 'founder'}
               </span>
             </Link>
 
             {/* Comments Count */}
-            <div className="flex items-center gap-3 font-mono text-[11px]">
-              <span className="flex items-center gap-1" title="Comments">
-                <MessageSquare className="h-3.5 w-3.5 text-zinc-500" />
+            <div className="flex items-center gap-3 font-extrabold text-xs">
+              <span className="flex items-center gap-1 text-zinc-300 bg-zinc-900 border-2 border-black px-2 py-0.5 rounded-lg shadow-brutal-sm" title="Comments">
+                <MessageSquare className="h-3.5 w-3.5 text-zinc-400" />
                 <span>{launch.comments?.length || 0}</span>
               </span>
             </div>

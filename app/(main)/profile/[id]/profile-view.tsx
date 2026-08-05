@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { useAuth } from '@/components/auth-provider';
 import { insforge, resolveStorageUrl } from '@/lib/insforge';
 import { MemeCard, type Launch } from '@/components/feed/meme-card';
-import { ProductModal } from '@/components/product/product-modal';
 import {
   User,
   Calendar,
@@ -58,12 +57,14 @@ export default function ProfileView({ profileId, initialProfile, initialLaunches
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Modal view for launches
-  const [selectedLaunchId, setSelectedLaunchId] = useState<string | null>(null);
-
   // Canvas card generation state
   const [isGeneratingCard, setIsGeneratingCard] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Is this the user's own profile?
   const isOwnProfile = user?.id === profileId;
@@ -456,16 +457,15 @@ export default function ProfileView({ profileId, initialProfile, initialLaunches
     else if (unlockedCount === 1) rankName = 'Meme Pioneer';
 
     const text = `Check out my Founder Stats on @MemeLaunch! 🚀\n\n🎯 launches: ${stats.totalLaunches}\n🔥 reactions: ${stats.totalReactions}\n🏅 Rank: ${rankName}\n\nJoin the chaos of meme-native product discovery! 👾👇\n`;
-    const shareUrl = typeof window !== 'undefined' ? window.location.href : `https://memelaunch.app/profile/${profileId}`;
+    const shareUrl = mounted && typeof window !== 'undefined' ? window.location.href : `https://memelaunch.app/profile/${profileId}`;
     return `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
-  }, [profile, stats, achievements, profileId]);
+  }, [profile, stats, achievements, profileId, mounted]);
 
   const formattedJoinedDate = useMemo(() => {
     if (!profile?.created_at) return '';
-    return new Date(profile.created_at).toLocaleDateString(undefined, {
-      month: 'long',
-      year: 'numeric',
-    });
+    const date = new Date(profile.created_at);
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return `${months[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
   }, [profile?.created_at]);
 
   if (isLoading) {
@@ -769,21 +769,11 @@ export default function ProfileView({ profileId, initialProfile, initialLaunches
               <MemeCard
                 key={launch.id}
                 launch={launch}
-                onSelect={(selected) => setSelectedLaunchId(selected.id)}
               />
             ))}
           </div>
         )}
       </section>
-
-      {/* Modal Detail Overlay */}
-      {selectedLaunchId && (
-        <ProductModal
-          launchId={selectedLaunchId}
-          onClose={() => setSelectedLaunchId(null)}
-          onRefreshFeed={fetchProfileAndLaunches}
-        />
-      )}
     </div>
   );
 }

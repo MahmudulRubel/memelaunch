@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { insforge } from '@/lib/insforge';
-import { ProductModal } from '@/components/product/product-modal';
 import { MemeCard, type Launch } from '@/components/feed/meme-card';
 import {
   Check,
@@ -37,7 +36,6 @@ export default function AdminPage() {
   // loading and overlays
   const [loadingData, setLoadingData] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [selectedLaunchId, setSelectedLaunchId] = useState<string | null>(null);
   const [actioningId, setActioningId] = useState<string | null>(null);
 
   // Validate admin status
@@ -380,7 +378,7 @@ export default function AdminPage() {
               {/* Moderation Controls Panel */}
               <div className="p-4 bg-zinc-950/70 border-t border-zinc-900 flex items-center justify-between gap-3">
                 <button
-                  onClick={() => setSelectedLaunchId(launch.id)}
+                  onClick={() => router.push(`/products/${encodeURIComponent(launch.product_name)}`)}
                   className="px-3.5 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <Eye className="h-3.5 w-3.5 text-zinc-400" />
@@ -442,15 +440,6 @@ export default function AdminPage() {
             </div>
           ))}
         </div>
-      )}
-
-      {/* Inspect Product Modal */}
-      {selectedLaunchId && (
-        <ProductModal
-          launchId={selectedLaunchId}
-          onClose={() => setSelectedLaunchId(null)}
-          onRefreshFeed={fetchModerationData}
-        />
       )}
     </div>
   );
