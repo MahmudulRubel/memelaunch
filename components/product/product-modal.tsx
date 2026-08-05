@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
-import { insforge, resolveStorageUrl } from '@/lib/insforge';
+import { insforge, resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
 import {
   X,
   ExternalLink,
@@ -449,7 +449,7 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                       onClick={() => onClose()}
                       className="flex items-center gap-2.5 group/founder cursor-pointer"
                     >
-                      <div className="h-9 w-9 rounded-full bg-zinc-800 border border-zinc-700 overflow-hidden flex items-center justify-center text-xs font-mono font-extrabold uppercase group-hover/founder:border-lime-400/50 transition-colors">
+                      <div className={`h-9 w-9 rounded-full border-2 border-black overflow-hidden flex items-center justify-center text-xs font-mono font-extrabold uppercase group-hover/founder:border-lime-400/50 transition-colors shrink-0 ${launch.users?.avatar ? 'bg-zinc-800' : getAvatarGradient(launch.users?.name || launch.user_id)}`}>
                         {launch.users?.avatar ? (
                           <Image
                             src={resolveStorageUrl(launch.users.avatar)}
@@ -459,7 +459,7 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          launch.users?.name ? launch.users.name[0] : 'F'
+                          <span>{launch.users?.name ? launch.users.name[0] : 'F'}</span>
                         )}
                       </div>
                       <div>
@@ -658,7 +658,7 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                               onClick={() => onClose()}
                               className="flex items-center gap-2 group/author cursor-pointer"
                             >
-                              <div className="h-5 w-5 rounded-full bg-zinc-800 border border-zinc-700 overflow-hidden flex items-center justify-center text-[9px] font-mono uppercase font-bold text-zinc-300 group-hover/author:border-lime-400/50 transition-colors">
+                              <div className={`h-5 w-5 rounded-full border border-black overflow-hidden flex items-center justify-center text-[9px] font-mono uppercase font-bold group-hover/author:border-lime-400/50 transition-colors shrink-0 ${comment.users?.avatar ? 'bg-zinc-800' : getAvatarGradient(comment.users?.name || comment.user_id)}`}>
                                 {comment.users?.avatar ? (
                                   <Image
                                     src={resolveStorageUrl(comment.users.avatar)}
@@ -668,7 +668,7 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                                     className="h-full w-full object-cover"
                                   />
                                 ) : (
-                                  comment.users?.name ? comment.users.name[0] : '?'
+                                  <span>{comment.users?.name ? comment.users.name[0] : 'U'}</span>
                                 )}
                               </div>
                               <span className="text-xs font-bold text-zinc-300 group-hover/author:text-lime-400 transition-colors truncate max-w-[100px]">

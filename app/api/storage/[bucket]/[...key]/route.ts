@@ -9,6 +9,15 @@ const insforge = createClient({
   anonKey: anonKey || 'placeholder',
 });
 
+const FALLBACK_URLS: Record<string, string> = {
+  'drake.jpg': 'https://i.imgflip.com/30b1gx.jpg',
+  'boyfriend.jpg': 'https://i.imgflip.com/1ur9b0.jpg',
+  'buttons.jpg': 'https://i.imgflip.com/1g8my4.jpg',
+  'bernie.jpg': 'https://i.imgflip.com/3oevdk.jpg',
+  'uno.jpg': 'https://i.imgflip.com/3lmzyx.jpg',
+  'exit12.jpg': 'https://i.imgflip.com/22bdq6.jpg',
+};
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ bucket: string; key: string[] }> }
@@ -25,6 +34,9 @@ export async function GET(
     const { data, error } = await insforge.storage.from(bucket).download(objectKey);
 
     if (error || !data) {
+      if (FALLBACK_URLS[objectKey]) {
+        return NextResponse.redirect(FALLBACK_URLS[objectKey]);
+      }
       console.error(`Proxy download error for ${bucket}/${objectKey}:`, error);
       return new NextResponse('Not Found', { status: 404 });
     }
@@ -39,6 +51,9 @@ export async function GET(
       },
     });
   } catch (err: any) {
+    if (FALLBACK_URLS[objectKey]) {
+      return NextResponse.redirect(FALLBACK_URLS[objectKey]);
+    }
     console.error(`Proxy exception for ${bucket}/${objectKey}:`, err);
     return new NextResponse('Internal Server Error', { status: 500 });
   }

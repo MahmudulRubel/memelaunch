@@ -117,6 +117,7 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
                 src={resolveStorageUrl(weeklyPick.thumbnail_url)}
                 alt={weeklyPick.name}
                 fill
+                unoptimized
                 sizes="(max-width: 1024px) 100vw, 384px"
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
                 priority
@@ -235,6 +236,7 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
                       src={resolveStorageUrl(tpl.thumbnail_url)}
                       alt={tpl.name}
                       fill
+                      unoptimized
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
@@ -335,6 +337,7 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
                 src={resolveStorageUrl(previewTemplate.thumbnail_url)}
                 alt={previewTemplate.name}
                 fill
+                unoptimized
                 sizes="(max-width: 1024px) 100vw, 512px"
                 className="object-cover"
               />
