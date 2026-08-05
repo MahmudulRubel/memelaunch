@@ -472,10 +472,21 @@ function LaunchForm() {
 
     } catch (err: any) {
       console.error('Image generation error:', err);
+      const isCreditLimit = err.message?.toLowerCase().includes('credit limit') || err.message?.toLowerCase().includes('quota');
+
+      const friendlyMessage = isCreditLimit
+        ? 'AI Image Credit limit reached. Switched to template mode — you can choose a template or upload a custom image.'
+        : (err.message || 'Failed to generate image. Please try again.');
+
       setFormErrors((prev) => ({
         ...prev,
-        meme: err.message || 'Failed to generate image. Please try again.',
+        meme: friendlyMessage,
       }));
+
+      // Fallback to template mode if no custom preview exists
+      if (!memePreview) {
+        setImageSource('template');
+      }
     } finally {
       setIsGeneratingImage(false);
     }
