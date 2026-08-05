@@ -4,8 +4,10 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
-import { resolveStorageUrl } from '@/lib/insforge';
-import { Menu, X, LogOut, User, Plus, Compass, Trophy, Settings } from 'lucide-react';
+import { resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
+import { getUserPoints } from '@/lib/points';
+import { EarnPointsModal } from '@/components/points/earn-points-modal';
+import { Menu, X, LogOut, User, Plus, Compass, Trophy, Settings, Zap } from 'lucide-react';
 
 export function Navigation() {
   const pathname = usePathname();
@@ -14,6 +16,17 @@ export function Navigation() {
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [userPoints, setUserPoints] = useState(0);
+  const [isPointsModalOpen, setIsPointsModalOpen] = useState(false);
+
+  React.useEffect(() => {
+    if (!user) return;
+    async function fetchPoints() {
+      const pts = await getUserPoints(user!.id);
+      setUserPoints(pts);
+    }
+    fetchPoints();
+  }, [user, pathname]);
 
   const handleSignOut = async () => {
     const { error } = await signOut();
@@ -84,6 +97,16 @@ export function Navigation() {
             ) : user ? (
               // Authenticated View
               <div className="flex items-center gap-4">
+                {/* Points Counter Pill */}
+                <button
+                  onClick={() => setIsPointsModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900 border-2 border-black rounded-xl text-xs font-black uppercase text-[#ffe600] hover:bg-[#ffe600] hover:text-zinc-950 shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+                  title="Click to view and earn points"
+                >
+                  <Zap className="h-4 w-4 fill-[#ffe600] text-[#ffe600] hover:fill-zinc-950" />
+                  <span>{userPoints} Pts</span>
+                </button>
+
                 {/* Submit / Launch Button */}
                 <Link
                   href="/launch"
@@ -99,7 +122,7 @@ export function Navigation() {
                     onClick={() => setDropdownOpen(!dropdownOpen)}
                     className="flex items-center gap-2 p-1 bg-zinc-900 border-2 border-black rounded-full hover:bg-zinc-800 transition-all shadow-brutal-sm focus:outline-none"
                   >
-                    <div className="h-8 w-8 rounded-full bg-[#ffe600] border border-black flex items-center justify-center text-zinc-950 text-sm font-black overflow-hidden">
+                    <div className={`h-8 w-8 rounded-full border border-black flex items-center justify-center text-sm font-black overflow-hidden ${user.profile?.avatar_url ? 'bg-[#ffe600]' : getAvatarGradient(user.profile?.name || user.email)}`}>
                       {user.profile?.avatar_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img 
@@ -108,7 +131,7 @@ export function Navigation() {
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        user.profile?.name ? user.profile.name[0].toUpperCase() : user.email[0].toUpperCase()
+                        <span>{user.profile?.name ? user.profile.name[0].toUpperCase() : user.email[0].toUpperCase()}</span>
                       )}
                     </div>
                   </button>
@@ -263,6 +286,13 @@ export function Navigation() {
           </div>
         </div>
       )}
+
+      {/* Earn Points Modal Popup */}
+      <EarnPointsModal
+        isOpen={isPointsModalOpen}
+        onClose={() => setIsPointsModalOpen(false)}
+        onPointsUpdated={(newPts) => setUserPoints(newPts)}
+      />
     </header>
   );
 }
