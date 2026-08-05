@@ -98,17 +98,20 @@ Output MUST be strictly JSON format matching this structure:
     {
       "headline": "Short punchy meme idea name",
       "textAbove": "TOP MEME CAPTION IN UPPERCASE",
-      "textBelow": "BOTTOM MEME CAPTION IN UPPERCASE"
+      "textBelow": "BOTTOM MEME CAPTION IN UPPERCASE",
+      "imagePrompt": "A vivid comic/cartoon illustration description for generating a background meme image for this product"
     },
     {
       "headline": "Second meme concept",
       "textAbove": "TOP CAPTION",
-      "textBelow": "BOTTOM CAPTION"
+      "textBelow": "BOTTOM CAPTION",
+      "imagePrompt": "Detailed visual description of background meme image"
     },
     {
       "headline": "Third meme concept",
       "textAbove": "TOP CAPTION",
-      "textBelow": "BOTTOM CAPTION"
+      "textBelow": "BOTTOM CAPTION",
+      "imagePrompt": "Detailed visual description of background meme image"
     }
   ]
 }`;
