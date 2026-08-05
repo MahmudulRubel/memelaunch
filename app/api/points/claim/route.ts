@@ -25,7 +25,7 @@ async function calculateUserTotalPoints(userId: string): Promise<number> {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { userId, taskKey, amount, actionType } = body;
+    const { userId, taskKey, amount, actionType, handle, openedAt } = body;
 
     if (!userId || !taskKey || typeof amount !== 'number') {
       return NextResponse.json(
@@ -34,7 +34,38 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Check if task exists in user_completed_tasks lock table
+    // Anti-Fraud Layer 1: Validate social handle for social tasks
+    const isSocialTask = taskKey.startsWith('follow_') || taskKey.startsWith('share_');
+    let cleanHandle = (handle || '').trim();
+
+    if (isSocialTask) {
+      if (!cleanHandle || cleanHandle.length < 2) {
+        return NextResponse.json(
+          { success: false, message: 'Please enter a valid social handle (e.g. @username) as proof of action.' },
+          { status: 400 }
+        );
+      }
+      if (!cleanHandle.startsWith('@')) {
+        cleanHandle = `@${cleanHandle}`;
+      }
+    }
+
+    // Anti-Fraud Layer 2: Enforce 40-second minimum dwell time
+    if (isSocialTask && typeof openedAt === 'number') {
+      const elapsedSeconds = Math.floor((Date.now() - openedAt) / 1000);
+      if (elapsedSeconds < 40) {
+        const remaining = 40 - elapsedSeconds;
+        return NextResponse.json(
+          {
+            success: false,
+            message: `⏳ Please spend at least 40 seconds on the social page before claiming. Try again in ${remaining}s.`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Anti-Fraud Layer 3: One-Time Lifetime Lock Check in user_completed_tasks
     const { data: existingTask } = await insforgeAdmin.database
       .from('user_completed_tasks')
       .select('id')
@@ -42,7 +73,7 @@ export async function POST(req: NextRequest) {
       .eq('task_key', taskKey)
       .limit(1);
 
-    // 2. Check if point transaction already exists for this task
+    // Check if point transaction already exists
     const { data: existingTx } = await insforgeAdmin.database
       .from('point_transactions')
       .select('id')
@@ -53,20 +84,22 @@ export async function POST(req: NextRequest) {
     const hasCompletedTask = existingTask && existingTask.length > 0;
     const hasRecordedTx = existingTx && existingTx.length > 0;
 
-    // Case A: Task lock existed BUT point transaction was missing (Self-healing repair)
+    const auditRef = isSocialTask ? `${taskKey}:${cleanHandle}` : taskKey;
+
+    // Self-healing repair if task lock existed but points transaction failed to write
     if (hasCompletedTask && !hasRecordedTx) {
-      console.log(`🔧 Self-healing missing point transaction for task ${taskKey} (user: ${userId})...`);
+      console.log(`🔧 Self-healing missing transaction for task ${taskKey} (user: ${userId}, handle: ${cleanHandle})...`);
       await insforgeAdmin.database.from('point_transactions').insert([
         {
           user_id: userId,
           amount,
           action_type: actionType || taskKey,
-          reference_id: taskKey,
+          reference_id: auditRef,
         },
       ]);
     }
 
-    // Case B: Task lock did NOT exist -> Insert lock and transaction
+    // New task claim
     if (!hasCompletedTask) {
       await insforgeAdmin.database
         .from('user_completed_tasks')
@@ -78,31 +111,29 @@ export async function POST(req: NextRequest) {
             user_id: userId,
             amount,
             action_type: actionType || taskKey,
-            reference_id: taskKey,
+            reference_id: auditRef,
           },
         ]);
       }
     }
 
-    // 3. Recalculate true point balance from all point_transactions
+    // Recalculate true point balance from all point_transactions
     const updatedTotalPoints = await calculateUserTotalPoints(userId);
 
-    // 4. Update public.users.points balance
+    // Update public.users.points balance
     await insforgeAdmin.database
       .from('users')
       .update({ points: updatedTotalPoints })
       .eq('id', userId);
 
-    // If points were repaired or awarded now:
     if (!hasRecordedTx || !hasCompletedTask) {
       return NextResponse.json({
         success: true,
         points: updatedTotalPoints,
-        message: `🎉 Earned +${amount} points!`,
+        message: `🎉 Verified ${cleanHandle}! +${amount} points awarded!`,
       });
     }
 
-    // If task and points transaction were both already present:
     return NextResponse.json({
       success: true,
       points: updatedTotalPoints,

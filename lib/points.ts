@@ -1,4 +1,5 @@
 import { insforge } from '@/lib/insforge';
+import { triggerRewardCelebration } from '@/components/points/reward-toast';
 
 export interface PointTransaction {
   id: string;
@@ -63,7 +64,9 @@ export async function claimSocialTask(
   userId: string,
   taskKey: string,
   amount: number,
-  actionType: string
+  actionType: string,
+  handle?: string,
+  openedAt?: number
 ): Promise<{ success: boolean; points: number; message: string }> {
   if (!userId || !taskKey) {
     return { success: false, points: 0, message: 'Invalid parameters' };
@@ -73,7 +76,7 @@ export async function claimSocialTask(
     const res = await fetch('/api/points/claim', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, taskKey, amount, actionType }),
+      body: JSON.stringify({ userId, taskKey, amount, actionType, handle, openedAt }),
     });
 
     const data = await res.json();
@@ -92,6 +95,8 @@ export async function claimSocialTask(
   }
 }
 
+}
+
 /**
  * Award +1 point for liking a product (0 pts for own product, max 1 per launch).
  */
@@ -103,33 +108,26 @@ export async function rewardLike(
   if (!userId || !launchId || userId === launchOwnerId) return;
 
   try {
-    // Check if already awarded for this launch
-    const { data: existing } = await insforge.database
-      .from('point_transactions')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('action_type', 'like_product')
-      .eq('reference_id', launchId)
-      .limit(1);
-
-    if (existing && existing.length > 0) return;
-
-    // Log transaction
-    await insforge.database.from('point_transactions').insert([
-      {
-        user_id: userId,
+    const taskKey = `like_${launchId}`;
+    const res = await fetch('/api/points/claim', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        taskKey,
         amount: 1,
-        action_type: 'like_product',
-        reference_id: launchId,
-      },
-    ]);
+        actionType: 'like_product',
+      }),
+    });
 
-    // Update user balance
-    const currentPoints = await getUserPoints(userId);
-    await insforge.database
-      .from('users')
-      .update({ points: currentPoints + 1 })
-      .eq('id', userId);
+    const data = await res.json();
+    if (data.success && !data.message?.includes('already been completed')) {
+      triggerRewardCelebration({
+        amount: 1,
+        message: 'Product Liked! +1 Point Awarded',
+        type: 'like',
+      });
+    }
   } catch (err) {
     console.error('Error rewarding like:', err);
   }
@@ -142,12 +140,13 @@ export async function revokeLike(userId: string, launchId: string): Promise<void
   if (!userId || !launchId) return;
 
   try {
+    const taskKey = `like_${launchId}`;
     const { data: existing } = await insforge.database
       .from('point_transactions')
       .select('id')
       .eq('user_id', userId)
       .eq('action_type', 'like_product')
-      .eq('reference_id', launchId)
+      .eq('reference_id', taskKey)
       .limit(1);
 
     if (!existing || existing.length === 0) return;
@@ -158,7 +157,7 @@ export async function revokeLike(userId: string, launchId: string): Promise<void
         user_id: userId,
         amount: -1,
         action_type: 'revoke_like_product',
-        reference_id: launchId,
+        reference_id: taskKey,
       },
     ]);
 
@@ -188,33 +187,26 @@ export async function rewardComment(
   if (!commentText || commentText.trim().length < 5) return;
 
   try {
-    // Check if already awarded comment points for this product
-    const { data: existing } = await insforge.database
-      .from('point_transactions')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('action_type', 'comment_product')
-      .eq('reference_id', launchId)
-      .limit(1);
-
-    if (existing && existing.length > 0) return;
-
-    // Log transaction
-    await insforge.database.from('point_transactions').insert([
-      {
-        user_id: userId,
+    const taskKey = `comment_${launchId}`;
+    const res = await fetch('/api/points/claim', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        taskKey,
         amount: 2,
-        action_type: 'comment_product',
-        reference_id: launchId,
-      },
-    ]);
+        actionType: 'comment_product',
+      }),
+    });
 
-    // Update user balance
-    const currentPoints = await getUserPoints(userId);
-    await insforge.database
-      .from('users')
-      .update({ points: currentPoints + 2 })
-      .eq('id', userId);
+    const data = await res.json();
+    if (data.success && !data.message?.includes('already been completed')) {
+      triggerRewardCelebration({
+        amount: 2,
+        message: 'Comment Posted! +2 Points Awarded',
+        type: 'comment',
+      });
+    }
   } catch (err) {
     console.error('Error rewarding comment points:', err);
   }
