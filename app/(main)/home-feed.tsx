@@ -196,80 +196,69 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-8 animate-in fade-in duration-300 relative">
+      {/* Background ambient blurs behind Hero */}
+      <div className="absolute -top-20 left-1/4 w-[500px] h-[500px] bg-lime-400/5 rounded-full blur-[120px] pointer-events-none -z-10" />
+      <div className="absolute -top-10 right-1/4 w-[400px] h-[400px] bg-rose-500/5 rounded-full blur-[100px] pointer-events-none -z-10" />
+
       {/* Hero Section */}
-      <section className="relative overflow-hidden rounded-[32px] border border-zinc-800/80 bg-gradient-to-br from-zinc-900/40 to-zinc-950 p-8 md:p-12 text-center md:text-left shadow-2xl">
-        <div className="absolute top-0 right-0 -mt-12 -mr-12 w-80 h-80 bg-lime-400/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 -mb-12 -ml-12 w-80 h-80 bg-cyan-400/5 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="relative max-w-2xl space-y-5">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900/80 border border-zinc-800 text-xs font-mono text-lime-400">
-            <Sparkles className="h-3 w-3 animate-pulse text-lime-400" />
-            <span>Where SaaS Meets Shitposting</span>
+      <section className="relative overflow-hidden rounded-3xl border-4 border-black bg-zinc-950 p-8 md:p-12 text-center flex flex-col items-center justify-center shadow-brutal-lg">
+        <div className="relative max-w-2xl flex flex-col items-center space-y-4">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-900 border-2 border-black text-xs font-black text-[#ffe600] shadow-brutal-sm">
+            <Sparkles className="h-4 w-4 text-[#ffe600]" />
+            <span className="tracking-wider uppercase">PITCH WITH MEMES, NOT SLIDE DECKS</span>
           </div>
           
-          <h1 className="font-impact text-4xl md:text-6xl uppercase tracking-tight text-zinc-50 leading-tight">
-            SHITPOST YOUR WAY <span className="text-lime-400">TO PRODUCT-MARKET FIT.</span>
+          <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight text-zinc-50 leading-tight">
+            Launch your Meme.
           </h1>
+
+          <p className="font-extrabold text-[#ffe600] relative inline-block text-2xl sm:text-3xl mt-1">
+            Don't just build → Get discovered
+            <svg className="text-[#ffe600] pointer-events-none absolute -bottom-2 left-0 h-3 w-full" viewBox="0 0 320 14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M3 9 C 60 2, 120 12, 180 6 S 280 11, 317 4"></path>
+            </svg>
+          </p>
           
-          <p className="text-zinc-400 text-base md:text-lg max-w-lg leading-relaxed">
-            Ditch the boring 500-word launch pitches that nobody reads. On MemeLaunch, your product is a single meme. If your meme is fire, they'll open the hood to find a clean, high-fidelity landing page with specs, pricing, and zero corporate fluff.
+          <p className="text-zinc-300 text-sm sm:text-base max-w-lg leading-relaxed font-medium pt-2">
+            Reach thousands of founders & developers with pure humor. If your SaaS was a meme, what would it be? The ultimate arena where builders pitch and community upvotes.
           </p>
 
-          <div className="pt-4 flex flex-wrap items-center justify-center md:justify-start gap-4">
-            {user ? (
-              <Link
-                href="/launch"
-                className="px-6 py-3 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-extrabold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_20px_rgba(163,230,53,0.15)] hover:shadow-[0_0_35px_rgba(163,230,53,0.35)] active:scale-95 flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4 stroke-[3]" />
-                <span>Launch a Shitpost</span>
-              </Link>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="px-6 py-3 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-extrabold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_20px_rgba(163,230,53,0.15)] hover:shadow-[0_0_35px_rgba(163,230,53,0.35)] active:scale-95 flex items-center gap-2"
-                >
-                  <Rocket className="h-4 w-4" />
-                  <span>Enter the Arena</span>
-                </Link>
-                <Link
-                  href="/login"
-                  className="px-6 py-3 bg-zinc-900/60 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-zinc-50 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors"
-                >
-                  Tell Me More
-                </Link>
-              </>
-            )}
-          </div>
+          {/* Quick Launch URL Form */}
+          <form className="border-2 border-black bg-zinc-900 shadow-brutal rounded-2xl mt-4 flex w-full max-w-md items-center gap-2 p-2" onSubmit={(e) => { e.preventDefault(); }}>
+            <span aria-hidden="true" className="text-zinc-400 pl-2">🔗</span>
+            <input type="url" placeholder="yourproduct.com" className="text-zinc-100 placeholder:text-zinc-500 min-w-0 flex-1 bg-transparent px-2 py-1 text-sm outline-none font-medium" />
+            <Link href={user ? "/launch" : "/login"} className="rounded-xl border-2 border-black bg-[#ffe600] text-zinc-950 hover:-translate-x-0.5 hover:-translate-y-0.5 shrink-0 px-4 py-2 text-xs font-black uppercase tracking-wider transition-all shadow-brutal-sm inline-flex items-center gap-1">
+              <span>Launch</span>
+            </Link>
+          </form>
         </div>
       </section>
 
       {/* Feed Filter & Search Row */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-zinc-800/80 pb-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-zinc-950 border-2 border-black p-4 rounded-2xl shadow-brutal">
         {/* Tabs */}
-        <div className="flex items-center gap-1 bg-zinc-900/60 border border-zinc-800/60 p-1 rounded-xl w-fit">
+        <div className="flex items-center gap-2 bg-zinc-900 border-2 border-black p-1.5 rounded-xl w-fit">
           <button
             onClick={() => setActiveTab('trending')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all border-2 border-black cursor-pointer ${
               activeTab === 'trending'
-                ? 'bg-lime-400 text-zinc-950 shadow-md font-extrabold'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-[#ffe600] text-zinc-950 shadow-brutal-sm'
+                : 'bg-transparent text-zinc-300 hover:text-white border-transparent'
             }`}
           >
-            <TrendingUp className="h-3.5 w-3.5" />
+            <TrendingUp className="h-4 w-4" />
             <span>Trending</span>
           </button>
           <button
             onClick={() => setActiveTab('new')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all border-2 border-black cursor-pointer ${
               activeTab === 'new'
-                ? 'bg-lime-400 text-zinc-950 shadow-md font-extrabold'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-[#ffe600] text-zinc-950 shadow-brutal-sm'
+                : 'bg-transparent text-zinc-300 hover:text-white border-transparent'
             }`}
           >
-            <Clock className="h-3.5 w-3.5" />
+            <Clock className="h-4 w-4" />
             <span>Fresh</span>
           </button>
         </div>
@@ -278,18 +267,18 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full md:w-auto">
           {/* Search bar */}
           <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search products, memes..."
-              className="w-full pl-10 pr-4 py-2 bg-zinc-900/50 border border-zinc-800/80 rounded-xl text-sm focus:outline-none focus:border-lime-500/50 text-zinc-100 placeholder-zinc-500 transition-colors"
+              className="w-full pl-10 pr-4 py-2 bg-zinc-900 border-2 border-black rounded-xl text-sm focus:outline-none focus:border-[#ffe600] text-zinc-100 placeholder-zinc-500 shadow-brutal-sm transition-all font-medium"
             />
           </div>
 
-          <div className="text-zinc-500 text-xs font-mono hidden sm:block">
-            Weekly rotations reset every Sunday. Don't let your memes be dreams.
+          <div className="text-zinc-400 text-xs font-mono font-bold uppercase hidden sm:block">
+            ◇ Weekly Rotations
           </div>
         </div>
       </div>
@@ -312,12 +301,12 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
           
           <div className="space-y-2">
             <h3 className="text-2xl font-extrabold text-zinc-100 tracking-tight">
-              {searchQuery ? 'Well, this is dry...' : 'The arena is dead quiet.'}
+              {searchQuery ? 'Well, this is dry...' : 'Did the founders go back to writing slide decks?'}
             </h3>
             <p className="text-zinc-400 text-sm max-w-md">
               {searchQuery
-                ? `No launches match "${searchQuery}". Maybe search for something that actually exists?`
-                : 'No memes have been launched yet. Be the absolute legend to kick off the week with some elite slop!'}
+                ? `No memes found matching "${searchQuery}". Maybe search for something that actually exists?`
+                : 'No memes have been launched yet. Be the absolute legend to kick off the week with some elite meme slop!'}
             </p>
           </div>
 
