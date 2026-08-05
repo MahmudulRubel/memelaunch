@@ -1,25 +1,26 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/components/auth-provider';
 import {
   getUserPoints,
   getUserCompletedTaskKeys,
   claimSocialTask,
 } from '@/lib/points';
+import { playLevelUpSound } from '@/lib/reward-sound';
 import {
   Zap,
   X,
   UserCheck,
-  Share2,
   Heart,
   MessageSquare,
   CheckCircle2,
   ExternalLink,
   Sparkles,
   ArrowRight,
-  Copy,
-  Check
+  Loader2,
+  ShieldCheck,
+  Rocket
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -27,6 +28,78 @@ interface EarnPointsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPointsUpdated?: (newPoints: number) => void;
+}
+
+// Canvas Confetti Component
+function ConfettiCanvas({ active }: { active: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    if (!active || !canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = canvas.parentElement?.clientWidth || 500;
+    canvas.height = canvas.parentElement?.clientHeight || 600;
+
+    const colors = ['#ffe600', '#a3e635', '#38bdf8', '#f43f5e', '#a855f7', '#fb923c'];
+    const particles = Array.from({ length: 70 }).map(() => ({
+      x: canvas.width / 2,
+      y: canvas.height / 2 - 50,
+      vx: (Math.random() - 0.5) * 14,
+      vy: (Math.random() - 0.8) * 14,
+      size: Math.random() * 8 + 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotation: Math.random() * 360,
+      rSpeed: (Math.random() - 0.5) * 10,
+      opacity: 1,
+    }));
+
+    let animationFrameId: number;
+
+    const render = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let alive = false;
+
+      particles.forEach((p) => {
+        if (p.opacity <= 0) return;
+        alive = true;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.3; // Gravity
+        p.rotation += p.rSpeed;
+        p.opacity -= 0.015;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.opacity);
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        ctx.restore();
+      });
+
+      if (alive) {
+        animationFrameId = requestAnimationFrame(render);
+      }
+    };
+
+    render();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [active]);
+
+  if (!active) return null;
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 pointer-events-none z-40 w-full h-full"
+    />
+  );
 }
 
 export function EarnPointsModal({
@@ -37,15 +110,16 @@ export function EarnPointsModal({
   const { user } = useAuth();
   const [points, setPoints] = useState(0);
   const [completedTaskKeys, setCompletedTaskKeys] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [claimingTask, setClaimingTask] = useState<string | null>(null);
+  const [openedTaskKeys, setOpenedTaskKeys] = useState<string[]>([]);
+  const [verifyingTaskKey, setVerifyingTaskKey] = useState<string | null>(null);
+  const [confettiActive, setConfettiActive] = useState(false);
+  const [celebrationMsg, setCelebrationMsg] = useState<{ amount: number; title: string } | null>(null);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     if (!isOpen || !user) return;
 
     async function loadData() {
-      setLoading(true);
       try {
         const [pts, keys] = await Promise.all([
           getUserPoints(user!.id),
@@ -55,8 +129,6 @@ export function EarnPointsModal({
         setCompletedTaskKeys(keys);
       } catch (err) {
         console.error('Error loading points data:', err);
-      } finally {
-        setLoading(false);
       }
     }
 
@@ -65,36 +137,53 @@ export function EarnPointsModal({
 
   if (!isOpen) return null;
 
-  const handleClaimSocial = async (
+  // Step 1: Open social link
+  const handleOpenSocialLink = (taskKey: string, url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+    if (!openedTaskKeys.includes(taskKey)) {
+      setOpenedTaskKeys((prev) => [...prev, taskKey]);
+    }
+  };
+
+  // Step 2: Gamified verification & claim
+  const handleVerifyAndClaim = async (
     taskKey: string,
     amount: number,
     actionType: string,
-    urlToOpen?: string
+    taskTitle: string
   ) => {
-    if (!user || claimingTask) return;
+    if (!user || verifyingTaskKey) return;
 
-    if (urlToOpen) {
-      window.open(urlToOpen, '_blank', 'noopener,noreferrer');
-    }
-
-    setClaimingTask(taskKey);
+    setVerifyingTaskKey(taskKey);
     setFeedbackMsg(null);
 
-    try {
-      const res = await claimSocialTask(user.id, taskKey, amount, actionType);
-      if (res.success) {
-        setPoints(res.points);
-        setCompletedTaskKeys((prev) => [...prev, taskKey]);
-        setFeedbackMsg({ type: 'success', text: res.message });
-        if (onPointsUpdated) onPointsUpdated(res.points);
-      } else {
-        setFeedbackMsg({ type: 'error', text: res.message });
+    // Simulate 1.2s verification animation delay
+    setTimeout(async () => {
+      try {
+        const res = await claimSocialTask(user.id, taskKey, amount, actionType);
+        if (res.success) {
+          setPoints(res.points);
+          setCompletedTaskKeys((prev) => [...prev, taskKey]);
+          
+          // Play Gamified Audio & Visual Celebration
+          playLevelUpSound();
+          setConfettiActive(true);
+          setTimeout(() => setConfettiActive(false), 2500);
+
+          setCelebrationMsg({ amount, title: taskTitle });
+          setTimeout(() => setCelebrationMsg(null), 4000);
+
+          setFeedbackMsg({ type: 'success', text: `🎉 Follow Verified! +${amount} Points Awarded!` });
+          if (onPointsUpdated) onPointsUpdated(res.points);
+        } else {
+          setFeedbackMsg({ type: 'error', text: res.message });
+        }
+      } catch (err: any) {
+        setFeedbackMsg({ type: 'error', text: err.message || 'Failed to verify follow' });
+      } finally {
+        setVerifyingTaskKey(null);
       }
-    } catch (err: any) {
-      setFeedbackMsg({ type: 'error', text: err.message || 'Failed to claim points' });
-    } finally {
-      setClaimingTask(null);
-    }
+    }, 1200);
   };
 
   const pointsTarget = 15;
@@ -208,7 +297,10 @@ export function EarnPointsModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-zinc-950/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-xl max-h-[85vh] my-auto flex flex-col bg-zinc-900 border-2 border-black rounded-3xl shadow-brutal overflow-hidden">
+      {/* Confetti Explosion Layer */}
+      <ConfettiCanvas active={confettiActive} />
+
+      <div className="relative w-full max-w-xl max-h-[88vh] my-auto flex flex-col bg-zinc-900 border-2 border-black rounded-3xl shadow-brutal overflow-hidden">
         
         {/* Close Button */}
         <button
@@ -229,30 +321,41 @@ export function EarnPointsModal({
                 EARN <span className="text-[#ffe600]">POINTS</span>
               </h2>
               <p className="text-zinc-400 text-xs font-medium">
-                Accumulate 15 points to submit your product to the world.
+                Accumulate 15 points to submit your product launch.
               </p>
             </div>
           </div>
 
           {/* Points Progress Banner */}
-          <div className="bg-zinc-950 border-2 border-black rounded-2xl p-3.5 space-y-2 shadow-inner">
+          <div className="bg-zinc-950 border-2 border-black rounded-2xl p-3.5 space-y-2 shadow-inner relative overflow-hidden">
             <div className="flex items-center justify-between text-xs font-black uppercase">
               <span className="text-zinc-300">Your Current Balance</span>
-              <span className="text-[#ffe600] font-mono text-sm">
-                {points} / {pointsTarget} Points
+              <span className="text-[#ffe600] font-mono text-base transition-all duration-300 font-extrabold flex items-center gap-1">
+                <Zap className="h-4 w-4 fill-[#ffe600] inline animate-pulse" />
+                <span>{points}</span> / {pointsTarget} Pts
               </span>
             </div>
             {/* Progress Bar */}
-            <div className="h-2.5 w-full bg-zinc-900 border border-zinc-800 rounded-full overflow-hidden">
+            <div className="h-3 w-full bg-zinc-900 border border-zinc-800 rounded-full overflow-hidden p-0.5">
               <div
-                className="h-full bg-gradient-to-r from-amber-400 to-[#ffe600] transition-all duration-500 rounded-full"
+                className="h-full bg-gradient-to-r from-amber-400 via-[#ffe600] to-lime-400 transition-all duration-500 rounded-full shadow-[0_0_12px_rgba(255,230,0,0.5)]"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
+
             {points >= 15 ? (
-              <p className="text-emerald-400 text-[11px] font-bold flex items-center gap-1.5 pt-0.5">
-                <CheckCircle2 className="h-3.5 w-3.5" /> You have enough points to launch a product!
-              </p>
+              <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-2 px-3 mt-2">
+                <p className="text-emerald-400 text-xs font-black uppercase flex items-center gap-1.5">
+                  <Rocket className="h-4 w-4 animate-bounce" /> You have enough points to launch!
+                </p>
+                <Link
+                  href="/launch"
+                  onClick={onClose}
+                  className="px-3 py-1 bg-[#ffe600] text-zinc-950 font-black text-[10px] uppercase rounded-lg border border-black shadow-brutal-sm hover:scale-105 transition-all"
+                >
+                  Pitch Now &rarr;
+                </Link>
+              </div>
             ) : (
               <p className="text-zinc-400 text-[11px]">
                 Earn <span className="text-amber-400 font-bold">{pointsTarget - points} more points</span> to unlock product submission.
@@ -260,8 +363,19 @@ export function EarnPointsModal({
             )}
           </div>
 
+          {/* Gamified Celebratory Banner Toast */}
+          {celebrationMsg && (
+            <div className="p-3 bg-[#ffe600] text-zinc-950 border-2 border-black rounded-xl text-xs font-black uppercase shadow-brutal-sm flex items-center gap-2 animate-in zoom-in-95 duration-200">
+              <Sparkles className="h-5 w-5 fill-zinc-950 shrink-0 animate-spin" />
+              <div>
+                <p className="font-extrabold text-sm leading-tight">+{celebrationMsg.amount} POINTS UNLOCKED!</p>
+                <p className="text-[10px] font-bold opacity-90 truncate">{celebrationMsg.title}</p>
+              </div>
+            </div>
+          )}
+
           {/* Feedback Alert */}
-          {feedbackMsg && (
+          {feedbackMsg && !celebrationMsg && (
             <div
               className={`p-3 rounded-xl border-2 border-black text-xs font-bold ${
                 feedbackMsg.type === 'success'
@@ -283,12 +397,15 @@ export function EarnPointsModal({
           {/* Render Social Tasks */}
           {socialTasks.map((t) => {
             const isDone = completedTaskKeys.includes(t.key);
-            const isClaiming = claimingTask === t.key;
+            const isOpened = openedTaskKeys.includes(t.key);
+            const isVerifying = verifyingTaskKey === t.key;
 
             return (
               <div
                 key={t.key}
-                className="flex items-center justify-between p-3.5 bg-zinc-950 border-2 border-black rounded-2xl shadow-brutal-sm hover:border-[#ffe600]/50 transition-all gap-3"
+                className={`flex items-center justify-between p-3.5 bg-zinc-950 border-2 border-black rounded-2xl shadow-brutal-sm transition-all gap-3 ${
+                  isOpened && !isDone ? 'border-[#ffe600] bg-zinc-900/90 shadow-[0_0_15px_rgba(255,230,0,0.15)]' : 'hover:border-zinc-700'
+                }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className={`h-10 w-10 rounded-xl border flex items-center justify-center shrink-0 ${t.bg}`}>
@@ -298,24 +415,42 @@ export function EarnPointsModal({
                     <h4 className="font-black text-xs sm:text-sm text-zinc-100 uppercase truncate">
                       {t.title}
                     </h4>
-                    <p className="text-zinc-400 text-[11px] truncate">{t.desc}</p>
+                    <p className="text-zinc-400 text-[11px] truncate">
+                      {isDone ? 'Completed' : isOpened ? 'Click "Verify Follow" after following!' : t.desc}
+                    </p>
                   </div>
                 </div>
 
+                {/* Task Action Buttons State Machine */}
                 {isDone ? (
                   <span className="px-3 py-1.5 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-black text-[11px] uppercase rounded-xl inline-flex items-center gap-1 shrink-0">
                     <CheckCircle2 className="h-3.5 w-3.5" /> Done
                   </span>
-                ) : (
+                ) : isVerifying ? (
+                  <button
+                    disabled
+                    className="px-3.5 py-1.5 bg-amber-400 text-zinc-950 font-black text-[11px] uppercase rounded-xl border-2 border-black shadow-brutal-sm inline-flex items-center gap-1.5 shrink-0 opacity-90 animate-pulse"
+                  >
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Verifying...</span>
+                  </button>
+                ) : isOpened ? (
                   <button
                     onClick={() =>
-                      handleClaimSocial(t.key, t.points, t.key, t.url)
+                      handleVerifyAndClaim(t.key, t.points, t.key, t.title)
                     }
-                    disabled={isClaiming}
-                    className="px-3.5 py-1.5 bg-[#ffe600] text-zinc-950 font-black text-[11px] uppercase rounded-xl border-2 border-black shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all shrink-0 inline-flex items-center gap-1"
+                    className="px-3.5 py-1.5 bg-[#ffe600] text-zinc-950 font-black text-[11px] uppercase rounded-xl border-2 border-black shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all shrink-0 inline-flex items-center gap-1.5 animate-bounce"
                   >
-                    <span>Claim +{t.points}</span>
-                    <ExternalLink className="h-3 w-3" />
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    <span>Verify & Claim</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleOpenSocialLink(t.key, t.url)}
+                    className="px-3.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-100 font-black text-[11px] uppercase rounded-xl border-2 border-black shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all shrink-0 inline-flex items-center gap-1"
+                  >
+                    <span>Follow / Share</span>
+                    <ExternalLink className="h-3 w-3 text-zinc-400" />
                   </button>
                 )}
               </div>

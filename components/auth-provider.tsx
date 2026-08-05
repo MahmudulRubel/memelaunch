@@ -35,7 +35,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data, error } = await insforge.auth.getCurrentUser();
       if (error) {
-        const isNoToken = error.message?.toLowerCase().includes('refresh token');
+        const isNoToken = 
+          error.message?.toLowerCase().includes('refresh token') ||
+          error.message?.toLowerCase().includes('csrf') ||
+          error.message?.toLowerCase().includes('jwt') ||
+          error.message?.toLowerCase().includes('unauthorized');
+
         const isNetworkOrTimeout = 
           error.statusCode === 0 || 
           error.statusCode === 408 || 
@@ -46,7 +51,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (!isNoToken && !isNetworkOrTimeout) {
           console.error('Error fetching current user:', error);
-          // Clear invalid tokens from SDK without awaiting to prevent blocking the UI
+          insforge.auth.signOut().catch(() => {});
+        } else if (isNoToken) {
+          // Silently clean up stale or invalid CSRF / session tokens
           insforge.auth.signOut().catch(() => {});
         } else if (isNetworkOrTimeout) {
           console.warn('Network or timeout error during auth check. Retaining local session state.');
@@ -56,7 +63,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(data?.user as AuthUser | null);
       }
     } catch (err: any) {
-      const isNoToken = err?.message?.toLowerCase().includes('refresh token');
+      const isNoToken = 
+        err?.message?.toLowerCase().includes('refresh token') ||
+        err?.message?.toLowerCase().includes('csrf') ||
+        err?.message?.toLowerCase().includes('jwt') ||
+        err?.message?.toLowerCase().includes('unauthorized');
+
       const isNetworkOrTimeout = 
         err?.statusCode === 0 || 
         err?.statusCode === 408 || 
@@ -67,6 +79,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!isNoToken && !isNetworkOrTimeout) {
         console.error('Auth check failed:', err);
+        insforge.auth.signOut().catch(() => {});
+      } else if (isNoToken) {
         insforge.auth.signOut().catch(() => {});
       } else if (isNetworkOrTimeout) {
         console.warn('Network or timeout error caught during auth check:', err.message);

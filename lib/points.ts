@@ -70,43 +70,17 @@ export async function claimSocialTask(
   }
 
   try {
-    const currentPoints = await getUserPoints(userId);
+    const res = await fetch('/api/points/claim', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, taskKey, amount, actionType }),
+    });
 
-    // 1. Attempt task lock insertion
-    const { error: taskError } = await insforge.database
-      .from('user_completed_tasks')
-      .insert([{ user_id: userId, task_key: taskKey }]);
-
-    if (taskError) {
-      // Task already completed or duplicate violation
-      return {
-        success: false,
-        points: currentPoints,
-        message: 'This task has already been completed!',
-      };
-    }
-
-    // 2. Insert point transaction audit entry
-    await insforge.database.from('point_transactions').insert([
-      {
-        user_id: userId,
-        amount,
-        action_type: actionType,
-        reference_id: taskKey,
-      },
-    ]);
-
-    // 3. Update user points balance
-    const newPoints = currentPoints + amount;
-    await insforge.database
-      .from('users')
-      .update({ points: newPoints })
-      .eq('id', userId);
-
+    const data = await res.json();
     return {
-      success: true,
-      points: newPoints,
-      message: `🎉 Earned +${amount} points!`,
+      success: !!data.success,
+      points: typeof data.points === 'number' ? data.points : 0,
+      message: data.message || 'Points process finished.',
     };
   } catch (err: any) {
     console.error('Error claiming social task:', err);
