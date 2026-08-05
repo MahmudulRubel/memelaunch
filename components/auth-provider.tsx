@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { insforge } from '@/lib/insforge';
+import { RewardToast } from '@/components/points/reward-toast';
 
 interface UserProfile {
   name: string | null;
@@ -120,6 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
+      <RewardToast />
     </AuthContext.Provider>
   );
 }

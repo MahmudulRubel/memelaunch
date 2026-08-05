@@ -20,7 +20,9 @@ import {
   ArrowRight,
   Loader2,
   ShieldCheck,
-  Rocket
+  Rocket,
+  AtSign,
+  Clock
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -111,11 +113,24 @@ export function EarnPointsModal({
   const [points, setPoints] = useState(0);
   const [completedTaskKeys, setCompletedTaskKeys] = useState<string[]>([]);
   const [openedTaskKeys, setOpenedTaskKeys] = useState<string[]>([]);
+  const [openedTimestamps, setOpenedTimestamps] = useState<Record<string, number>>({});
+  
+  // Anti-fraud handle prompt modal state
+  const [promptTask, setPromptTask] = useState<{
+    key: string;
+    amount: number;
+    actionType: string;
+    title: string;
+  } | null>(null);
+  const [handleInput, setHandleInput] = useState('');
   const [verifyingTaskKey, setVerifyingTaskKey] = useState<string | null>(null);
+  const [remainingTime, setRemainingTime] = useState<number>(0);
+
   const [confettiActive, setConfettiActive] = useState(false);
-  const [celebrationMsg, setCelebrationMsg] = useState<{ amount: number; title: string } | null>(null);
+  const [celebrationMsg, setCelebrationMsg] = useState<{ amount: number; title: string; handle: string } | null>(null);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  // Load points data when modal opens
   useEffect(() => {
     if (!isOpen || !user) return;
 
@@ -135,55 +150,102 @@ export function EarnPointsModal({
     loadData();
   }, [isOpen, user]);
 
+  // 40-second dwell timer countdown ticker
+  useEffect(() => {
+    if (!promptTask) return;
+    const openedAt = openedTimestamps[promptTask.key] || Date.now();
+
+    const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - openedAt) / 1000);
+      const left = Math.max(0, 40 - elapsed);
+      setRemainingTime(left);
+    }, 500);
+
+    const elapsedInitial = Math.floor((Date.now() - openedAt) / 1000);
+    setRemainingTime(Math.max(0, 40 - elapsedInitial));
+
+    return () => clearInterval(interval);
+  }, [promptTask, openedTimestamps]);
+
   if (!isOpen) return null;
 
-  // Step 1: Open social link
+  // Step 1: Open social link in new tab & record timestamp
   const handleOpenSocialLink = (taskKey: string, url: string) => {
+    const now = Date.now();
     window.open(url, '_blank', 'noopener,noreferrer');
     if (!openedTaskKeys.includes(taskKey)) {
       setOpenedTaskKeys((prev) => [...prev, taskKey]);
     }
+    setOpenedTimestamps((prev) => ({ ...prev, [taskKey]: now }));
   };
 
-  // Step 2: Gamified verification & claim
-  const handleVerifyAndClaim = async (
-    taskKey: string,
-    amount: number,
-    actionType: string,
-    taskTitle: string
-  ) => {
-    if (!user || verifyingTaskKey) return;
+  // Open handle prompt modal for task
+  const handleInitiateClaim = (taskKey: string, amount: number, actionType: string, title: string) => {
+    setPromptTask({ key: taskKey, amount, actionType, title });
+    setHandleInput('');
+    setFeedbackMsg(null);
+  };
 
-    setVerifyingTaskKey(taskKey);
+  // Step 2: Submit Handle Proof & Claim Points
+  const handleSubmitHandleClaim = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !promptTask || verifyingTaskKey) return;
+
+    let cleanHandle = handleInput.trim();
+    if (!cleanHandle) {
+      setFeedbackMsg({ type: 'error', text: 'Please enter your social media handle (e.g. @username).' });
+      return;
+    }
+    if (!cleanHandle.startsWith('@')) {
+      cleanHandle = `@${cleanHandle}`;
+    }
+
+    const openedAt = openedTimestamps[promptTask.key] || Date.now();
+    const elapsed = Math.floor((Date.now() - openedAt) / 1000);
+    if (elapsed < 40) {
+      setFeedbackMsg({
+        type: 'error',
+        text: `⏳ Please spend at least 40 seconds on the social page before verifying! (${40 - elapsed}s remaining)`,
+      });
+      return;
+    }
+
+    setVerifyingTaskKey(promptTask.key);
     setFeedbackMsg(null);
 
-    // Simulate 1.2s verification animation delay
-    setTimeout(async () => {
-      try {
-        const res = await claimSocialTask(user.id, taskKey, amount, actionType);
-        if (res.success) {
-          setPoints(res.points);
-          setCompletedTaskKeys((prev) => [...prev, taskKey]);
-          
-          // Play Gamified Audio & Visual Celebration
-          playLevelUpSound();
-          setConfettiActive(true);
-          setTimeout(() => setConfettiActive(false), 2500);
+    try {
+      const res = await claimSocialTask(
+        user.id,
+        promptTask.key,
+        promptTask.amount,
+        promptTask.actionType,
+        cleanHandle,
+        openedAt
+      );
 
-          setCelebrationMsg({ amount, title: taskTitle });
-          setTimeout(() => setCelebrationMsg(null), 4000);
+      if (res.success) {
+        setPoints(res.points);
+        setCompletedTaskKeys((prev) => [...prev, promptTask.key]);
+        
+        // Play Gamified Audio & Visual Celebration
+        playLevelUpSound();
+        setConfettiActive(true);
+        setTimeout(() => setConfettiActive(false), 2500);
 
-          setFeedbackMsg({ type: 'success', text: `🎉 Follow Verified! +${amount} Points Awarded!` });
-          if (onPointsUpdated) onPointsUpdated(res.points);
-        } else {
-          setFeedbackMsg({ type: 'error', text: res.message });
-        }
-      } catch (err: any) {
-        setFeedbackMsg({ type: 'error', text: err.message || 'Failed to verify follow' });
-      } finally {
-        setVerifyingTaskKey(null);
+        setCelebrationMsg({ amount: promptTask.amount, title: promptTask.title, handle: cleanHandle });
+        setTimeout(() => setCelebrationMsg(null), 4500);
+
+        setFeedbackMsg({ type: 'success', text: res.message });
+        if (onPointsUpdated) onPointsUpdated(res.points);
+        setPromptTask(null);
+      } else {
+        setFeedbackMsg({ type: 'error', text: res.message });
       }
-    }, 1200);
+    } catch (err: any) {
+      setFeedbackMsg({ type: 'error', text: err.message || 'Failed to verify claim' });
+    } finally {
+      setVerifyingTaskKey(null);
+    }
   };
 
   const pointsTarget = 15;
@@ -368,7 +430,7 @@ export function EarnPointsModal({
             <div className="p-3 bg-[#ffe600] text-zinc-950 border-2 border-black rounded-xl text-xs font-black uppercase shadow-brutal-sm flex items-center gap-2 animate-in zoom-in-95 duration-200">
               <Sparkles className="h-5 w-5 fill-zinc-950 shrink-0 animate-spin" />
               <div>
-                <p className="font-extrabold text-sm leading-tight">+{celebrationMsg.amount} POINTS UNLOCKED!</p>
+                <p className="font-extrabold text-sm leading-tight">+{celebrationMsg.amount} POINTS UNLOCKED FOR {celebrationMsg.handle}!</p>
                 <p className="text-[10px] font-bold opacity-90 truncate">{celebrationMsg.title}</p>
               </div>
             </div>
@@ -398,7 +460,6 @@ export function EarnPointsModal({
           {socialTasks.map((t) => {
             const isDone = completedTaskKeys.includes(t.key);
             const isOpened = openedTaskKeys.includes(t.key);
-            const isVerifying = verifyingTaskKey === t.key;
 
             return (
               <div
@@ -416,7 +477,7 @@ export function EarnPointsModal({
                       {t.title}
                     </h4>
                     <p className="text-zinc-400 text-[11px] truncate">
-                      {isDone ? 'Completed' : isOpened ? 'Click "Verify Follow" after following!' : t.desc}
+                      {isDone ? 'Completed (1-time lifetime claim)' : isOpened ? 'Click "Verify & Claim" to provide social proof' : t.desc}
                     </p>
                   </div>
                 </div>
@@ -426,20 +487,10 @@ export function EarnPointsModal({
                   <span className="px-3 py-1.5 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-black text-[11px] uppercase rounded-xl inline-flex items-center gap-1 shrink-0">
                     <CheckCircle2 className="h-3.5 w-3.5" /> Done
                   </span>
-                ) : isVerifying ? (
-                  <button
-                    disabled
-                    className="px-3.5 py-1.5 bg-amber-400 text-zinc-950 font-black text-[11px] uppercase rounded-xl border-2 border-black shadow-brutal-sm inline-flex items-center gap-1.5 shrink-0 opacity-90 animate-pulse"
-                  >
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    <span>Verifying...</span>
-                  </button>
                 ) : isOpened ? (
                   <button
-                    onClick={() =>
-                      handleVerifyAndClaim(t.key, t.points, t.key, t.title)
-                    }
-                    className="px-3.5 py-1.5 bg-[#ffe600] text-zinc-950 font-black text-[11px] uppercase rounded-xl border-2 border-black shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all shrink-0 inline-flex items-center gap-1.5 animate-bounce"
+                    onClick={() => handleInitiateClaim(t.key, t.points, t.key, t.title)}
+                    className="px-3.5 py-1.5 bg-[#ffe600] text-zinc-950 font-black text-[11px] uppercase rounded-xl border-2 border-black shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all shrink-0 inline-flex items-center gap-1.5 animate-pulse"
                   >
                     <ShieldCheck className="h-3.5 w-3.5" />
                     <span>Verify & Claim</span>
@@ -504,6 +555,90 @@ export function EarnPointsModal({
           </div>
 
         </div>
+
+        {/* SOCIAL HANDLE PROOF PROMPT MODAL OVERLAY */}
+        {promptTask && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/90 backdrop-blur-sm animate-in zoom-in-95 duration-150">
+            <div className="w-full max-w-md bg-zinc-900 border-2 border-black rounded-3xl p-6 shadow-brutal space-y-4">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <h3 className="font-black text-base uppercase text-zinc-100 flex items-center gap-2">
+                    <ShieldCheck className="h-5 w-5 text-[#ffe600]" />
+                    <span>Social Action Verification</span>
+                  </h3>
+                  <p className="text-xs text-zinc-400">
+                    Submit your social handle to claim +{promptTask.amount} points for <strong className="text-zinc-200">{promptTask.title}</strong>.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPromptTask(null)}
+                  className="p-1.5 text-zinc-400 hover:text-zinc-100 rounded-lg hover:bg-zinc-800"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmitHandleClaim} className="space-y-4 pt-1">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-mono uppercase text-zinc-300 font-bold block">
+                    Your Social Media Handle / Username:
+                  </label>
+                  <div className="relative">
+                    <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                    <input
+                      type="text"
+                      value={handleInput}
+                      onChange={(e) => setHandleInput(e.target.value)}
+                      placeholder="username or @username"
+                      required
+                      className="w-full pl-9 pr-4 py-2.5 bg-zinc-950 border-2 border-black rounded-xl text-xs font-mono text-zinc-100 focus:outline-none focus:border-[#ffe600] transition-colors"
+                    />
+                  </div>
+                  <span className="text-[10px] text-zinc-500 block">
+                    Required for audit log & spot-checks. Enforces 1-claim limit per account.
+                  </span>
+                </div>
+
+                {/* 40-Second Dwell Timer Status */}
+                {remainingTime > 0 ? (
+                  <div className="p-3 bg-amber-400/10 border border-amber-400/30 rounded-xl text-amber-300 text-xs font-bold flex items-center gap-2">
+                    <Clock className="h-4 w-4 animate-spin text-amber-400 shrink-0" />
+                    <span>⏳ Please spend at least 40s on the opened social page ({remainingTime}s left)</span>
+                  </div>
+                ) : null}
+
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setPromptTask(null)}
+                    className="py-2.5 bg-zinc-950 hover:bg-zinc-800 border-2 border-black text-zinc-300 font-black text-xs uppercase rounded-xl transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={verifyingTaskKey === promptTask.key || remainingTime > 0}
+                    className="py-2.5 bg-[#ffe600] disabled:bg-zinc-800 disabled:text-zinc-600 text-zinc-950 font-black text-xs uppercase rounded-xl border-2 border-black shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-1.5"
+                  >
+                    {verifyingTaskKey === promptTask.key ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Verifying...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Claim +{promptTask.amount} Pts</span>
+                        <Zap className="h-4 w-4 fill-zinc-950" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
