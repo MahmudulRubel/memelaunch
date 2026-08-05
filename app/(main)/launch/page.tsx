@@ -99,7 +99,7 @@ function LaunchForm() {
   // AI Auto-Fill & Meme Generation State
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
-  const [aiMemeIdeas, setAiMemeIdeas] = useState<Array<{ headline: string; textAbove: string; textBelow: string }>>([]);
+  const [aiMemeIdeas, setAiMemeIdeas] = useState<Array<{ headline: string; textAbove: string; textBelow: string; imagePrompt?: string }>>([]);
 
   const handleAiGenerate = async () => {
     if (!productUrl || !productUrl.trim()) {
@@ -130,6 +130,12 @@ function LaunchForm() {
         setTextAbove(data.memeIdeas[0].textAbove || '');
         setTextBelow(data.memeIdeas[0].textBelow || '');
         setCaptionPosition('both');
+
+        // Automatically trigger AI background image generation for top meme concept
+        if (data.memeIdeas[0].imagePrompt) {
+          setAiPrompt(data.memeIdeas[0].imagePrompt);
+          generateMemeImageFromPrompt(data.memeIdeas[0].imagePrompt);
+        }
       }
 
       // Clear any previous URL error
@@ -405,9 +411,9 @@ function LaunchForm() {
     setScreenshotPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Handle AI image generation
-  const handleGenerateImage = async () => {
-    if (!aiPrompt.trim() || isGeneratingImage) return;
+  // Core AI image generator from prompt string
+  const generateMemeImageFromPrompt = async (promptText: string) => {
+    if (!promptText.trim() || isGeneratingImage) return;
 
     setIsGeneratingImage(true);
     setFormErrors((prev) => {
@@ -419,7 +425,7 @@ function LaunchForm() {
     try {
       const image = await insforge.ai.images.generate({
         model: 'google/gemini-3-pro-image-preview',
-        prompt: aiPrompt.trim(),
+        prompt: promptText.trim(),
       });
 
       if (!image?.data?.[0]?.b64_json) {
@@ -462,6 +468,7 @@ function LaunchForm() {
 
       setMemeFile(file);
       setMemePreview(URL.createObjectURL(file));
+      setImageSource('ai');
 
     } catch (err: any) {
       console.error('Image generation error:', err);
@@ -472,6 +479,11 @@ function LaunchForm() {
     } finally {
       setIsGeneratingImage(false);
     }
+  };
+
+  // Handle AI image generation from manual prompt box
+  const handleGenerateImage = async () => {
+    await generateMemeImageFromPrompt(aiPrompt);
   };
 
   // Submit form handler
@@ -1009,6 +1021,10 @@ function LaunchForm() {
                           setTextAbove(idea.textAbove);
                           setTextBelow(idea.textBelow);
                           setCaptionPosition('both');
+                          if (idea.imagePrompt) {
+                            setAiPrompt(idea.imagePrompt);
+                            generateMemeImageFromPrompt(idea.imagePrompt);
+                          }
                         }}
                         className="text-left p-3 rounded-lg bg-zinc-900/90 hover:bg-zinc-900 border border-zinc-800 hover:border-lime-500/50 transition-all cursor-pointer group"
                       >
