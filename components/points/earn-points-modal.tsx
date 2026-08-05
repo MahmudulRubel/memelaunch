@@ -123,7 +123,7 @@ export function EarnPointsModal({
       desc: 'Claim +5 points one-time bonus',
       points: 5,
       bg: 'bg-purple-400/10 border-purple-400/30 text-purple-400',
-      url: 'https://x.com/intent/follow?screen_name=rubel',
+      url: 'https://x.com/intent/follow?screen_name=builtwithrubel',
       icon: <UserCheck className="h-4 w-4" />,
     },
     {
