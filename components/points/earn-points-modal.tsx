@@ -208,18 +208,18 @@ export function EarnPointsModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-zinc-950/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-xl max-h-[85vh] flex flex-col bg-zinc-900 border-2 border-black rounded-3xl p-5 md:p-7 shadow-brutal overflow-hidden">
+      <div className="relative w-full max-w-xl max-h-[85vh] my-auto flex flex-col bg-zinc-900 border-2 border-black rounded-3xl shadow-brutal overflow-hidden">
         
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-zinc-100 bg-zinc-950 border-2 border-black rounded-xl hover:bg-rose-500/20 transition-all z-10"
+          className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-zinc-100 bg-zinc-950 border-2 border-black rounded-xl hover:bg-rose-500/20 transition-all z-20"
         >
           <X className="h-5 w-5" />
         </button>
 
         {/* FIXED HEADER & PROGRESS */}
-        <div className="shrink-0 space-y-4 border-b border-zinc-800/80 pb-5 mb-4 pr-6">
+        <div className="shrink-0 p-5 md:p-6 pb-4 border-b border-zinc-800/80 bg-zinc-900 space-y-4 pr-12">
           <div className="flex items-center gap-3">
             <div className="h-11 w-11 rounded-2xl bg-[#ffe600] text-zinc-950 border-2 border-black flex items-center justify-center font-black text-xl shadow-brutal-sm shrink-0">
               <Zap className="h-6 w-6 fill-zinc-950" />
@@ -259,23 +259,23 @@ export function EarnPointsModal({
               </p>
             )}
           </div>
+
+          {/* Feedback Alert */}
+          {feedbackMsg && (
+            <div
+              className={`p-3 rounded-xl border-2 border-black text-xs font-bold ${
+                feedbackMsg.type === 'success'
+                  ? 'bg-emerald-400/20 text-emerald-300 border-emerald-400/40'
+                  : 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+              }`}
+            >
+              {feedbackMsg.text}
+            </div>
+          )}
         </div>
 
-        {/* Feedback Alert */}
-        {feedbackMsg && (
-          <div
-            className={`shrink-0 mb-3 p-3 rounded-xl border-2 border-black text-xs font-bold ${
-              feedbackMsg.type === 'success'
-                ? 'bg-emerald-400/20 text-emerald-300 border-emerald-400/40'
-                : 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-            }`}
-          >
-            {feedbackMsg.text}
-          </div>
-        )}
-
         {/* SCROLLABLE TASK LIST AREA */}
-        <div className="flex-1 overflow-y-auto pr-1.5 space-y-3 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-5 md:p-6 pt-4 space-y-3 custom-scrollbar">
           <h3 className="font-black text-xs uppercase text-zinc-400 tracking-wider">
             Social & Community Tasks
           </h3>
