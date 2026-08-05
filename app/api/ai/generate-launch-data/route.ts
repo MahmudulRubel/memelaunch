@@ -154,7 +154,7 @@ Output MUST be strictly JSON format matching this structure:
       );
     }
 
-    const parsedData = JSON.parse(rawContent);
+    const parsedData = parseLlmJson(rawContent);
 
     // Validate category & pricing fallback
     const validCategory = CATEGORIES.includes(parsedData.category) ? parsedData.category : 'SaaS';
@@ -174,5 +174,43 @@ Output MUST be strictly JSON format matching this structure:
       { error: error.message || 'Internal Server Error' },
       { status: 500 }
     );
+  }
+}
+
+function parseLlmJson(rawContent: string): any {
+  if (!rawContent) throw new Error('Empty response from AI model');
+
+  let cleaned = rawContent.trim();
+
+  // Strip markdown code blocks if present
+  if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+  }
+
+  // Extract inner JSON object if LLM included preamble text
+  const firstBrace = cleaned.indexOf('{');
+  const lastBrace = cleaned.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    cleaned = cleaned.slice(firstBrace, lastBrace + 1);
+  }
+
+  try {
+    return JSON.parse(cleaned);
+  } catch (firstErr) {
+    console.warn('Initial JSON.parse failed, attempting JSON string cleanup...');
+    try {
+      // Fix unescaped newlines/tabs inside double-quoted string values
+      const sanitized = cleaned
+        .replace(/[\r\n\t]/g, (match) => {
+          if (match === '\n') return '\\n';
+          if (match === '\r') return '\\r';
+          if (match === '\t') return '\\t';
+          return match;
+        });
+      return JSON.parse(sanitized);
+    } catch (secondErr) {
+      console.error('JSON parsing failed. Raw LLM content:\n', rawContent);
+      throw new Error('AI generated malformed response. Please try again.');
+    }
   }
 }
