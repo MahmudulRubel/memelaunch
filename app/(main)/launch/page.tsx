@@ -96,6 +96,56 @@ function LaunchForm() {
   const [widthBelow, setWidthBelow] = useState(90);
   const previewContainerRef = useRef<HTMLDivElement>(null);
 
+  // AI Auto-Fill & Meme Generation State
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiMemeIdeas, setAiMemeIdeas] = useState<Array<{ headline: string; textAbove: string; textBelow: string }>>([]);
+
+  const handleAiGenerate = async () => {
+    if (!productUrl || !productUrl.trim()) {
+      setFormErrors((prev) => ({ ...prev, productUrl: 'Please enter a product URL first' }));
+      return;
+    }
+
+    setIsGeneratingAi(true);
+    setAiError(null);
+    try {
+      const res = await fetch('/api/ai/generate-launch-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: productUrl.trim() })
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Failed to generate launch data');
+      }
+
+      if (data.productName) setProductName(data.productName);
+      if (data.productDescription) setProductDescription(data.productDescription);
+      if (data.category) setCategory(data.category);
+      if (data.pricing) setPricing(data.pricing);
+      if (Array.isArray(data.memeIdeas) && data.memeIdeas.length > 0) {
+        setAiMemeIdeas(data.memeIdeas);
+        setTextAbove(data.memeIdeas[0].textAbove || '');
+        setTextBelow(data.memeIdeas[0].textBelow || '');
+        setCaptionPosition('both');
+      }
+
+      // Clear any previous URL error
+      setFormErrors((prev) => {
+        const copy = { ...prev };
+        delete copy.productUrl;
+        return copy;
+      });
+    } catch (err: any) {
+      console.error('AI Auto-Fill error:', err);
+      setAiError(err.message || 'AI Auto-Fill failed. Please check the URL.');
+    } finally {
+      setIsGeneratingAi(false);
+    }
+  };
+
   // Drag handler for caption positioning
   const handleStartDrag = (type: 'above' | 'below', e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -932,6 +982,51 @@ function LaunchForm() {
                 <Sparkles className="h-5 w-5 text-lime-400" />
                 <span>Meme Setup</span>
               </h2>
+
+              {/* AI Meme Captions Suggestion Box */}
+              {aiMemeIdeas.length > 0 && (
+                <div className="p-4 bg-zinc-950/80 border border-lime-500/30 rounded-xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-lime-400 font-semibold text-sm">
+                      <Sparkles className="w-4 h-4 animate-pulse" />
+                      <span>AI Suggested Meme Captions</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAiGenerate}
+                      disabled={isGeneratingAi}
+                      className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
+                    >
+                      <Repeat className="w-3 h-3" /> Regenerate
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2">
+                    {aiMemeIdeas.map((idea, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setTextAbove(idea.textAbove);
+                          setTextBelow(idea.textBelow);
+                          setCaptionPosition('both');
+                        }}
+                        className="text-left p-3 rounded-lg bg-zinc-900/90 hover:bg-zinc-900 border border-zinc-800 hover:border-lime-500/50 transition-all cursor-pointer group"
+                      >
+                        <div className="text-[11px] font-mono text-lime-400 mb-1 font-semibold flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-lime-400" />
+                          <span>{idea.headline}</span>
+                        </div>
+                        {idea.textAbove && (
+                          <div className="text-xs font-bold text-white uppercase tracking-wide">{idea.textAbove}</div>
+                        )}
+                        {idea.textBelow && (
+                          <div className="text-xs font-bold text-zinc-300 uppercase tracking-wide mt-0.5">{idea.textBelow}</div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
                     {/* Caption Position Selection */}
               <div className="space-y-2">
                 <label className="block text-sm font-bold text-zinc-300">
@@ -1464,23 +1559,63 @@ function LaunchForm() {
                 </div>
               </div>
 
-              {/* Product URL */}
+              {/* Product URL & AI Auto-Fill */}
               <div className="space-y-1.5" id="err-productUrl">
-                <label htmlFor="productUrl" className="block text-sm font-bold text-zinc-300">
-                  Product Link (URL)
-                </label>
-                <div className="relative">
-                  <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-                  <input
-                    id="productUrl"
-                    type="url"
-                    required
-                    placeholder="https://memelaunch.dev"
-                    value={productUrl}
-                    onChange={(e) => setProductUrl(e.target.value)}
-                    className={`w-full pl-10 pr-4 py-2.5 bg-zinc-950 border ${formErrors.productUrl ? 'border-rose-500/60' : 'border-zinc-800'} rounded-xl text-sm focus:outline-none focus:border-lime-500 text-zinc-100 placeholder-zinc-650 transition-colors`}
-                  />
+                <div className="flex items-center justify-between">
+                  <label htmlFor="productUrl" className="block text-sm font-bold text-zinc-300">
+                    Product Link (URL)
+                  </label>
+                  <span className="text-[11px] font-mono text-lime-400 flex items-center gap-1">
+                    <Sparkles className="h-3 w-3" /> Auto-fill powered by DeepSeek AI
+                  </span>
                 </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="relative flex-1">
+                    <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                    <input
+                      id="productUrl"
+                      type="url"
+                      required
+                      placeholder="https://memelaunch.dev"
+                      value={productUrl}
+                      onChange={(e) => {
+                        setProductUrl(e.target.value);
+                        if (formErrors.productUrl) {
+                          setFormErrors((prev) => {
+                            const copy = { ...prev };
+                            delete copy.productUrl;
+                            return copy;
+                          });
+                        }
+                      }}
+                      className={`w-full pl-10 pr-4 py-2.5 bg-zinc-950 border ${formErrors.productUrl ? 'border-rose-500/60' : 'border-zinc-800'} rounded-xl text-sm focus:outline-none focus:border-lime-500 text-zinc-100 placeholder-zinc-650 transition-colors`}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAiGenerate}
+                    disabled={isGeneratingAi || !productUrl.trim()}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-lime-500 to-emerald-500 hover:from-lime-400 hover:to-emerald-400 text-zinc-950 font-extrabold rounded-xl transition-all disabled:opacity-50 text-xs uppercase tracking-wider shadow-[0_0_15px_rgba(163,230,53,0.15)] cursor-pointer shrink-0"
+                  >
+                    {isGeneratingAi ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Analyzing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4" />
+                        <span>Auto-Fill with AI</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                {aiError && (
+                  <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {aiError}
+                  </p>
+                )}
                 {formErrors.productUrl && (
                   <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
