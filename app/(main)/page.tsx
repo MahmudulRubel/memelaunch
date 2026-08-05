@@ -9,14 +9,14 @@ import type { Launch } from '@/components/feed/meme-card';
 export const revalidate = 30;
 
 export const metadata: Metadata = {
-  title: 'MemeLaunch - Fun Hooks, Trustworthy Details',
-  description: 'A playful, high-contrast, meme-native alternative to Product Hunt where every product launch is represented by a single meme.',
+  title: 'MemeLaunch - If Your Product Was a Meme, What Would It Be?',
+  description: 'Pitch your SaaS with pure humor, not boring pitch decks. If your product was a meme, what would it be? MemeLaunch is where founders shitpost their way to product-market fit.',
   alternates: {
     canonical: 'https://memelaunch.insforge.app',
   },
   openGraph: {
-    title: 'MemeLaunch - Fun Hooks, Trustworthy Details',
-    description: 'A playful, high-contrast, meme-native alternative to Product Hunt where every product launch is represented by a single meme.',
+    title: 'MemeLaunch - If Your Product Was a Meme, What Would It Be?',
+    description: 'Pitch your SaaS with pure humor, not boring pitch decks. If your product was a meme, what would it be? MemeLaunch is where founders shitpost their way to product-market fit.',
     url: 'https://memelaunch.insforge.app',
     siteName: 'MemeLaunch',
     images: [
@@ -32,8 +32,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'MemeLaunch - Fun Hooks, Trustworthy Details',
-    description: 'A playful, high-contrast, meme-native alternative to Product Hunt where every product launch is represented by a single meme.',
+    title: 'MemeLaunch - If Your Product Was a Meme, What Would It Be?',
+    description: 'Pitch your SaaS with pure humor, not boring pitch decks. If your product was a meme, what would it be? MemeLaunch is where founders shitpost their way to product-market fit.',
     images: ['https://memelaunch.insforge.app/globe.svg'],
   },
 };
@@ -60,7 +60,7 @@ export default async function HomePage() {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
     name: 'MemeLaunch',
-    description: 'A playful, high-contrast, meme-native alternative to Product Hunt where every product launch is represented by a single meme.',
+    description: 'Pitch your SaaS with pure humor, not boring pitch decks. If your product was a meme, what would it be? MemeLaunch is where founders shitpost their way to product-market fit.',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'All',
     offers: {
