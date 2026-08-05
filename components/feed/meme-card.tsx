@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { insforge, resolveStorageUrl, getAvatarGradient, getCategoryBadgeStyle } from '@/lib/insforge';
+import { rewardLike, revokeLike } from '@/lib/points';
 import { MessageSquare, ExternalLink, Globe, Tag } from 'lucide-react';
 import { parseCaption, getCaptionText } from '@/lib/meme';
 
@@ -107,6 +108,12 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
         setReactions(previousReactions);
         if (error.message?.includes('429') || error.message?.toLowerCase().includes('too many requests')) {
           alert('Whoa, slow down! You are reacting too fast.');
+        }
+      } else {
+        if (userReacted) {
+          revokeLike(user.id, launch.id);
+        } else {
+          rewardLike(user.id, launch.user_id, launch.id);
         }
       }
     } catch (err) {

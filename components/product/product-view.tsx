@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { insforge, resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
+import { rewardLike, revokeLike, rewardComment, revokeComment } from '@/lib/points';
 import {
   ExternalLink,
   Globe,
@@ -152,6 +153,12 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
       });
       if (error) {
         setReactions(previousReactions);
+      } else {
+        if (userReacted) {
+          revokeLike(user.id, launch.id);
+        } else {
+          rewardLike(user.id, launch.user_id, launch.id);
+        }
       }
     } catch (err) {
       setReactions(previousReactions);
@@ -166,19 +173,21 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
       router.push('/login');
       return;
     }
-    if (!commentText.trim() || !launch || isSubmittingComment) return;
+    const textToSubmit = commentText.trim();
+    if (!textToSubmit || !launch || isSubmittingComment) return;
 
     setIsSubmittingComment(true);
     try {
       const { data, error } = await insforge.database
         .from('comments')
-        .insert([{ launch_id: launch.id, user_id: user.id, body: commentText.trim() }])
+        .insert([{ launch_id: launch.id, user_id: user.id, body: textToSubmit }])
         .select('*, users(name, avatar)')
         .single();
 
       if (error) throw error;
       if (data) {
         setComments((prev) => [...prev, data as DBComment]);
+        rewardComment(user.id, launch.user_id, launch.id, data.id, textToSubmit);
         setCommentText('');
       }
     } catch (err: any) {
