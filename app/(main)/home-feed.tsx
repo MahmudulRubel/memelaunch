@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
-import { insforge } from '@/lib/insforge';
+import { insforge, resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
 import { MemeCard, type Launch } from '@/components/feed/meme-card';
-import { ProductModal } from '@/components/product/product-modal';
 import {
   Flame,
   Clock,
@@ -23,15 +23,22 @@ interface HomeFeedProps {
 }
 
 export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
+  const router = useRouter();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'trending' | 'new'>('trending');
   const [searchQuery, setSearchQuery] = useState('');
+  const [quickUrl, setQuickUrl] = useState('');
   
   // Database state initialized with server-side data
   const [launches, setLaunches] = useState<Launch[]>(initialLaunches || []);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [selectedLaunchId, setSelectedLaunchId] = useState<string | null>(null);
+
+  // Top featured launch for hero showcase
+  const topFeaturedLaunch = useMemo(() => {
+    if (!launches || launches.length === 0) return null;
+    return [...launches].sort((a, b) => (b.reactions?.length || 0) - (a.reactions?.length || 0))[0];
+  }, [launches]);
 
   // Pagination / Infinite scroll state
   const [visibleCount, setVisibleCount] = useState(9);
@@ -242,57 +249,112 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
             </div>
 
             {/* Quick Launch URL Form */}
-            <form className="border-2 border-black bg-zinc-900 shadow-brutal rounded-2xl mt-4 flex w-full max-w-md items-center gap-2 p-2" onSubmit={(e) => { e.preventDefault(); }}>
+            <form 
+              className="border-2 border-black bg-zinc-900 shadow-brutal rounded-2xl mt-4 flex w-full max-w-md items-center gap-2 p-2" 
+              onSubmit={(e) => { 
+                e.preventDefault(); 
+                const url = quickUrl.trim();
+                const target = url ? `/launch?url=${encodeURIComponent(url)}` : '/launch';
+                router.push(user ? target : `/login?redirect=${encodeURIComponent(target)}`);
+              }}
+            >
               <span aria-hidden="true" className="text-zinc-400 pl-2">🔗</span>
-              <input type="url" placeholder="https://your-micro-saas.com" className="text-zinc-100 placeholder:text-zinc-500 min-w-0 flex-1 bg-transparent px-2 py-1 text-sm outline-none font-medium" />
-              <Link href={user ? "/launch" : "/login"} className="rounded-xl border-2 border-black bg-[#ffe600] text-zinc-950 hover:-translate-x-0.5 hover:-translate-y-0.5 shrink-0 px-4 py-2 text-xs font-black uppercase tracking-wider transition-all shadow-brutal-sm inline-flex items-center gap-1">
+              <input 
+                type="url" 
+                value={quickUrl}
+                onChange={(e) => setQuickUrl(e.target.value)}
+                placeholder="https://your-micro-saas.com" 
+                className="text-zinc-100 placeholder:text-zinc-500 min-w-0 flex-1 bg-transparent px-2 py-1 text-sm outline-none font-medium" 
+              />
+              <button 
+                type="submit"
+                className="rounded-xl border-2 border-black bg-[#ffe600] text-zinc-950 hover:-translate-x-0.5 hover:-translate-y-0.5 shrink-0 px-4 py-2 text-xs font-black uppercase tracking-wider transition-all shadow-brutal-sm inline-flex items-center gap-1 cursor-pointer"
+              >
                 <span>Enter The Arena 🥊</span>
-              </Link>
+              </button>
             </form>
           </div>
 
           {/* Right Column: Live Sample Meme Card Spotlight */}
           <div className="lg:col-span-5 flex justify-center lg:justify-end">
-            <div className="relative w-full max-w-sm bg-zinc-950 border-2 border-black rounded-2xl p-3 shadow-brutal hover:rotate-0 transition-transform duration-300 rotate-2">
-              
-              {/* Badge Pinned to top */}
-              <div className="flex items-center justify-between mb-3 border-b-2 border-black pb-2">
-                <span className="bg-[#ffe600] text-zinc-950 font-black text-xs uppercase px-2.5 py-0.5 rounded-lg border-2 border-black shadow-brutal-sm flex items-center gap-1">
-                  <span>🥇</span> #1 MEME THIS WEEK
-                </span>
-                <span className="text-zinc-400 font-mono text-[10px] font-extrabold uppercase">LIVE DEMO</span>
-              </div>
+            {topFeaturedLaunch ? (
+              <div 
+                onClick={() => router.push(`/products/${encodeURIComponent(topFeaturedLaunch.product_name)}`)}
+                className="group relative w-full max-w-sm bg-zinc-950 border-2 border-black rounded-2xl p-3 shadow-brutal hover:rotate-0 transition-transform duration-300 rotate-2 cursor-pointer"
+              >
+                {/* Badge Pinned to top */}
+                <div className="flex items-center justify-between mb-3 border-b-2 border-black pb-2">
+                  <span className="bg-[#ffe600] text-zinc-950 font-black text-xs uppercase px-2.5 py-0.5 rounded-lg border-2 border-black shadow-brutal-sm flex items-center gap-1">
+                    <span>🥇</span> #1 MEME THIS WEEK
+                  </span>
+                  <span className="text-lime-400 font-mono text-[10px] font-extrabold uppercase animate-pulse">FEATURED HERO</span>
+                </div>
 
-              {/* Sample Meme Visual Box */}
-              <div className="relative aspect-square w-full rounded-xl overflow-hidden border-2 border-black bg-zinc-900 flex flex-col justify-between p-3 text-center">
-                <div className="bg-zinc-950/90 border border-black p-2 rounded-lg z-10">
-                  <p className="font-impact text-zinc-50 uppercase text-sm sm:text-base leading-tight tracking-wider">
-                    DEPS INSTALLED 0 ERRORS
-                  </p>
+                {/* Meme Visual Box */}
+                <div className="relative aspect-square w-full rounded-xl overflow-hidden border-2 border-black bg-zinc-900">
+                  {topFeaturedLaunch.meme_image_url && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={resolveStorageUrl(topFeaturedLaunch.meme_image_url)}
+                      alt={topFeaturedLaunch.product_name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  )}
+                  <div className="absolute top-2 right-2 text-[9px] font-mono text-zinc-400 font-extrabold tracking-widest uppercase bg-zinc-950/80 px-2 py-0.5 rounded border border-black">
+                    MEMELAUNCH
+                  </div>
                 </div>
-                <div className="my-auto py-6">
-                  <span className="text-5xl">😎</span>
-                </div>
-                <div className="bg-zinc-950/90 border border-black p-2 rounded-lg z-10">
-                  <p className="font-impact text-[#ffe600] uppercase text-sm sm:text-base leading-tight tracking-wider">
-                    PROD DEPLOYED AT 5PM ON FRIDAY
-                  </p>
+
+                {/* Sample Product Info Bar */}
+                <div className="mt-3 pt-2 border-t-2 border-black flex items-center justify-between">
+                  <div className="min-w-0 flex-1 pr-2">
+                    <h4 className="font-black text-sm text-zinc-100 truncate group-hover:text-[#ffe600] transition-colors">{topFeaturedLaunch.product_name}</h4>
+                    <p className="text-[10px] font-bold text-zinc-400 uppercase">◇ {topFeaturedLaunch.category} • {topFeaturedLaunch.pricing}</p>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs font-black bg-rose-400 text-zinc-950 border-2 border-black px-2.5 py-1 rounded-lg shadow-brutal-sm">
+                    <span>🔥</span>
+                    <span>{topFeaturedLaunch.reactions?.length || 0}</span>
+                  </div>
                 </div>
               </div>
-
-              {/* Sample Product Info Bar */}
-              <div className="mt-3 pt-2 border-t-2 border-black flex items-center justify-between">
-                <div>
-                  <h4 className="font-black text-sm text-zinc-100">LaunchDock Track</h4>
-                  <p className="text-[10px] font-bold text-zinc-400 uppercase">◇ SaaS • FREE</p>
+            ) : (
+              <div className="relative w-full max-w-sm bg-zinc-950 border-2 border-black rounded-2xl p-3 shadow-brutal hover:rotate-0 transition-transform duration-300 rotate-2">
+                <div className="flex items-center justify-between mb-3 border-b-2 border-black pb-2">
+                  <span className="bg-[#ffe600] text-zinc-950 font-black text-xs uppercase px-2.5 py-0.5 rounded-lg border-2 border-black shadow-brutal-sm flex items-center gap-1">
+                    <span>🥇</span> #1 MEME THIS WEEK
+                  </span>
+                  <span className="text-zinc-400 font-mono text-[10px] font-extrabold uppercase">SPOTLIGHT</span>
                 </div>
-                <div className="flex items-center gap-1 text-xs font-black bg-zinc-900 border-2 border-black px-2 py-1 rounded-lg shadow-brutal-sm">
-                  <span>🔥</span>
-                  <span>142</span>
+                <div className="relative aspect-square w-full rounded-xl overflow-hidden border-2 border-black bg-zinc-900">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img 
+                    src="https://i.imgflip.com/1g8my4.jpg" 
+                    alt="Drake Meme" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950/90 to-transparent p-3 text-center">
+                    <p className="font-impact text-zinc-100 uppercase text-xs sm:text-sm tracking-wider">
+                      BUILDING IN SECRET FOR 6 MONTHS
+                    </p>
+                  </div>
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950/90 to-transparent p-3 text-center">
+                    <p className="font-impact text-[#ffe600] uppercase text-xs sm:text-sm tracking-wider">
+                      LAUNCHING ON MEMELAUNCH TO 10K BUILDERS
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 pt-2 border-t-2 border-black flex items-center justify-between">
+                  <div>
+                    <h4 className="font-black text-sm text-zinc-100">LaunchDock Track</h4>
+                    <p className="text-[10px] font-bold text-zinc-400 uppercase">◇ SaaS • FREE</p>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs font-black bg-rose-400 text-zinc-950 border-2 border-black px-2.5 py-1 rounded-lg shadow-brutal-sm">
+                    <span>🔥</span>
+                    <span>342</span>
+                  </div>
                 </div>
               </div>
-
-            </div>
+            )}
           </div>
 
         </div>
@@ -389,7 +451,6 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
             <MemeCard
               key={launch.id}
               launch={launch}
-              onSelect={(selected) => setSelectedLaunchId(selected.id)}
             />
           ))}
         </div>
@@ -400,15 +461,6 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
         <div ref={observerTarget} className="flex justify-center py-8">
           <div className="h-8 w-8 border-4 border-lime-400 border-t-transparent rounded-full animate-spin" />
         </div>
-      )}
-
-      {/* Product Detailed Modal Overlay */}
-      {selectedLaunchId && (
-        <ProductModal
-          launchId={selectedLaunchId}
-          onClose={() => setSelectedLaunchId(null)}
-          onRefreshFeed={() => fetchLaunches(true)}
-        />
       )}
     </div>
   );

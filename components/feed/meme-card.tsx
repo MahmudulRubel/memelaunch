@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
-import { insforge, resolveStorageUrl } from '@/lib/insforge';
+import { insforge, resolveStorageUrl, getAvatarGradient, getCategoryBadgeStyle } from '@/lib/insforge';
 import { MessageSquare, ExternalLink, Globe, Tag } from 'lucide-react';
 import { parseCaption, getCaptionText } from '@/lib/meme';
 
@@ -123,9 +123,17 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
     freemium: 'bg-[#ffe600] text-zinc-950 border-2 border-black font-black',
   };
 
+  const handleCardClick = () => {
+    if (onSelect) {
+      onSelect(launch);
+    } else {
+      router.push(`/products/${encodeURIComponent(launch.product_name)}`);
+    }
+  };
+
   return (
     <div
-      onClick={() => onSelect?.(launch)}
+      onClick={handleCardClick}
       className="group relative flex flex-col bg-zinc-950 border-2 border-black rounded-2xl overflow-hidden shadow-brutal hover-brutal transition-all cursor-pointer break-inside-avoid mb-6"
     >
       {/* Aspect Ratio Box for Meme */}
@@ -318,7 +326,7 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
               onClick={(e) => e.stopPropagation()}
               className="flex items-center gap-2 group/author cursor-pointer"
             >
-              <div className="h-6 w-6 rounded-full bg-zinc-900 border-2 border-black overflow-hidden flex items-center justify-center text-[10px] text-zinc-100 font-black uppercase font-mono group-hover/author:border-[#ffe600] transition-colors">
+              <div className={`h-6 w-6 rounded-full border-2 border-black overflow-hidden flex items-center justify-center text-[10px] font-black uppercase font-mono group-hover/author:border-[#ffe600] transition-colors shrink-0 ${launch.users?.avatar ? 'bg-zinc-900' : getAvatarGradient(launch.users?.name || launch.user_id)}`}>
                 {launch.users?.avatar ? (
                   <Image
                     src={resolveStorageUrl(launch.users.avatar)}
@@ -328,7 +336,7 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
                     className="object-cover h-full w-full"
                   />
                 ) : (
-                  launch.users?.name ? launch.users.name[0] : '?'
+                  <span>{launch.users?.name ? launch.users.name[0] : 'F'}</span>
                 )}
               </div>
               <span className="text-zinc-300 group-hover/author:text-[#ffe600] transition-colors truncate max-w-[80px] font-extrabold">

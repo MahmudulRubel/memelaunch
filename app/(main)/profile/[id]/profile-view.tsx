@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { useAuth } from '@/components/auth-provider';
 import { insforge, resolveStorageUrl } from '@/lib/insforge';
 import { MemeCard, type Launch } from '@/components/feed/meme-card';
-import { ProductModal } from '@/components/product/product-modal';
 import {
   User,
   Calendar,
@@ -57,9 +56,6 @@ export default function ProfileView({ profileId, initialProfile, initialLaunches
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Modal view for launches
-  const [selectedLaunchId, setSelectedLaunchId] = useState<string | null>(null);
 
   // Canvas card generation state
   const [isGeneratingCard, setIsGeneratingCard] = useState(false);
@@ -769,21 +765,11 @@ export default function ProfileView({ profileId, initialProfile, initialLaunches
               <MemeCard
                 key={launch.id}
                 launch={launch}
-                onSelect={(selected) => setSelectedLaunchId(selected.id)}
               />
             ))}
           </div>
         )}
       </section>
-
-      {/* Modal Detail Overlay */}
-      {selectedLaunchId && (
-        <ProductModal
-          launchId={selectedLaunchId}
-          onClose={() => setSelectedLaunchId(null)}
-          onRefreshFeed={fetchProfileAndLaunches}
-        />
-      )}
     </div>
   );
 }

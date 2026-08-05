@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ProductModal } from '@/components/product/product-modal';
+import { useRouter } from 'next/navigation';
 import {
   Trophy,
   Sparkles,
@@ -44,13 +44,13 @@ interface TemplatesFeedProps {
 }
 
 export default function TemplatesFeed({ initialTemplates, initialLaunches }: TemplatesFeedProps) {
+  const router = useRouter();
   // State
   const [templates] = useState<Template[]>(initialTemplates || []);
   const [launches] = useState<Launch[]>(initialLaunches || []);
   
-  // Preview / Details Modal State
+  // Preview Modal State
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
-  const [selectedLaunchId, setSelectedLaunchId] = useState<string | null>(null);
 
   // Calculate current week number
   const currentWeek = useMemo(() => {
@@ -159,7 +159,7 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
                     {getTemplateLaunches(weeklyPick.id).slice(0, 2).map((launch) => (
                       <div
                         key={launch.id}
-                        onClick={() => setSelectedLaunchId(launch.id)}
+                        onClick={() => router.push(`/products/${encodeURIComponent(launch.product_name)}`)}
                         className="group flex items-center gap-3 p-3 bg-zinc-950/60 hover:bg-zinc-900/80 border border-zinc-850 hover:border-zinc-800 rounded-xl cursor-pointer transition-all text-left"
                       >
                         <div className="relative h-12 w-12 rounded-lg overflow-hidden border border-zinc-800 shrink-0 bg-zinc-900">
@@ -286,7 +286,7 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
                           {tplLaunches.slice(0, 4).map((launch) => (
                             <div
                               key={launch.id}
-                              onClick={() => setSelectedLaunchId(launch.id)}
+                              onClick={() => router.push(`/products/${encodeURIComponent(launch.product_name)}`)}
                               title={launch.product_name}
                               className="inline-block h-6 w-6 rounded-full ring-2 ring-zinc-900 bg-zinc-800 overflow-hidden cursor-pointer hover:scale-110 hover:z-10 transition-transform border border-zinc-750"
                             >
@@ -378,15 +378,6 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
             </div>
           </div>
         </div>
-      )}
-
-      {/* Product Detailed Modal Overlay */}
-      {selectedLaunchId && (
-        <ProductModal
-          launchId={selectedLaunchId}
-          onClose={() => setSelectedLaunchId(null)}
-          onRefreshFeed={() => {}}
-        />
       )}
     </div>
   );
