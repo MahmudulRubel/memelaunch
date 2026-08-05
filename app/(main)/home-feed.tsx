@@ -18,16 +18,12 @@ import {
 } from 'lucide-react';
 import { getCaptionText } from '@/lib/meme';
 
-import { useRouter } from 'next/navigation';
-
 interface HomeFeedProps {
   initialLaunches: Launch[];
 }
 
 export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
   const { user } = useAuth();
-  const router = useRouter();
-  const [launchUrl, setLaunchUrl] = useState('');
   const [activeTab, setActiveTab] = useState<'trending' | 'new'>('trending');
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -205,66 +201,102 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
       <div className="absolute -top-20 left-1/4 w-[500px] h-[500px] bg-lime-400/5 rounded-full blur-[120px] pointer-events-none -z-10" />
       <div className="absolute -top-10 right-1/4 w-[400px] h-[400px] bg-rose-500/5 rounded-full blur-[100px] pointer-events-none -z-10" />
 
-      {/* Hero Section */}
-      <section className="relative mx-auto mb-6 flex max-w-4xl flex-col items-center px-4 pt-4 text-center">
-        <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight text-zinc-50 leading-tight">
-          Launch your Product.
-        </h1>
+      {/* Hero Section - Unique 2-Column Split Layout */}
+      <section className="relative overflow-hidden rounded-3xl border-4 border-black bg-zinc-950 p-6 md:p-10 shadow-brutal-lg">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          
+          {/* Left Column: Headline, Copy, Trust Pills & Launch Form */}
+          <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left space-y-4">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900 border-2 border-black text-xs font-black text-[#ffe600] shadow-brutal-sm">
+              <Sparkles className="h-4 w-4 text-[#ffe600]" />
+              <span className="tracking-wider uppercase">🥊 THE WEEKLY INDIE BUILDER ARENA</span>
+            </div>
+            
+            <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-zinc-50 leading-none">
+              BUILD IN PUBLIC. <br className="hidden sm:inline" />
+              LAUNCH IN HUMOR.
+            </h1>
 
-        <p className="font-extrabold text-[#ffe600] relative mt-2 inline-block text-2xl sm:text-3xl" aria-hidden="true">
-          Don't just build → Get discovered
-          <svg className="text-[#ffe600] pointer-events-none absolute -bottom-2 left-0 h-3 w-full" viewBox="0 0 320 14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" preserveAspectRatio="none" aria-hidden="true">
-            <path d="M3 9 C 60 2, 120 12, 180 6 S 280 11, 317 4"></path>
-          </svg>
-        </p>
-        
-        <p className="text-zinc-300 text-sm sm:text-base max-w-xl leading-relaxed font-medium pt-4">
-          Reach <span className="font-black text-[#ffe600]">thousands</span> of builders plus a permanent <span className="font-black text-[#ffe600]">backlink</span> from a <span className="font-black text-[#ffe600]">DR 68</span> site for real SEO lift. If your SaaS was a fire meme, what would it be?
-        </p>
+            <p className="font-extrabold text-[#ffe600] relative inline-block text-xl sm:text-2xl md:text-3xl">
+              Where solo founders become viral legends 🏆
+              <svg className="text-[#ffe600] pointer-events-none absolute -bottom-2 left-0 h-3 w-full" viewBox="0 0 320 14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M3 9 C 60 2, 120 12, 180 6 S 280 11, 317 4"></path>
+              </svg>
+            </p>
+            
+            <p className="text-zinc-300 text-sm sm:text-base max-w-xl leading-relaxed font-medium pt-1">
+              Building in public is tough when nobody notices your tweets. MemeLaunch is the weekly battleground where indie hackers drop their funniest product memes, compete for top gold badges, and win real customers.
+            </p>
 
-        {/* Quick Launch URL Form */}
-        <form 
-          className="border-2 border-black bg-zinc-900 shadow-brutal rounded-2xl mt-6 flex w-full max-w-md items-center gap-2 p-1.5 transition-transform" 
-          onSubmit={(e) => {
-            e.preventDefault();
-            const targetUrl = launchUrl.trim();
-            if (user) {
-              router.push(targetUrl ? `/launch?url=${encodeURIComponent(targetUrl)}` : '/launch');
-            } else {
-              router.push('/login');
-            }
-          }}
-        >
-          <span aria-hidden="true" className="text-zinc-400 pl-2">🔗</span>
-          <input 
-            type="url" 
-            placeholder="yourproduct.com" 
-            value={launchUrl}
-            onChange={(e) => setLaunchUrl(e.target.value)}
-            required
-            className="text-zinc-100 placeholder:text-zinc-500 min-w-0 flex-1 bg-transparent px-2 py-1 text-sm outline-none font-medium" 
-          />
-          <button 
-            type="submit" 
-            className="rounded-xl border-2 border-black bg-[#ffe600] text-zinc-950 hover:-translate-x-0.5 hover:-translate-y-0.5 shrink-0 px-5 py-2.5 text-xs font-black uppercase tracking-wider transition-all shadow-brutal-sm cursor-pointer"
-          >
-            Launch
-          </button>
-        </form>
-      </section>
+            {/* Feature / Trust Badges */}
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 pt-1 text-xs font-extrabold text-zinc-300">
+              <span className="bg-zinc-900 border-2 border-black px-2.5 py-1 rounded-xl shadow-brutal-sm flex items-center gap-1">
+                <span className="text-[#ffe600]">◇</span> DR 68 Permanent Backlink
+              </span>
+              <span className="bg-zinc-900 border-2 border-black px-2.5 py-1 rounded-xl shadow-brutal-sm flex items-center gap-1">
+                <span className="text-[#ffe600]">◇</span> 100% Free Launch
+              </span>
+              <span className="bg-zinc-900 border-2 border-black px-2.5 py-1 rounded-xl shadow-brutal-sm flex items-center gap-1">
+                <span className="text-[#ffe600]">◇</span> Instant Eyeballs
+              </span>
+            </div>
 
-      {/* Section Header: "This week's products" */}
-      <div className="mb-2 flex items-center justify-between flex-wrap gap-2">
-        <h2 className="font-heading text-zinc-100 text-2xl font-black tracking-tight">
-          This week's products
-        </h2>
-        <div className="relative inline-block">
-          <div className="border-2 border-black bg-zinc-900 text-zinc-100 shadow-brutal-sm rounded-xl inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-black uppercase">
-            <span>Week {new Date().getFullYear() > 2025 ? '32, 2026' : '1'}</span>
-            <span className="text-[#ffe600]">· {filteredAndSortedLaunches.length} launches ▾</span>
+            {/* Quick Launch URL Form */}
+            <form className="border-2 border-black bg-zinc-900 shadow-brutal rounded-2xl mt-4 flex w-full max-w-md items-center gap-2 p-2" onSubmit={(e) => { e.preventDefault(); }}>
+              <span aria-hidden="true" className="text-zinc-400 pl-2">🔗</span>
+              <input type="url" placeholder="https://your-micro-saas.com" className="text-zinc-100 placeholder:text-zinc-500 min-w-0 flex-1 bg-transparent px-2 py-1 text-sm outline-none font-medium" />
+              <Link href={user ? "/launch" : "/login"} className="rounded-xl border-2 border-black bg-[#ffe600] text-zinc-950 hover:-translate-x-0.5 hover:-translate-y-0.5 shrink-0 px-4 py-2 text-xs font-black uppercase tracking-wider transition-all shadow-brutal-sm inline-flex items-center gap-1">
+                <span>Enter The Arena 🥊</span>
+              </Link>
+            </form>
           </div>
+
+          {/* Right Column: Live Sample Meme Card Spotlight */}
+          <div className="lg:col-span-5 flex justify-center lg:justify-end">
+            <div className="relative w-full max-w-sm bg-zinc-950 border-2 border-black rounded-2xl p-3 shadow-brutal hover:rotate-0 transition-transform duration-300 rotate-2">
+              
+              {/* Badge Pinned to top */}
+              <div className="flex items-center justify-between mb-3 border-b-2 border-black pb-2">
+                <span className="bg-[#ffe600] text-zinc-950 font-black text-xs uppercase px-2.5 py-0.5 rounded-lg border-2 border-black shadow-brutal-sm flex items-center gap-1">
+                  <span>🥇</span> #1 MEME THIS WEEK
+                </span>
+                <span className="text-zinc-400 font-mono text-[10px] font-extrabold uppercase">LIVE DEMO</span>
+              </div>
+
+              {/* Sample Meme Visual Box */}
+              <div className="relative aspect-square w-full rounded-xl overflow-hidden border-2 border-black bg-zinc-900 flex flex-col justify-between p-3 text-center">
+                <div className="bg-zinc-950/90 border border-black p-2 rounded-lg z-10">
+                  <p className="font-impact text-zinc-50 uppercase text-sm sm:text-base leading-tight tracking-wider">
+                    DEPS INSTALLED 0 ERRORS
+                  </p>
+                </div>
+                <div className="my-auto py-6">
+                  <span className="text-5xl">😎</span>
+                </div>
+                <div className="bg-zinc-950/90 border border-black p-2 rounded-lg z-10">
+                  <p className="font-impact text-[#ffe600] uppercase text-sm sm:text-base leading-tight tracking-wider">
+                    PROD DEPLOYED AT 5PM ON FRIDAY
+                  </p>
+                </div>
+              </div>
+
+              {/* Sample Product Info Bar */}
+              <div className="mt-3 pt-2 border-t-2 border-black flex items-center justify-between">
+                <div>
+                  <h4 className="font-black text-sm text-zinc-100">LaunchDock Track</h4>
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase">◇ SaaS • FREE</p>
+                </div>
+                <div className="flex items-center gap-1 text-xs font-black bg-zinc-900 border-2 border-black px-2 py-1 rounded-lg shadow-brutal-sm">
+                  <span>🔥</span>
+                  <span>142</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
         </div>
-      </div>
+      </section>
 
       {/* Feed Filter & Search Row */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-zinc-950 border-2 border-black p-4 rounded-2xl shadow-brutal">
