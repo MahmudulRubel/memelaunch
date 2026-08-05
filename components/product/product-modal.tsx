@@ -263,9 +263,9 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
   };
 
   const pricingColors = {
-    free: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    paid: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-    freemium: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    free: 'bg-emerald-400 text-zinc-950 border-2 border-black font-black',
+    paid: 'bg-rose-400 text-zinc-950 border-2 border-black font-black',
+    freemium: 'bg-[#ffe600] text-zinc-950 border-2 border-black font-black',
   };
 
   const formatDate = (dateString: string) => {
@@ -282,21 +282,21 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="absolute inset-0 bg-zinc-950/75 backdrop-blur-md cursor-zoom-out"
+        className="absolute inset-0 bg-zinc-950/85 backdrop-blur-md cursor-zoom-out"
       />
 
       {/* Modal Container */}
-      <div className="relative w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-4xl bg-zinc-950 border border-zinc-900 sm:border-zinc-800/80 rounded-none sm:rounded-[32px] overflow-hidden flex flex-col shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-10 animate-in slide-in-from-bottom duration-300">
+      <div className="relative w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-4xl bg-zinc-950 border-4 border-black rounded-none sm:rounded-3xl overflow-hidden flex flex-col shadow-brutal-lg z-10 animate-in slide-in-from-bottom duration-300">
         
         {/* Sticky Header with Title & Close button */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-900 bg-zinc-950/90 backdrop-blur-md sticky top-0 z-20">
+        <div className="flex items-center justify-between px-6 py-4 border-b-4 border-black bg-zinc-950 sticky top-0 z-20">
           <div className="flex items-center gap-3">
-            <span className="text-lime-400 font-extrabold text-sm uppercase tracking-wider font-mono">
+            <span className="bg-[#ffe600] text-zinc-950 font-black text-xs uppercase tracking-wider px-2.5 py-0.5 rounded-lg border-2 border-black shadow-brutal-sm">
               Product Arena
             </span>
-            <span className="h-1.5 w-1.5 rounded-full bg-zinc-800" />
+            <span className="h-1.5 w-1.5 rounded-full bg-zinc-700" />
             {launch && (
-              <h2 className="text-zinc-200 font-extrabold text-base truncate max-w-[180px] sm:max-w-[300px]">
+              <h2 className="text-zinc-100 font-black text-base truncate max-w-[180px] sm:max-w-[300px]">
                 {launch.product_name}
               </h2>
             )}
@@ -304,7 +304,7 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
           
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg border border-zinc-900 bg-zinc-900/30 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 hover:border-zinc-800 transition-all cursor-pointer"
+            className="p-1.5 rounded-xl border-2 border-black bg-[#ffe600] text-zinc-950 font-black hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all shadow-brutal-sm cursor-pointer"
           >
             <X className="h-5 w-5" />
           </button>
