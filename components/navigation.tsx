@@ -2,12 +2,17 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
 import { getUserPoints } from '@/lib/points';
-import { EarnPointsModal } from '@/components/points/earn-points-modal';
-import { Menu, X, LogOut, User, Plus, Compass, Trophy, Settings, Zap } from 'lucide-react';
+import { Menu, X, LogOut, User, Plus, Compass, Trophy, Settings, Zap, BarChart3 } from 'lucide-react';
+
+const EarnPointsModal = dynamic(
+  () => import('@/components/points/earn-points-modal').then((m) => m.EarnPointsModal),
+  { ssr: false }
+);
 
 export function Navigation() {
   const pathname = usePathname();
@@ -41,6 +46,7 @@ export function Navigation() {
   const navLinks = [
     { name: 'Feed', href: '/', icon: Compass },
     { name: 'Templates', href: '/templates', icon: Trophy },
+    { name: 'Rules', href: '/rules', icon: Settings },
   ];
 
   const getActiveLinkClass = (href: string) => {
@@ -153,7 +159,16 @@ export function Navigation() {
                           </p>
                         </div>
 
-                         <Link
+                        <Link
+                          href="/analytics"
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-200 hover:text-zinc-950 hover:bg-[#ffe600] rounded-xl transition-colors border border-transparent hover:border-black"
+                        >
+                          <BarChart3 className="h-4 w-4" />
+                          <span>Analytics</span>
+                        </Link>
+
+                        <Link
                           href={`/profile/${user.id}`}
                           onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2 w-full px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-200 hover:text-zinc-950 hover:bg-[#ffe600] rounded-xl transition-colors border border-transparent hover:border-black"
@@ -245,6 +260,15 @@ export function Navigation() {
                 >
                   <Plus className="h-4 w-4 stroke-[3]" />
                   <span>Pitch a Meme</span>
+                </Link>
+
+                <Link
+                  href="/analytics"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-zinc-200 bg-zinc-900 border-2 border-black rounded-xl font-bold uppercase text-xs"
+                >
+                  <BarChart3 className="h-5 w-5 text-[#ffe600]" />
+                  <span>Analytics</span>
                 </Link>
 
                 <Link
