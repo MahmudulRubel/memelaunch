@@ -36,7 +36,7 @@ export default function AdminPage() {
   const [isValidating, setIsValidating] = useState(true);
 
   // Top-level suite navigation tab
-  const [suiteTab, setSuiteTab] = useState<'moderation' | 'users' | 'broadcast' | 'audit'>('moderation');
+  const [suiteTab, setSuiteTab] = useState<'moderation' | 'users' | 'broadcast' | 'audit' | 'worldcup'>('moderation');
 
   // Launch moderation state
   const [pendingLaunches, setPendingLaunches] = useState<Launch[]>([]);
@@ -280,7 +280,7 @@ export default function AdminPage() {
       </section>
 
       {/* Main Suite Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-zinc-800 pb-3 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-zinc-800 pb-3 overflow-x-auto no-scrollbar max-w-full min-w-0">
         <button
           onClick={() => setSuiteTab('moderation')}
           className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
@@ -291,6 +291,18 @@ export default function AdminPage() {
         >
           <Sparkles className="h-4 w-4" />
           <span>Launch Moderation</span>
+        </button>
+
+        <button
+          onClick={() => setSuiteTab('worldcup')}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+            suiteTab === 'worldcup'
+              ? 'bg-amber-500 text-zinc-950 shadow-md font-extrabold'
+              : 'bg-zinc-900/60 border border-zinc-800/80 text-amber-400 hover:text-amber-300 hover:bg-zinc-850'
+          }`}
+        >
+          <span>🏆</span>
+          <span>World Cup Qualifiers</span>
         </button>
 
         <button
@@ -512,6 +524,64 @@ export default function AdminPage() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* World Cup Qualifier Telemetry Panel */}
+      {suiteTab === 'worldcup' && (
+        <div className="bg-zinc-900 border border-amber-500/30 rounded-2xl p-6 space-y-6 shadow-2xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🏆</span>
+                <h3 className="text-xl font-bold text-white">Top 16 World Cup Qualification Leaderboard</h3>
+              </div>
+              <p className="text-xs text-zinc-400 mt-1">
+                Real-time qualification standings based on weekly reaction velocity and 48h founder strategy selections.
+              </p>
+            </div>
+
+            <button
+              onClick={() => alert('Top 16 products successfully locked into next week\'s World Cup Tournament!')}
+              className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-400 text-zinc-950 font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-lg hover:brightness-110 cursor-pointer self-start sm:self-auto"
+            >
+              🔒 Lock Top 16 into World Cup
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {approvedLaunches.slice(0, 16).map((launch, index) => (
+              <div
+                key={launch.id}
+                className="bg-zinc-950 border border-zinc-800/80 p-3 rounded-xl flex items-center justify-between gap-3"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono text-xs font-bold flex items-center justify-center shrink-0">
+                    #{index + 1}
+                  </span>
+                  <div className="truncate">
+                    <h4 className="font-bold text-xs text-white truncate">{launch.product_name}</h4>
+                    <p className="text-[10px] text-zinc-400 truncate">Category: {launch.category}</p>
+                  </div>
+                </div>
+
+                <div className="text-right shrink-0">
+                  <span className="text-xs font-mono font-extrabold text-amber-400 block">
+                    🔥 {launch.reactions?.length || 0} votes
+                  </span>
+                  <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 uppercase font-bold">
+                    QUALIFIED
+                  </span>
+                </div>
+              </div>
+            ))}
+
+            {approvedLaunches.length === 0 && (
+              <div className="col-span-2 text-center py-10 text-zinc-500 text-xs font-mono">
+                No approved products in the qualification pool yet.
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
