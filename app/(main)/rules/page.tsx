@@ -1,101 +1,130 @@
 import React from 'react';
 import type { Metadata } from 'next';
-import { Award, Zap, AlertTriangle, EyeOff, ThumbsUp } from 'lucide-react';
+import Link from 'next/link';
+import { Flame, ShieldAlert, Award, ArrowLeft, CheckCircle2, Zap, AlertTriangle } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Community Rules & Guidelines - MemeLaunch',
-  description: 'The official code of conduct and meme-posting rules for the MemeLaunch Arena. Keep it high-effort, fun, and clean.',
+  title: 'Arena Rules & Community Guidelines | MemeLaunch',
+  description: 'Learn the official MemeLaunch rules for product submissions, meme crafting, point earning, and fair competition in the weekly arena.',
   alternates: {
     canonical: 'https://memelaunch.insforge.app/rules',
   },
 };
 
 export default function RulesPage() {
-  const lastUpdated = 'July 21, 2026';
-
-  const rules = [
-    {
-      title: '1. Build Real Things',
-      icon: <Zap className="h-5 w-5 text-amber-400" />,
-      content: 'MemeLaunch is a product launch platform, not a generic image board. Your submission must represent an actual software app, site, tool, physical product, or open-source project. Vaporware and fake mockups will be removed.',
-    },
-    {
-      title: '2. One Launch per Product',
-      icon: <Award className="h-5 w-5 text-amber-400" />,
-      content: 'You can launch your product once per major release. Spamming the feed with the same template daily to farm reactions is an instant ticket to the ban list.',
-    },
-    {
-      title: '3. Keep Memes Relevant & Culturally Safe',
-      icon: <EyeOff className="h-5 w-5 text-amber-400" />,
-      content: 'We love shitposts, dark humor, and self-deprecation. However, we have zero tolerance for hate speech, harassment, sexually explicit content, political campaigning, or malicious attacks on other creators or products.',
-    },
-    {
-      title: '4. No Voter Collusion or Sybil Attacks',
-      icon: <AlertTriangle className="h-5 w-5 text-amber-400" />,
-      content: 'Every reaction must come from a real user. Creating multiple accounts or paying for upvote rings will trigger our security triggers and lead to immediate unapproval of your launch.',
-    },
-    {
-      title: '5. Provide Clear Product Details',
-      icon: <ThumbsUp className="h-5 w-5 text-amber-400" />,
-      content: 'Underneath your meme is a real product sheet. You must upload high-quality screenshots, provide an accurate description, select the correct category, and link to a valid URL where users can actually visit your project.',
-    },
-  ];
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: 'Arena Rules & Guidelines',
+    description: 'Community guidelines and rules for MemeLaunch.',
+    url: 'https://memelaunch.insforge.app/rules',
+  };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 py-4 md:py-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
-      <section className="relative overflow-hidden rounded-[24px] border border-zinc-800 bg-gradient-to-br from-zinc-900/40 to-zinc-950 p-8 md:p-12 shadow-xl">
-        <div className="absolute top-0 right-0 -mt-12 -mr-12 w-80 h-80 bg-amber-400/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900/80 border border-zinc-800 text-xs font-mono text-amber-400">
-            <Zap className="h-3.5 w-3.5" />
-            <span>Community Standards</span>
+    <div className="max-w-4xl mx-auto space-y-8 pb-16 animate-in fade-in duration-300">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
+      {/* Top Header Navigation */}
+      <div className="flex items-center justify-between">
+        <Link
+          id="rules-back-btn"
+          href="/"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 border-2 border-black rounded-xl text-xs font-black uppercase text-zinc-200 hover:text-zinc-950 hover:bg-[#ffe600] shadow-brutal-sm transition-all"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to Arena
+        </Link>
+        <span className="text-xs font-mono font-bold text-zinc-400 uppercase">
+          MemeLaunch Codex v1.0
+        </span>
+      </div>
+
+      {/* Hero Banner */}
+      <div className="bg-zinc-950 border-4 border-black rounded-3xl p-6 md:p-10 shadow-brutal space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="h-12 w-12 rounded-2xl bg-amber-400 text-zinc-950 border-2 border-black flex items-center justify-center font-black text-2xl shadow-brutal-sm shrink-0">
+            <Flame className="h-6 w-6" />
           </div>
-          <h1 id="rules-title" className="font-impact text-4xl md:text-5xl uppercase tracking-tight text-zinc-50">
-            COMMUNITY <span className="text-amber-400">RULES</span>
-          </h1>
-          <p className="text-zinc-400 text-sm md:text-base max-w-xl leading-relaxed">
-            Welcome to the arena. We keep things chaotic but fair. Follow these guidelines to keep your product approved and trending.
-          </p>
-          <div className="text-xs text-zinc-500 font-mono pt-2">
-            Last Updated: {lastUpdated}
+          <div>
+            <h1 className="font-heading text-3xl md:text-5xl font-black uppercase text-zinc-50 tracking-tight">
+              Arena <span className="text-amber-400">Rules</span>
+            </h1>
+            <p className="text-zinc-400 text-sm font-medium">
+              Keep the arena funny, high-octane, and fair for every founder.
+            </p>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* Rules Grid */}
-      <div className="grid grid-cols-1 gap-6">
-        {rules.map((rule, idx) => (
-          <article 
-            key={idx} 
-            id={`rule-item-${idx + 1}`}
-            className="p-6 rounded-2xl border border-zinc-800 bg-zinc-900/10 hover:border-zinc-700/80 transition-all duration-300 flex gap-4"
-          >
-            <div className="p-3 bg-amber-400/10 rounded-xl text-amber-400 h-fit">
-              {rule.icon}
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-lg font-bold text-zinc-100 tracking-tight">{rule.title}</h2>
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                {rule.content}
-              </p>
-            </div>
-          </article>
-        ))}
-      </div>
-
-      {/* Pro Tip Box */}
-      <div className="p-6 rounded-2xl border border-amber-500/20 bg-amber-500/5 flex items-start gap-4">
-        <div className="p-2 bg-amber-400/10 rounded-xl text-amber-400 mt-0.5">
-          <Award className="h-5 w-5" />
-        </div>
-        <div className="space-y-1">
-          <h3 className="text-sm font-bold text-zinc-100 uppercase tracking-wider">How to Win the Arena</h3>
-          <p className="text-zinc-400 text-xs leading-relaxed">
-            High-effort custom memes referencing popular trends or self-deprecating developer struggles outperform generic templates 10 to 1. Put some effort into your caption, write a clean description, and let your work speak for itself.
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        {/* Rule 1 */}
+        <div className="bg-zinc-950 border-2 border-black rounded-3xl p-6 shadow-brutal space-y-3">
+          <div className="flex items-center gap-2 text-emerald-400 font-black text-sm uppercase">
+            <CheckCircle2 className="h-5 w-5 shrink-0" />
+            <span>Rule #1: Real Products Only</span>
+          </div>
+          <p className="text-zinc-300 text-xs leading-relaxed">
+            Every submission must be a working software product, SaaS, AI tool, or indie project. Fake placeholder websites, vaporware, or phishing scams will be immediately removed.
           </p>
         </div>
+
+        {/* Rule 2 */}
+        <div className="bg-zinc-950 border-2 border-black rounded-3xl p-6 shadow-brutal space-y-3">
+          <div className="flex items-center gap-2 text-[#ffe600] font-black text-sm uppercase">
+            <Zap className="h-5 w-5 shrink-0" />
+            <span>Rule #2: 15 Points Required</span>
+          </div>
+          <p className="text-zinc-300 text-xs leading-relaxed">
+            Founders must earn 15 points through active community engagement (liking products, posting genuine feedback, or completing social tasks) before submitting a launch.
+          </p>
+        </div>
+
+        {/* Rule 3 */}
+        <div className="bg-zinc-950 border-2 border-black rounded-3xl p-6 shadow-brutal space-y-3">
+          <div className="flex items-center gap-2 text-rose-400 font-black text-sm uppercase">
+            <AlertTriangle className="h-5 w-5 shrink-0" />
+            <span>Rule #3: Zero Tolerance for Bots</span>
+          </div>
+          <p className="text-zinc-300 text-xs leading-relaxed">
+            Automated voting scripts, fake accounts, or rapid click-and-close point fraud will trigger automatic IP and account bans. All social tasks enforce anti-fraud dwell timers.
+          </p>
+        </div>
+
+        {/* Rule 4 */}
+        <div className="bg-zinc-950 border-2 border-black rounded-3xl p-6 shadow-brutal space-y-3">
+          <div className="flex items-center gap-2 text-purple-400 font-black text-sm uppercase">
+            <Award className="h-5 w-5 shrink-0" />
+            <span>Rule #4: Humor with Respect</span>
+          </div>
+          <p className="text-zinc-300 text-xs leading-relaxed">
+            Self-deprecating founder humor and witty tech memes are encouraged! Harassment, hate speech, explicit content, or targeted personal attacks will result in immediate disqualification.
+          </p>
+        </div>
+
       </div>
+
+      {/* Additional Info Box */}
+      <div className="bg-zinc-950 border-2 border-black rounded-3xl p-6 shadow-brutal text-center space-y-3">
+        <h3 className="font-heading text-lg font-black uppercase text-zinc-100">
+          Ready to Enter the Arena?
+        </h3>
+        <p className="text-zinc-400 text-xs max-w-lg mx-auto">
+          Explore our viral meme template gallery or earn your first points to pitch your product today.
+        </p>
+        <div className="pt-2 flex justify-center gap-4">
+          <Link
+            href="/templates"
+            className="px-5 py-2.5 bg-[#ffe600] text-zinc-950 font-black text-xs uppercase rounded-xl border-2 border-black shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+          >
+            Browse Meme Templates
+          </Link>
+        </div>
+      </div>
+
     </div>
   );
 }

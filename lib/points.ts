@@ -95,8 +95,6 @@ export async function claimSocialTask(
   }
 }
 
-}
-
 /**
  * Award +1 point for liking a product (0 pts for own product, max 1 per launch).
  */

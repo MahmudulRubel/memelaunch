@@ -74,9 +74,21 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
     return templates.filter(t => t.id !== weeklyPick.id);
   }, [templates, weeklyPick]);
 
-  // Get launches associated with a specific template
+  // Memoized O(1) lookup map for launches per template
+  const launchesByTemplateMap = useMemo(() => {
+    const map: Record<string, Launch[]> = {};
+    for (const l of launches) {
+      if (l.template_id) {
+        if (!map[l.template_id]) map[l.template_id] = [];
+        map[l.template_id].push(l);
+      }
+    }
+    return map;
+  }, [launches]);
+
+  // Fast O(1) template launches lookup
   const getTemplateLaunches = (templateId: string) => {
-    return launches.filter(l => l.template_id === templateId);
+    return launchesByTemplateMap[templateId] || [];
   };
 
   return (

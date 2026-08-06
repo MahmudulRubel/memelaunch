@@ -20,8 +20,59 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MemeLaunch - Fun Hooks, Trustworthy Details",
-  description: "A playful, high-contrast, meme-native alternative to Product Hunt where every product launch is represented by a single meme.",
+  metadataBase: new URL("https://memelaunch.insforge.app"),
+  title: {
+    default: "MemeLaunch — Build in Public. Launch in Humor. Win the Week.",
+    template: "%s | MemeLaunch",
+  },
+  description: "MemeLaunch is the viral product launch arena where indie hackers, founders, and creators drop their funniest software memes, compete for gold badges, and win real users.",
+  keywords: [
+    "meme launch",
+    "product hunt alternative",
+    "indie hacker launch",
+    "viral product pitch",
+    "saas memes",
+    "startup launch platform",
+    "meme marketing",
+    "software launch arena"
+  ],
+  authors: [{ name: "MemeLaunch Team", url: "https://memelaunch.insforge.app" }],
+  creator: "MemeLaunch",
+  publisher: "MemeLaunch",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://memelaunch.insforge.app",
+    siteName: "MemeLaunch",
+    title: "MemeLaunch — Build in Public. Launch in Humor. Win the Week.",
+    description: "The playful, high-contrast alternative to Product Hunt. Pitch your SaaS or dev tool using viral memes.",
+    images: [
+      {
+        url: "https://memelaunch.insforge.app/globe.svg",
+        width: 1200,
+        height: 630,
+        alt: "MemeLaunch Arena Preview",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MemeLaunch — Build in Public. Launch in Humor. Win the Week.",
+    description: "The playful, high-contrast alternative to Product Hunt. Pitch your SaaS or dev tool using viral memes.",
+    creator: "@launchmeme",
+    images: ["https://memelaunch.insforge.app/globe.svg"],
+  },
 };
 
 export default function RootLayout({
@@ -29,11 +80,53 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // AEO & Structured Data Schemas
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "MemeLaunch",
+    url: "https://memelaunch.insforge.app",
+    logo: "https://memelaunch.insforge.app/favicon.ico",
+    sameAs: [
+      "https://x.com/launchmeme",
+      "https://x.com/builtwithrubel"
+    ],
+    description: "Meme-native product launch arena for indie hackers and startup founders.",
+  };
+
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "MemeLaunch",
+    url: "https://memelaunch.insforge.app",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: "https://memelaunch.insforge.app/products/{search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  };
+
   return (
     <html
       lang="en"
       className={`${inter.variable} ${outfit.variable} ${jetbrainsMono.variable} h-full antialiased dark`}
     >
+      <head>
+        {/* Resource hints for instant TLS handshake & asset fetching */}
+        <link rel="preconnect" href="https://fw47aqh3.ap-southeast.insforge.app" />
+        <link rel="dns-prefetch" href="https://fw47aqh3.ap-southeast.insforge.app" />
+        <link rel="preconnect" href="https://i.imgflip.com" />
+        <link rel="dns-prefetch" href="https://i.imgflip.com" />
+
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-50 font-sans">
         <PostHogProvider>
           <AuthProvider>{children}</AuthProvider>
@@ -42,5 +135,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-
