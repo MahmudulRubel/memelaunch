@@ -2,11 +2,19 @@ import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: {
-      userAgent: '*',
-      allow: '/',
-      disallow: ['/admin', '/login', '/signup', '/forgot-password', '/reset-password', '/launch'],
-    },
+    rules: [
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: ['/admin', '/login', '/signup', '/forgot-password', '/reset-password', '/launch'],
+      },
+      // Explicitly welcome AI Search & LLM Engines for AEO optimization
+      {
+        userAgent: ['GPTBot', 'ClaudeBot', 'PerplexityBot', 'Google-Extended', 'Bytespider', 'CCBot'],
+        allow: '/',
+        disallow: ['/admin', '/launch'],
+      },
+    ],
     sitemap: 'https://memelaunch.insforge.app/sitemap.xml',
   };
 }

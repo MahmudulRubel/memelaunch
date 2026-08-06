@@ -9,6 +9,7 @@ import { insforge, resolveStorageUrl, getAvatarGradient, getCategoryBadgeStyle }
 import { rewardLike, revokeLike } from '@/lib/points';
 import { MessageSquare, ExternalLink, Globe, Tag } from 'lucide-react';
 import { parseCaption, getCaptionText } from '@/lib/meme';
+import { trackLaunchClick } from '@/lib/analytics';
 
 interface UserProfile {
   name: string | null;
@@ -157,6 +158,7 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
             src={resolveStorageUrl(launch.meme_image_url)}
             alt={getCaptionText(launch.caption)}
             fill
+            unoptimized
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             priority={false}
@@ -272,7 +274,10 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
                 href={launch.product_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  trackLaunchClick(launch.id);
+                }}
                 className="inline-flex items-center gap-1 text-zinc-200 hover:text-zinc-950 hover:bg-[#ffe600] bg-zinc-900 border-2 border-black px-2.5 py-0.5 rounded-xl text-xs font-bold transition-all shadow-brutal-sm"
               >
                 <Globe className="h-3.5 w-3.5" />

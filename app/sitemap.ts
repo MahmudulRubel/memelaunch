@@ -4,7 +4,7 @@ import { insforge } from '@/lib/insforge';
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://memelaunch.insforge.app';
 
-  // Base routes with explicit MetadataRoute.Sitemap type
+  // Core static pages
   const routes: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
@@ -16,7 +16,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${baseUrl}/templates`,
       lastModified: new Date(),
       changeFrequency: 'daily',
-      priority: 0.8,
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/rules`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/support`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.7,
     },
     {
       url: `${baseUrl}/terms`,
@@ -30,22 +42,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly',
       priority: 0.3,
     },
-    {
-      url: `${baseUrl}/rules`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/support`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.5,
-    },
   ];
 
   try {
-    // Dynamic profiles
+    // Dynamic product launch pages for SEO & AEO indexing
+    const { data: launches } = await insforge.database
+      .from('launches')
+      .select('product_name, created_at')
+      .eq('is_approved', true)
+      .limit(200);
+
+    if (launches) {
+      launches.forEach((launch) => {
+        if (launch.product_name) {
+          routes.push({
+            url: `${baseUrl}/products/${encodeURIComponent(launch.product_name)}`,
+            lastModified: launch.created_at ? new Date(launch.created_at) : new Date(),
+            changeFrequency: 'daily',
+            priority: 0.8,
+          });
+        }
+      });
+    }
+
+    // Dynamic user profiles
     const { data: users } = await insforge.database
       .from('users')
       .select('id, created_at')
@@ -57,7 +77,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           url: `${baseUrl}/profile/${user.id}`,
           lastModified: user.created_at ? new Date(user.created_at) : new Date(),
           changeFrequency: 'weekly',
-          priority: 0.6,
+          priority: 0.5,
         });
       });
     }

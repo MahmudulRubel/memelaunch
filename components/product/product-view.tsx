@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import type { Launch } from '@/components/feed/meme-card';
 import { parseCaption, getCaptionText } from '@/lib/meme';
+import { trackLaunchView, trackLaunchClick } from '@/lib/analytics';
 
 interface Screenshot {
   id: string;
@@ -108,6 +109,9 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
         if (!screensErr && screensData) setScreenshots(screensData as Screenshot[]);
         if (!commentsErr && commentsData) setComments(commentsData as DBComment[]);
         if (!reactionsErr && reactionsData) setReactions(reactionsData as Reaction[]);
+
+        // Track launch view
+        trackLaunchView(initialLaunchId);
       } catch (err: any) {
         console.error('Error fetching launch details:', err);
         setErrorMsg(err.message || 'An unexpected error occurred.');
@@ -256,6 +260,7 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
                   src={resolveStorageUrl(launch.product_logo_url)}
                   alt={`${launch.product_name} logo`}
                   fill
+                  unoptimized
                   sizes="80px"
                   className="object-cover"
                 />
@@ -296,6 +301,7 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
               href={launch.product_url}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackLaunchClick(launch.id)}
               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#ffe600] text-zinc-950 border-2 border-black rounded-xl font-black text-sm uppercase shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all shrink-0"
             >
               <Globe className="h-4 w-4" />
@@ -317,6 +323,7 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
                   src={resolveStorageUrl(launch.meme_image_url)}
                   alt={getCaptionText(launch.caption)}
                   fill
+                  unoptimized
                   sizes="(max-width: 1024px) 100vw, 60vw"
                   className="object-cover"
                 />
