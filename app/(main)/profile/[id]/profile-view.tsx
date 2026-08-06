@@ -120,11 +120,25 @@ export default function ProfileView({ profileId, initialProfile, initialLaunches
 
   useEffect(() => {
     setMounted(true);
-    // Load notification preferences from localStorage if available
+    // Load notification preferences & social links from localStorage if available
     try {
       const savedNotifs = localStorage.getItem(`memelaunch_notifs_${profileId}`);
       if (savedNotifs) {
         setNotifications(JSON.parse(savedNotifs));
+      }
+
+      const savedSocials = localStorage.getItem(`memelaunch_socials_${profileId}`);
+      if (savedSocials) {
+        const parsed = JSON.parse(savedSocials);
+        setEditTwitter(parsed.twitter || '');
+        setEditGithub(parsed.github || '');
+        setEditWebsite(parsed.website || '');
+        setProfile((prev) => prev ? {
+          ...prev,
+          twitter_handle: prev.twitter_handle || parsed.twitter || null,
+          github_handle: prev.github_handle || parsed.github || null,
+          website_url: prev.website_url || parsed.website || null,
+        } : null);
       }
     } catch (e) {
       // ignore storage errors
@@ -182,13 +196,29 @@ export default function ProfileView({ profileId, initialProfile, initialLaunches
         throw new Error(profileErr?.message || 'Founder profile not found.');
       }
 
-      setProfile(profileData as ProfileData);
+      let localSocials: any = {};
+      try {
+        const savedSocials = localStorage.getItem(`memelaunch_socials_${profileId}`);
+        if (savedSocials) localSocials = JSON.parse(savedSocials);
+      } catch (e) {}
+
+      const finalTwitter = profileData.twitter_handle || localSocials.twitter || null;
+      const finalGithub = profileData.github_handle || localSocials.github || null;
+      const finalWebsite = profileData.website_url || localSocials.website || null;
+
+      setProfile({
+        ...profileData,
+        twitter_handle: finalTwitter,
+        github_handle: finalGithub,
+        website_url: finalWebsite,
+      } as ProfileData);
+
       setEditName(profileData.name || '');
       setEditBio(profileData.bio || '');
       setEditAvatar(profileData.avatar || '');
-      setEditTwitter(profileData.twitter_handle || '');
-      setEditGithub(profileData.github_handle || '');
-      setEditWebsite(profileData.website_url || '');
+      setEditTwitter(finalTwitter || '');
+      setEditGithub(finalGithub || '');
+      setEditWebsite(finalWebsite || '');
 
       if (launchesErr) {
         console.error('Error fetching founder launches:', launchesErr);
@@ -316,8 +346,17 @@ export default function ProfileView({ profileId, initialProfile, initialLaunches
         finalAvatarUrl = uploadData.url;
       }
 
-      // 2. Update users table row with extra social fields
-      const { error: updateError } = await insforge.database
+      // Save social links to localStorage as backup
+      try {
+        localStorage.setItem(`memelaunch_socials_${profileId}`, JSON.stringify({
+          twitter: editTwitter.trim(),
+          github: editGithub.trim(),
+          website: editWebsite.trim(),
+        }));
+      } catch (e) {}
+
+      // 2. Try updating users table row with extra social fields
+      let { error: updateError } = await insforge.database
         .from('users')
         .update({
           name: editName.trim(),
@@ -328,6 +367,21 @@ export default function ProfileView({ profileId, initialProfile, initialLaunches
           website_url: editWebsite.trim() || null,
         })
         .eq('id', profileId);
+
+      // If DB schema doesn't have twitter_handle/github_handle/website_url columns yet (PGRST204), fallback to core columns
+      if (updateError && (updateError.code === 'PGRST204' || updateError.message?.includes('schema cache') || updateError.message?.includes('column'))) {
+        console.warn('Social columns not found in database schema cache, performing core columns update fallback...');
+        const fallbackRes = await insforge.database
+          .from('users')
+          .update({
+            name: editName.trim(),
+            bio: editBio.trim(),
+            avatar: finalAvatarUrl,
+          })
+          .eq('id', profileId);
+
+        updateError = fallbackRes.error;
+      }
 
       if (updateError) {
         throw updateError;
