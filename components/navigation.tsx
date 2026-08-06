@@ -7,7 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
 import { getUserPoints } from '@/lib/points';
-import { Menu, X, LogOut, User, Plus, Compass, Trophy, Settings, Zap, BarChart3 } from 'lucide-react';
+import { Menu, X, LogOut, User, Plus, Compass, Trophy, Settings, Zap, BarChart3, Sparkles } from 'lucide-react';
 
 const EarnPointsModal = dynamic(
   () => import('@/components/points/earn-points-modal').then((m) => m.EarnPointsModal),
