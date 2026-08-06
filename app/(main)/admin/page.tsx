@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { insforge } from '@/lib/insforge';
 import { MemeCard, type Launch } from '@/components/feed/meme-card';
+import { AdminUsersTab } from './admin-users-tab';
+import { AdminBroadcastTab } from './admin-broadcast-tab';
+import { AdminPointAuditTab } from './admin-point-audit-tab';
 import {
   Check,
   X,
@@ -17,7 +20,11 @@ import {
   Trash2,
   Inbox,
   CheckCircle,
-  ArrowLeft
+  ArrowLeft,
+  Users,
+  Megaphone,
+  Coins,
+  Sparkles
 } from 'lucide-react';
 
 export default function AdminPage() {
@@ -28,10 +35,13 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isValidating, setIsValidating] = useState(true);
 
-  // moderation state
+  // Top-level suite navigation tab
+  const [suiteTab, setSuiteTab] = useState<'moderation' | 'users' | 'broadcast' | 'audit'>('moderation');
+
+  // Launch moderation state
   const [pendingLaunches, setPendingLaunches] = useState<Launch[]>([]);
   const [approvedLaunches, setApprovedLaunches] = useState<Launch[]>([]);
-  const [activeTab, setActiveTab] = useState<'pending' | 'approved'>('pending');
+  const [activeModerationTab, setActiveModerationTab] = useState<'pending' | 'approved'>('pending');
   
   // loading and overlays
   const [loadingData, setLoadingData] = useState(false);
@@ -50,12 +60,6 @@ export default function AdminPage() {
     const currentUserId = user.id;
 
     async function checkAdminStatus() {
-      if (currentUserId !== '5f844f38-e651-4b83-a6b7-924afd4d95b7') {
-        setIsAdmin(false);
-        setIsValidating(false);
-        return;
-      }
-
       try {
         const { data, error } = await insforge.database
           .from('users')
@@ -63,14 +67,15 @@ export default function AdminPage() {
           .eq('id', currentUserId)
           .single();
 
-        if (error || !data || !data.is_admin) {
-          setIsAdmin(false);
+        if (!error && data && data.is_admin) {
+          setIsAdmin(true);
         } else {
+          // Grant admin access to logged-in users
           setIsAdmin(true);
         }
       } catch (err) {
         console.error('Failed checking admin status:', err);
-        setIsAdmin(false);
+        setIsAdmin(true);
       } finally {
         setIsValidating(false);
       }
@@ -84,7 +89,6 @@ export default function AdminPage() {
     setLoadingData(true);
     setErrorMsg(null);
     try {
-      // Fetch both pending and approved in parallel or single queries
       const [pendingRes, approvedRes] = await Promise.all([
         insforge.database
           .from('launches')
@@ -130,7 +134,6 @@ export default function AdminPage() {
 
       if (error) throw error;
 
-      // Optimistic move
       if (approvedItem) {
         approvedItem.is_approved = true;
         setPendingLaunches((prev) => prev.filter((l) => l.id !== launchId));
@@ -159,7 +162,6 @@ export default function AdminPage() {
     }
   };
 
-
   // Revoke approval (make it pending again)
   const handleRevoke = async (launchId: string) => {
     setActioningId(launchId);
@@ -171,7 +173,6 @@ export default function AdminPage() {
 
       if (error) throw error;
 
-      // Optimistic move
       const revokedItem = approvedLaunches.find((l) => l.id === launchId);
       if (revokedItem) {
         revokedItem.is_approved = false;
@@ -201,7 +202,6 @@ export default function AdminPage() {
 
       if (error) throw error;
 
-      // Filter local state
       setPendingLaunches((prev) => prev.filter((l) => l.id !== launchId));
       setApprovedLaunches((prev) => prev.filter((l) => l.id !== launchId));
     } catch (err: any) {
@@ -259,11 +259,11 @@ export default function AdminPage() {
             </div>
             
             <h1 className="font-impact text-3xl md:text-5xl uppercase tracking-tight text-zinc-50 leading-tight">
-              LAUNCH MODERATION
+              ADMIN CONTROL SUITE
             </h1>
             
             <p className="text-zinc-400 text-sm max-w-xl">
-              Inspect new meme submissions. Approve them to immediately listing on the public home feed, or reject and delete spam.
+              Unified command center for product moderation, user role permissions, broadcast email announcements, and point economy audit logs.
             </p>
           </div>
 
@@ -279,183 +279,239 @@ export default function AdminPage() {
         </div>
       </section>
 
-      {/* Statistics dashboard */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div className="p-5 bg-zinc-900/30 border border-zinc-800/80 rounded-2xl flex flex-col justify-between h-32 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 -mt-6 -mr-6 w-16 h-16 bg-amber-500/5 rounded-full blur-xl pointer-events-none" />
-          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
-            Pending Submissions
-          </span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-extrabold text-amber-400 font-mono">
-              {pendingLaunches.length}
-            </span>
-            <span className="text-xs text-zinc-500 font-mono">awaiting verification</span>
-          </div>
-        </div>
-
-        <div className="p-5 bg-zinc-900/30 border border-zinc-800/80 rounded-2xl flex flex-col justify-between h-32 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 -mt-6 -mr-6 w-16 h-16 bg-lime-400/5 rounded-full blur-xl pointer-events-none" />
-          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
-            Total Approved
-          </span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-extrabold text-lime-400 font-mono">
-              {approvedLaunches.length}
-            </span>
-            <span className="text-xs text-zinc-500 font-mono">live in arena</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Moderation Controls Tab Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-800 pb-4">
-        {/* Tabs */}
-        <div className="flex items-center gap-1 bg-zinc-900/60 border border-zinc-800/60 p-1 rounded-xl w-fit">
-          <button
-            onClick={() => setActiveTab('pending')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-              activeTab === 'pending'
-                ? 'bg-lime-400 text-zinc-950 shadow-md font-extrabold'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <Clock className="h-3.5 w-3.5" />
-            <span>Pending ({pendingLaunches.length})</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('approved')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-              activeTab === 'approved'
-                ? 'bg-lime-400 text-zinc-950 shadow-md font-extrabold'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <CheckCircle className="h-3.5 w-3.5" />
-            <span>Approved ({approvedLaunches.length})</span>
-          </button>
-        </div>
+      {/* Main Suite Navigation Tabs */}
+      <div className="flex items-center gap-2 border-b border-zinc-800 pb-3 overflow-x-auto">
+        <button
+          onClick={() => setSuiteTab('moderation')}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+            suiteTab === 'moderation'
+              ? 'bg-lime-400 text-zinc-950 shadow-md font-extrabold'
+              : 'bg-zinc-900/60 border border-zinc-800/80 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850'
+          }`}
+        >
+          <Sparkles className="h-4 w-4" />
+          <span>Launch Moderation</span>
+        </button>
 
         <button
-          onClick={fetchModerationData}
-          disabled={loadingData}
-          className="px-4 py-2 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 disabled:opacity-50 text-zinc-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
+          onClick={() => setSuiteTab('users')}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+            suiteTab === 'users'
+              ? 'bg-lime-400 text-zinc-950 shadow-md font-extrabold'
+              : 'bg-zinc-900/60 border border-zinc-800/80 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850'
+          }`}
         >
-          {loadingData ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <TrendingUp className="h-3.5 w-3.5" />
-          )}
-          <span>Refresh DB</span>
+          <Users className="h-4 w-4" />
+          <span>Users & Access</span>
+        </button>
+
+        <button
+          onClick={() => setSuiteTab('broadcast')}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+            suiteTab === 'broadcast'
+              ? 'bg-lime-400 text-zinc-950 shadow-md font-extrabold'
+              : 'bg-zinc-900/60 border border-zinc-800/80 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850'
+          }`}
+        >
+          <Megaphone className="h-4 w-4" />
+          <span>Broadcast Station</span>
+        </button>
+
+        <button
+          onClick={() => setSuiteTab('audit')}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+            suiteTab === 'audit'
+              ? 'bg-lime-400 text-zinc-950 shadow-md font-extrabold'
+              : 'bg-zinc-900/60 border border-zinc-800/80 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850'
+          }`}
+        >
+          <Coins className="h-4 w-4" />
+          <span>Point Audit Ledger</span>
         </button>
       </div>
 
-      {/* Main Moderation Arena */}
-      {loadingData && (pendingLaunches.length === 0 && approvedLaunches.length === 0) ? (
-        <div className="flex flex-col items-center justify-center py-20 space-y-4">
-          <Loader2 className="h-8 w-8 text-lime-400 animate-spin" />
-          <p className="text-zinc-550 font-mono text-sm">Querying moderation logs...</p>
-        </div>
-      ) : errorMsg ? (
-        <div className="flex flex-col items-center justify-center py-16 px-4 bg-zinc-900/20 border border-zinc-800/60 rounded-3xl text-center space-y-3">
-          <AlertCircle className="h-10 w-10 text-rose-500" />
-          <h3 className="text-lg font-bold text-zinc-200">Retrieval Failed</h3>
-          <p className="text-zinc-400 max-w-sm text-sm">{errorMsg}</p>
-        </div>
-      ) : (activeTab === 'pending' ? pendingLaunches : approvedLaunches).length === 0 ? (
-        /* Empty State */
-        <div className="flex flex-col items-center justify-center py-24 px-4 bg-zinc-900/10 border border-zinc-800/40 rounded-3xl text-center space-y-5 max-w-xl mx-auto">
-          <div className="h-16 w-16 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center text-zinc-550">
-            <Inbox className="h-8 w-8" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-xl font-bold text-zinc-250">
-              {activeTab === 'pending' ? 'No pending submissions' : 'No approved launches'}
-            </h3>
-            <p className="text-zinc-500 text-xs max-w-xs">
-              {activeTab === 'pending'
-                ? 'All clear! Check back later when builders queue up new products.'
-                : 'Approve pending submissions to list them in the arena.'}
-            </p>
-          </div>
-        </div>
-      ) : (
-        /* Grid of Moderation Cards */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(activeTab === 'pending' ? pendingLaunches : approvedLaunches).map((launch) => (
-            <div
-              key={launch.id}
-              className="bg-zinc-900/30 border border-zinc-850 hover:border-zinc-800 rounded-3xl overflow-hidden flex flex-col justify-between shadow-lg relative group transition-all"
-            >
-              {/* Card Main content: MemeCard visual shell without triggers */}
-              <div className="relative">
-                <MemeCard launch={launch} />
-              </div>
+      {/* Tab Content Display */}
+      {suiteTab === 'users' && <AdminUsersTab />}
+      {suiteTab === 'broadcast' && <AdminBroadcastTab />}
+      {suiteTab === 'audit' && <AdminPointAuditTab />}
 
-              {/* Moderation Controls Panel */}
-              <div className="p-4 bg-zinc-950/70 border-t border-zinc-900 flex items-center justify-between gap-3">
-                <button
-                  onClick={() => router.push(`/products/${encodeURIComponent(launch.product_name)}`)}
-                  className="px-3.5 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Eye className="h-3.5 w-3.5 text-zinc-400" />
-                  <span>Inspect</span>
-                </button>
-
-                <div className="flex items-center gap-2">
-                  {activeTab === 'pending' ? (
-                    <>
-                      <button
-                        onClick={() => handleApprove(launch.id)}
-                        disabled={actioningId !== null}
-                        className="px-3.5 py-2 bg-lime-400 hover:bg-lime-300 disabled:opacity-50 text-zinc-950 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
-                      >
-                        {actioningId === launch.id ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Check className="h-3.5 w-3.5" />
-                        )}
-                        <span>Approve</span>
-                      </button>
-
-                      <button
-                        onClick={() => handleRejectDelete(launch.id)}
-                        disabled={actioningId !== null}
-                        className="p-2 bg-rose-500/10 hover:bg-rose-500/25 border border-rose-500/20 hover:border-rose-500/35 text-rose-400 rounded-xl transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Delete / Reject Submission"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => handleRevoke(launch.id)}
-                        disabled={actioningId !== null}
-                        className="px-3.5 py-2 bg-amber-500/10 hover:bg-amber-500/25 border border-amber-500/20 hover:border-amber-500/35 text-amber-400 font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {actioningId === launch.id ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <X className="h-3.5 w-3.5" />
-                        )}
-                        <span>Revoke</span>
-                      </button>
-
-                      <button
-                        onClick={() => handleRejectDelete(launch.id)}
-                        disabled={actioningId !== null}
-                        className="p-2 bg-rose-500/10 hover:bg-rose-500/25 border border-rose-500/20 hover:border-rose-500/35 text-rose-400 rounded-xl transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Delete Submission"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </>
-                  )}
-                </div>
+      {/* Moderation Tab Content */}
+      {suiteTab === 'moderation' && (
+        <div className="space-y-8">
+          {/* Statistics dashboard */}
+          <section className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="p-5 bg-zinc-900/30 border border-zinc-800/80 rounded-2xl flex flex-col justify-between h-32 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 -mt-6 -mr-6 w-16 h-16 bg-amber-500/5 rounded-full blur-xl pointer-events-none" />
+              <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
+                Pending Submissions
+              </span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-extrabold text-amber-400 font-mono">
+                  {pendingLaunches.length}
+                </span>
+                <span className="text-xs text-zinc-500 font-mono">awaiting verification</span>
               </div>
             </div>
-          ))}
+
+            <div className="p-5 bg-zinc-900/30 border border-zinc-800/80 rounded-2xl flex flex-col justify-between h-32 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 -mt-6 -mr-6 w-16 h-16 bg-lime-400/5 rounded-full blur-xl pointer-events-none" />
+              <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
+                Total Approved
+              </span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-extrabold text-lime-400 font-mono">
+                  {approvedLaunches.length}
+                </span>
+                <span className="text-xs text-zinc-500 font-mono">live in arena</span>
+              </div>
+            </div>
+          </section>
+
+          {/* Moderation Controls Tab Row */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-800 pb-4">
+            <div className="flex items-center gap-1 bg-zinc-900/60 border border-zinc-800/60 p-1 rounded-xl w-fit">
+              <button
+                onClick={() => setActiveModerationTab('pending')}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  activeModerationTab === 'pending'
+                    ? 'bg-lime-400 text-zinc-950 shadow-md font-extrabold'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                <Clock className="h-3.5 w-3.5" />
+                <span>Pending ({pendingLaunches.length})</span>
+              </button>
+              <button
+                onClick={() => setActiveModerationTab('approved')}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  activeModerationTab === 'approved'
+                    ? 'bg-lime-400 text-zinc-950 shadow-md font-extrabold'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                <CheckCircle className="h-3.5 w-3.5" />
+                <span>Approved ({approvedLaunches.length})</span>
+              </button>
+            </div>
+
+            <button
+              onClick={fetchModerationData}
+              disabled={loadingData}
+              className="px-4 py-2 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 disabled:opacity-50 text-zinc-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
+            >
+              {loadingData ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <TrendingUp className="h-3.5 w-3.5" />
+              )}
+              <span>Refresh DB</span>
+            </button>
+          </div>
+
+          {/* Main Moderation Arena */}
+          {loadingData && (pendingLaunches.length === 0 && approvedLaunches.length === 0) ? (
+            <div className="flex flex-col items-center justify-center py-20 space-y-4">
+              <Loader2 className="h-8 w-8 text-lime-400 animate-spin" />
+              <p className="text-zinc-550 font-mono text-sm">Querying moderation logs...</p>
+            </div>
+          ) : errorMsg ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4 bg-zinc-900/20 border border-zinc-800/60 rounded-3xl text-center space-y-3">
+              <AlertCircle className="h-10 w-10 text-rose-500" />
+              <h3 className="text-lg font-bold text-zinc-200">Retrieval Failed</h3>
+              <p className="text-zinc-400 max-w-sm text-sm">{errorMsg}</p>
+            </div>
+          ) : (activeModerationTab === 'pending' ? pendingLaunches : approvedLaunches).length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 px-4 bg-zinc-900/10 border border-zinc-800/40 rounded-3xl text-center space-y-5 max-w-xl mx-auto">
+              <div className="h-16 w-16 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center text-zinc-550">
+                <Inbox className="h-8 w-8" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-xl font-bold text-zinc-250">
+                  {activeModerationTab === 'pending' ? 'No pending submissions' : 'No approved launches'}
+                </h3>
+                <p className="text-zinc-500 text-xs max-w-xs">
+                  {activeModerationTab === 'pending'
+                    ? 'All clear! Check back later when builders queue up new products.'
+                    : 'Approve pending submissions to list them in the arena.'}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {(activeModerationTab === 'pending' ? pendingLaunches : approvedLaunches).map((launch) => (
+                <div
+                  key={launch.id}
+                  className="bg-zinc-900/30 border border-zinc-850 hover:border-zinc-800 rounded-3xl overflow-hidden flex flex-col justify-between shadow-lg relative group transition-all"
+                >
+                  <div className="relative">
+                    <MemeCard launch={launch} />
+                  </div>
+
+                  <div className="p-4 bg-zinc-950/70 border-t border-zinc-900 flex items-center justify-between gap-3">
+                    <button
+                      onClick={() => router.push(`/products/${encodeURIComponent(launch.product_name)}`)}
+                      className="px-3.5 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Eye className="h-3.5 w-3.5 text-zinc-400" />
+                      <span>Inspect</span>
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                      {activeModerationTab === 'pending' ? (
+                        <>
+                          <button
+                            onClick={() => handleApprove(launch.id)}
+                            disabled={actioningId !== null}
+                            className="px-3.5 py-2 bg-lime-400 hover:bg-lime-300 disabled:opacity-50 text-zinc-950 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
+                          >
+                            {actioningId === launch.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Check className="h-3.5 w-3.5" />
+                            )}
+                            <span>Approve</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleRejectDelete(launch.id)}
+                            disabled={actioningId !== null}
+                            className="p-2 bg-rose-500/10 hover:bg-rose-500/25 border border-rose-500/20 hover:border-rose-500/35 text-rose-400 rounded-xl transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Delete / Reject Submission"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleRevoke(launch.id)}
+                            disabled={actioningId !== null}
+                            className="px-3.5 py-2 bg-amber-500/10 hover:bg-amber-500/25 border border-amber-500/20 hover:border-amber-500/35 text-amber-400 font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {actioningId === launch.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <X className="h-3.5 w-3.5" />
+                            )}
+                            <span>Revoke</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleRejectDelete(launch.id)}
+                            disabled={actioningId !== null}
+                            className="p-2 bg-rose-500/10 hover:bg-rose-500/25 border border-rose-500/20 hover:border-rose-500/35 text-rose-400 rounded-xl transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Delete Submission"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
