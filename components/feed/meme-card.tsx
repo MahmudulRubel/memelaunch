@@ -226,6 +226,19 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
           );
         })()}
 
+        {/* World Cup Qualification Badge in top left */}
+        <div className="absolute top-2 left-3 z-20">
+          {reactions.length >= 10 ? (
+            <span className="inline-flex items-center gap-1 bg-amber-500 text-zinc-950 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-md">
+              <span>🏆</span> Top 16 Qualifier
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 bg-zinc-950/80 text-amber-400 border border-amber-500/40 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur">
+              <span>⚡</span> {10 - reactions.length} votes to Top 16
+            </span>
+          )}
+        </div>
+
         {/* Watermark in bottom right */}
         <div className="absolute top-2 right-3 text-[9px] font-mono text-zinc-400 font-extrabold tracking-widest uppercase bg-zinc-950/80 px-2 py-0.5 rounded border border-black">
           MEMELAUNCH
@@ -295,7 +308,7 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
           <div className="flex items-center justify-between gap-1.5 bg-zinc-900 border-2 border-black rounded-xl p-1 shadow-brutal-sm">
             <button
               onClick={(e) => handleReaction('🔥', e)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-black transition-all border-2 active:translate-x-0.5 active:translate-y-0.5 ${
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 min-h-[44px] rounded-lg text-xs font-black transition-all border-2 active:translate-x-0.5 active:translate-y-0.5 ${
                 hasReacted('🔥')
                   ? 'bg-rose-400 text-zinc-950 border-black shadow-brutal-sm'
                   : 'bg-zinc-950 text-zinc-300 border-black hover:bg-rose-400/20'
@@ -307,7 +320,7 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
 
             <button
               onClick={(e) => handleReaction('😂', e)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-black transition-all border-2 active:translate-x-0.5 active:translate-y-0.5 ${
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 min-h-[44px] rounded-lg text-xs font-black transition-all border-2 active:translate-x-0.5 active:translate-y-0.5 ${
                 hasReacted('😂')
                   ? 'bg-[#ffe600] text-zinc-950 border-black shadow-brutal-sm'
                   : 'bg-zinc-950 text-zinc-300 border-black hover:bg-[#ffe600]/20'
@@ -319,7 +332,7 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
 
             <button
               onClick={(e) => handleReaction('🤔', e)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-black transition-all border-2 active:translate-x-0.5 active:translate-y-0.5 ${
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 min-h-[44px] rounded-lg text-xs font-black transition-all border-2 active:translate-x-0.5 active:translate-y-0.5 ${
                 hasReacted('🤔')
                   ? 'bg-cyan-400 text-zinc-950 border-black shadow-brutal-sm'
                   : 'bg-zinc-950 text-zinc-300 border-black hover:bg-cyan-400/20'

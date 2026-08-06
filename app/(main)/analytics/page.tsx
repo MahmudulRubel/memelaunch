@@ -193,7 +193,7 @@ export default function AnalyticsPage() {
       )}
 
       {/* 4 Main KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         
         {/* KPI 1: Live Products */}
         <div className="bg-zinc-900 border-4 border-black p-6 rounded-2xl shadow-brutal flex flex-col justify-between space-y-4 hover:-translate-y-1 transition-all">

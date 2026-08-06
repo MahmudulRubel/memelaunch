@@ -97,6 +97,7 @@ function LaunchForm() {
   const [leftBelow, setLeftBelow] = useState(50);
   const [widthAbove, setWidthAbove] = useState(90);
   const [widthBelow, setWidthBelow] = useState(90);
+  const [preferredCycle, setPreferredCycle] = useState<'current' | 'next'>('current');
   const previewContainerRef = useRef<HTMLDivElement>(null);
 
   // Drag handler for caption positioning
@@ -924,8 +925,60 @@ function LaunchForm() {
           {/* RIGHT COLUMN: FIELDS & UPLOADS (7 Cols) */}
           <div className="lg:col-span-7 bg-zinc-900/30 border border-zinc-800/80 rounded-2xl p-6 md:p-8 space-y-8">
             
+            {/* World Cup Strategy Selector */}
+            <div className="space-y-3 p-4 bg-gradient-to-r from-amber-500/10 via-zinc-950 to-amber-500/5 border border-amber-500/30 rounded-2xl">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🏆</span>
+                <label className="text-sm font-extrabold text-white">
+                  World Cup Entry Strategy
+                </label>
+                <span className="text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold ml-auto">
+                  48h Strategy Choice
+                </span>
+              </div>
+              <p className="text-xs text-zinc-400">
+                Choose how your launch enters the weekly World Cup qualification race:
+              </p>
 
-            
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPreferredCycle('current')}
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                    preferredCycle === 'current'
+                      ? 'bg-amber-500/20 border-amber-500 text-white shadow-md'
+                      : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-amber-400">
+                    <span>🚀</span>
+                    <span>I&apos;m Confident! (This Week)</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 mt-1 leading-snug">
+                    Enter this week&apos;s race immediately. Great if you have an audience ready to vote!
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPreferredCycle('next')}
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                    preferredCycle === 'next'
+                      ? 'bg-amber-500/20 border-amber-500 text-white shadow-md'
+                      : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-amber-400">
+                    <span>🛡️</span>
+                    <span>Safe Play (Next Week)</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 mt-1 leading-snug">
+                    Get a full 7 days on the main feed to accumulate reactions naturally for next week.
+                  </p>
+                </button>
+              </div>
+            </div>
+
             {/* Section 1: Meme Content */}
             <div className="space-y-6">
               <h2 className="text-xl font-bold border-b border-zinc-800 pb-3 flex items-center gap-2 text-zinc-200">

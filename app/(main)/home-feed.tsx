@@ -17,6 +17,7 @@ import {
   Rocket
 } from 'lucide-react';
 import { getCaptionText } from '@/lib/meme';
+import { HowItWorksModal } from '@/components/how-it-works-modal';
 
 interface HomeFeedProps {
   initialLaunches: Launch[];
@@ -25,9 +26,11 @@ interface HomeFeedProps {
 export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
   const router = useRouter();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'trending' | 'new'>('trending');
+  const [activeTab, setActiveTab] = useState<'trending' | 'new' | 'qualifiers'>('trending');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All Categories');
   const [searchQuery, setSearchQuery] = useState('');
   const [quickUrl, setQuickUrl] = useState('');
+  const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
   
   // Database state initialized with server-side data
   const [launches, setLaunches] = useState<Launch[]>(initialLaunches || []);
@@ -122,7 +125,12 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
   const filteredAndSortedLaunches = useMemo(() => {
     let result = [...launches];
 
-    // 1. Apply Search Query
+    // 1. Apply Category Filter
+    if (selectedCategory && selectedCategory !== 'All Categories') {
+      result = result.filter((l) => l.category?.toLowerCase() === selectedCategory.toLowerCase());
+    }
+
+    // 2. Apply Search Query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       result = result.filter(
@@ -133,24 +141,24 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
       );
     }
 
-    // 2. Apply Sorting based on Active Tab
+    // 3. Apply Sorting based on Active Tab
     if (activeTab === 'new') {
-      // Already sorted by created_at descending from database
       return result;
+    } else if (activeTab === 'qualifiers') {
+      // Top 16 Qualifiers
+      return result.sort((a, b) => (b.reactions?.length || 0) - (a.reactions?.length || 0)).slice(0, 16);
     } else if (activeTab === 'trending') {
-      // Popularity score = total reactions
       return result.sort((a, b) => {
         const aScore = a.reactions?.length || 0;
         const bScore = b.reactions?.length || 0;
         
         if (bScore !== aScore) return bScore - aScore;
-        // Fallback to fresh if scores are equal
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
     }
 
     return result;
-  }, [launches, searchQuery, activeTab]);
+  }, [launches, searchQuery, activeTab, selectedCategory]);
 
   // Paginated subset of launches
   const paginatedLaunches = useMemo(() => {
@@ -235,44 +243,36 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
               Building in public is tough when nobody notices your tweets. MemeLaunch is the weekly battleground where indie hackers drop their funniest product memes, compete for top gold badges, and win real customers.
             </p>
 
-            {/* Feature / Trust Badges */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 pt-1 text-xs font-extrabold text-zinc-300">
-              <span className="bg-zinc-900 border-2 border-black px-2.5 py-1 rounded-xl shadow-brutal-sm flex items-center gap-1">
-                <span className="text-[#ffe600]">◇</span> DR 68 Permanent Backlink
-              </span>
-              <span className="bg-zinc-900 border-2 border-black px-2.5 py-1 rounded-xl shadow-brutal-sm flex items-center gap-1">
-                <span className="text-[#ffe600]">◇</span> 100% Free Launch
-              </span>
-              <span className="bg-zinc-900 border-2 border-black px-2.5 py-1 rounded-xl shadow-brutal-sm flex items-center gap-1">
-                <span className="text-[#ffe600]">◇</span> Instant Eyeballs
-              </span>
-            </div>
-
-            {/* Quick Launch URL Form */}
-            <form 
-              className="border-2 border-black bg-zinc-900 shadow-brutal rounded-2xl mt-4 flex w-full max-w-md items-center gap-2 p-2" 
-              onSubmit={(e) => { 
-                e.preventDefault(); 
-                const url = quickUrl.trim();
-                const target = url ? `/launch?url=${encodeURIComponent(url)}` : '/launch';
-                router.push(user ? target : `/login?redirect=${encodeURIComponent(target)}`);
-              }}
-            >
-              <span aria-hidden="true" className="text-zinc-400 pl-2">🔗</span>
-              <input 
-                type="url" 
-                value={quickUrl}
-                onChange={(e) => setQuickUrl(e.target.value)}
-                placeholder="https://your-micro-saas.com" 
-                className="text-zinc-100 placeholder:text-zinc-500 min-w-0 flex-1 bg-transparent px-2 py-1 text-sm outline-none font-medium" 
-              />
-              <button 
-                type="submit"
-                className="rounded-xl border-2 border-black bg-[#ffe600] text-zinc-950 hover:-translate-x-0.5 hover:-translate-y-0.5 shrink-0 px-4 py-2 text-xs font-black uppercase tracking-wider transition-all shadow-brutal-sm inline-flex items-center gap-1 cursor-pointer"
+            {/* Action Buttons Row */}
+            <div className="flex flex-wrap items-center gap-3 w-full max-w-md mt-2">
+              <Link
+                href="/world-cup"
+                className="flex-1 bg-gradient-to-r from-amber-500/20 via-zinc-900 to-amber-500/10 border-2 border-amber-500/50 p-3 rounded-2xl flex items-center justify-between shadow-brutal hover:border-amber-400 transition-all group"
               >
-                <span>Enter The Arena 🥊</span>
+                <div className="flex items-center gap-3 text-left">
+                  <span className="text-2xl animate-bounce">🏆</span>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-black text-amber-400 uppercase tracking-wider">World Cup #32 Live</span>
+                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                    </div>
+                    <p className="text-xs text-zinc-300 font-medium">16 Products battling in Knockout Bracket</p>
+                  </div>
+                </div>
+                <span className="text-xs font-black bg-amber-500 text-zinc-950 px-2.5 py-1 rounded-xl uppercase tracking-wider group-hover:scale-105 transition-transform">
+                  Vote ➔
+                </span>
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => setIsHowItWorksOpen(true)}
+                className="w-full sm:w-auto px-4 py-3 bg-zinc-900 border-2 border-black hover:bg-[#ffe600] hover:text-zinc-950 text-zinc-200 font-black text-xs uppercase tracking-wider rounded-2xl shadow-brutal-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>How It Works</span>
+                <span className="text-base">ℹ️</span>
               </button>
-            </form>
+            </div>
           </div>
 
           {/* Right Column: Live Sample Meme Card Spotlight */}
@@ -361,12 +361,12 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
       </section>
 
       {/* Feed Filter & Search Row */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-zinc-950 border-2 border-black p-4 rounded-2xl shadow-brutal">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-zinc-950 border-2 border-black p-4 rounded-2xl shadow-brutal">
         {/* Tabs */}
-        <div className="flex items-center gap-2 bg-zinc-900 border-2 border-black p-1.5 rounded-xl w-fit">
+        <div className="flex items-center gap-2 bg-zinc-900 border-2 border-black p-1.5 rounded-xl overflow-x-auto no-scrollbar max-w-full min-w-0">
           <button
             onClick={() => setActiveTab('trending')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all border-2 border-black cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2.5 min-h-[44px] rounded-lg text-xs font-black uppercase tracking-wider transition-all border-2 border-black cursor-pointer shrink-0 whitespace-nowrap ${
               activeTab === 'trending'
                 ? 'bg-[#ffe600] text-zinc-950 shadow-brutal-sm'
                 : 'bg-transparent text-zinc-300 hover:text-white border-transparent'
@@ -375,9 +375,10 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
             <TrendingUp className="h-4 w-4" />
             <span>Trending</span>
           </button>
+
           <button
             onClick={() => setActiveTab('new')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all border-2 border-black cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2.5 min-h-[44px] rounded-lg text-xs font-black uppercase tracking-wider transition-all border-2 border-black cursor-pointer shrink-0 whitespace-nowrap ${
               activeTab === 'new'
                 ? 'bg-[#ffe600] text-zinc-950 shadow-brutal-sm'
                 : 'bg-transparent text-zinc-300 hover:text-white border-transparent'
@@ -386,24 +387,66 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
             <Clock className="h-4 w-4" />
             <span>Fresh</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab('qualifiers')}
+            className={`flex items-center gap-2 px-3.5 py-2.5 min-h-[44px] rounded-lg text-xs font-black uppercase tracking-wider transition-all border-2 border-black cursor-pointer shrink-0 whitespace-nowrap ${
+              activeTab === 'qualifiers'
+                ? 'bg-amber-500 text-zinc-950 shadow-brutal-sm font-extrabold'
+                : 'bg-transparent text-amber-400 hover:text-amber-300 border-transparent'
+            }`}
+          >
+            <span>🏆</span>
+            <span>Top 16 Qualifiers</span>
+          </button>
         </div>
 
-        {/* Search Input & Info */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full md:w-auto">
+        {/* Search & Category Filter Controls */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+          {/* Category Dropdown */}
+          <div className="relative w-full sm:w-48">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full px-3 py-2 bg-zinc-900 border-2 border-black rounded-xl text-xs font-bold uppercase tracking-wider text-zinc-100 focus:outline-none focus:border-[#ffe600] cursor-pointer appearance-none shadow-brutal-sm"
+            >
+              {[
+                'All Categories',
+                'SaaS',
+                'Developer Tools',
+                'AI & Machine Learning',
+                'Mobile Apps',
+                'Web Utilities',
+                'Design & Creative',
+                'Marketing & Sales',
+                'Productivity',
+                'Crypto & Web3',
+                'E-Commerce',
+                'Hardware',
+                'Other'
+              ].map((cat) => (
+                <option key={cat} value={cat} className="bg-zinc-950 text-zinc-100">
+                  {cat}
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-400">
+              <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+              </svg>
+            </div>
+          </div>
+
           {/* Search bar */}
-          <div className="relative flex-1 sm:w-64">
+          <div className="relative w-full sm:w-64">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search products, memes..."
-              className="w-full pl-10 pr-4 py-2 bg-zinc-900 border-2 border-black rounded-xl text-sm focus:outline-none focus:border-[#ffe600] text-zinc-100 placeholder-zinc-500 shadow-brutal-sm transition-all font-medium"
+              className="w-full pl-10 pr-4 py-2 bg-zinc-900 border-2 border-black rounded-xl text-xs font-bold text-zinc-100 placeholder-zinc-500 shadow-brutal-sm focus:outline-none focus:border-[#ffe600] transition-all"
             />
-          </div>
-
-          <div className="text-zinc-400 text-xs font-mono font-bold uppercase hidden sm:block">
-            ◇ Weekly Rotations
           </div>
         </div>
       </div>
@@ -462,6 +505,12 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
           <div className="h-8 w-8 border-4 border-lime-400 border-t-transparent rounded-full animate-spin" />
         </div>
       )}
+
+      {/* How It Works Modal */}
+      <HowItWorksModal
+        isOpen={isHowItWorksOpen}
+        onClose={() => setIsHowItWorksOpen(false)}
+      />
     </div>
   );
 }
