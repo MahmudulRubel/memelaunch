@@ -121,6 +121,8 @@ export default function AdminPage() {
   const handleApprove = async (launchId: string) => {
     setActioningId(launchId);
     try {
+      const approvedItem = pendingLaunches.find((l) => l.id === launchId);
+
       const { error } = await insforge.database
         .from('launches')
         .update({ is_approved: true })
@@ -129,11 +131,25 @@ export default function AdminPage() {
       if (error) throw error;
 
       // Optimistic move
-      const approvedItem = pendingLaunches.find((l) => l.id === launchId);
       if (approvedItem) {
         approvedItem.is_approved = true;
         setPendingLaunches((prev) => prev.filter((l) => l.id !== launchId));
         setApprovedLaunches((prev) => [approvedItem, ...prev]);
+
+        // Send automatic launch approval email notification to maker
+        try {
+          const ownerEmail = (approvedItem.users as any)?.email || 'mahomudulhasanrubel@gmail.com';
+          await fetch('/api/email/approve-launch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              toEmail: ownerEmail,
+              productName: approvedItem.product_name,
+            }),
+          });
+        } catch (emailErr) {
+          console.error('Failed sending approval notification email:', emailErr);
+        }
       }
     } catch (err: any) {
       console.error('Approve failed:', err);
@@ -142,6 +158,7 @@ export default function AdminPage() {
       setActioningId(null);
     }
   };
+
 
   // Revoke approval (make it pending again)
   const handleRevoke = async (launchId: string) => {
