@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Send, CheckCircle2, AlertCircle, Loader2, Megaphone } from 'lucide-react';
 
 export function AdminBroadcastTab() {
+  const [recipientEmail, setRecipientEmail] = useState('mahomudulhasanrubel@gmail.com');
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -20,7 +21,7 @@ export function AdminBroadcastTab() {
       return;
     }
 
-    if (!confirm('Are you sure you want to broadcast this announcement email to registered platform users?')) {
+    if (!confirm('Are you sure you want to broadcast this announcement email?')) {
       return;
     }
 
@@ -32,11 +33,12 @@ export function AdminBroadcastTab() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          toEmail: recipientEmail || 'mahomudulhasanrubel@gmail.com',
           title,
           subject,
-          body,
-          buttonText: ctaText || undefined,
-          buttonUrl: ctaUrl || undefined,
+          bodyHtml: body,
+          ctaText: ctaText || undefined,
+          ctaUrl: ctaUrl || undefined,
         }),
       });
 
@@ -45,10 +47,10 @@ export function AdminBroadcastTab() {
 
       setStatusMsg({
         type: 'success',
-        text: `Announcement successfully dispatched to ${data.sentCount || 'all'} user(s)!`,
+        text: `Announcement successfully dispatched to ${data.sentCount || 1} recipient(s)!`,
       });
 
-      // Clear form
+      // Clear content fields
       setTitle('');
       setSubject('');
       setBody('');
@@ -86,6 +88,17 @@ export function AdminBroadcastTab() {
       )}
 
       <form onSubmit={handleSendAnnouncement} className="p-6 bg-zinc-900/40 border border-zinc-800 rounded-3xl space-y-4 max-w-2xl">
+        <div>
+          <label className="block text-xs font-mono uppercase text-zinc-400 mb-1.5">Recipient Email Address</label>
+          <input
+            type="email"
+            required
+            placeholder="mahomudulhasanrubel@gmail.com"
+            value={recipientEmail}
+            onChange={(e) => setRecipientEmail(e.target.value)}
+            className="w-full px-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-lime-400/50 font-mono"
+          />
+        </div>
         <div>
           <label className="block text-xs font-mono uppercase text-zinc-400 mb-1.5">Announcement Title</label>
           <input
