@@ -45,6 +45,7 @@ export function Navigation() {
 
   const navLinks = [
     { name: 'Feed', href: '/', icon: Compass },
+    { name: 'World Cup 🏆', href: '/world-cup', icon: Trophy },
     { name: 'Templates', href: '/templates', icon: Trophy },
     { name: 'Rules', href: '/rules', icon: Settings },
   ];
@@ -209,102 +210,200 @@ export function Navigation() {
             )}
           </div>
 
-          {/* Hamburger Menu Toggle */}
-          <div className="flex md:hidden">
+          {/* Mobile Header Quick Actions */}
+          <div className="flex md:hidden items-center gap-2">
+            {user && (
+              <button
+                onClick={() => setIsPointsModalOpen(true)}
+                className="flex items-center gap-1 px-2.5 py-1.5 bg-zinc-900 border-2 border-black rounded-xl text-xs font-black uppercase text-[#ffe600] shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                title="Earn points"
+              >
+                <Zap className="h-3.5 w-3.5 fill-[#ffe600] text-[#ffe600]" />
+                <span>{userPoints}</span>
+              </button>
+            )}
+
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="inline-flex items-center justify-center p-2 rounded-xl text-zinc-100 bg-zinc-900 border-2 border-black shadow-brutal-sm focus:outline-none transition-colors"
+              aria-label="Open menu"
             >
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu Panel */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t-4 border-black bg-zinc-950 p-4 space-y-4 animate-in slide-in-from-top-5 duration-200">
-          <div className="space-y-2">
-            {navLinks.map((link) => {
-              const Icon = link.icon;
-              return (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={getMobileActiveLinkClass(link.href)}
-                >
-                  <Icon className="h-5 w-5" />
-                  <span className="text-base">{link.name}</span>
-                </Link>
-              );
-            })}
-          </div>
+      {/* Fixed Bottom Mobile Navigation Bar (<768px) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t-4 border-black bg-zinc-950/95 backdrop-blur-md px-3 py-2 flex items-center justify-around">
+        <Link 
+          href="/" 
+          onClick={() => setMobileMenuOpen(false)}
+          className={`flex flex-col items-center gap-0.5 text-[10px] font-black uppercase transition-colors ${
+            pathname === '/' ? 'text-[#ffe600]' : 'text-zinc-400 hover:text-zinc-100'
+          }`}
+        >
+          <Compass className="h-5 w-5" />
+          <span>Feed</span>
+        </Link>
 
-          <div className="border-t-2 border-zinc-800 pt-4">
-            {isLoading ? (
-              <div className="h-10 w-full bg-zinc-900 animate-pulse rounded-xl border-2 border-black" />
-            ) : user ? (
-              <div className="space-y-3">
-                <div className="px-4 py-2 bg-zinc-900 rounded-xl border-2 border-black">
+        <Link 
+          href="/world-cup" 
+          onClick={() => setMobileMenuOpen(false)}
+          className={`flex flex-col items-center gap-0.5 text-[10px] font-black uppercase transition-colors ${
+            pathname === '/world-cup' ? 'text-[#ffe600]' : 'text-zinc-400 hover:text-zinc-100'
+          }`}
+        >
+          <Trophy className="h-5 w-5 text-amber-400" />
+          <span>Cup</span>
+        </Link>
+
+        {/* Elevated Pitch CTA Button */}
+        <Link 
+          href="/launch" 
+          onClick={() => setMobileMenuOpen(false)}
+          className="flex flex-col items-center justify-center -mt-6 h-12 w-12 rounded-2xl bg-[#ffe600] text-zinc-950 border-2 border-black shadow-brutal hover:bg-yellow-300 transition-all active:scale-95"
+          title="Pitch a Meme"
+        >
+          <Plus className="h-6 w-6 stroke-[3]" />
+        </Link>
+
+        <Link 
+          href="/templates" 
+          onClick={() => setMobileMenuOpen(false)}
+          className={`flex flex-col items-center gap-0.5 text-[10px] font-black uppercase transition-colors ${
+            pathname === '/templates' ? 'text-[#ffe600]' : 'text-zinc-400 hover:text-zinc-100'
+          }`}
+        >
+          <Sparkles className="h-5 w-5" />
+          <span>Templates</span>
+        </Link>
+
+        <button 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className={`flex flex-col items-center gap-0.5 text-[10px] font-black uppercase transition-colors ${
+            mobileMenuOpen ? 'text-[#ffe600]' : 'text-zinc-400 hover:text-zinc-100'
+          }`}
+        >
+          <User className="h-5 w-5" />
+          <span>Profile</span>
+        </button>
+      </nav>
+
+      {/* Mobile Slide-Over Drawer */}
+      {mobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex justify-end">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200" 
+            onClick={() => setMobileMenuOpen(false)}
+          />
+
+          {/* Right Slide-over Sheet */}
+          <div className="relative w-80 max-w-[85vw] h-full bg-zinc-950 border-l-4 border-black p-6 space-y-6 flex flex-col justify-between overflow-y-auto z-10 shadow-2xl animate-in slide-in-from-right duration-200">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b-2 border-zinc-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🚀</span>
+                  <span className="font-impact text-xl uppercase tracking-tight text-[#ffe600]">MemeLaunch</span>
+                </div>
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* User Identity Header in Drawer */}
+              {user ? (
+                <div className="p-3 bg-zinc-900 rounded-xl border-2 border-black space-y-1">
                   <p className="text-sm font-black text-zinc-100 truncate">
                     {user.profile?.name || 'Founder'}
                   </p>
                   <p className="text-xs text-zinc-400 truncate">{user.email}</p>
+                  <div className="pt-2 flex items-center justify-between">
+                    <span className="text-xs font-black text-[#ffe600] flex items-center gap-1">
+                      <Zap className="h-3.5 w-3.5 fill-[#ffe600]" /> {userPoints} Points
+                    </span>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setIsPointsModalOpen(true);
+                      }}
+                      className="text-[10px] font-bold uppercase bg-[#ffe600] text-zinc-950 px-2 py-0.5 rounded border border-black"
+                    >
+                      Earn More
+                    </button>
+                  </div>
                 </div>
-                
-                <Link
-                  href="/launch"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 w-full py-3 bg-[#ffe600] text-zinc-950 border-2 border-black font-black uppercase text-xs tracking-wider rounded-xl shadow-brutal-sm"
-                >
-                  <Plus className="h-4 w-4 stroke-[3]" />
-                  <span>Pitch a Meme</span>
-                </Link>
+              ) : (
+                <div className="p-3 bg-zinc-900 rounded-xl border-2 border-black text-center space-y-2">
+                  <p className="text-xs font-bold text-zinc-300">Join MemeLaunch to pitch memes & earn points!</p>
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block w-full py-2 bg-[#ffe600] text-zinc-950 font-black uppercase text-xs rounded-lg border border-black shadow-brutal-sm"
+                  >
+                    Sign In / Sign Up
+                  </Link>
+                </div>
+              )}
 
-                <Link
-                  href="/analytics"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 text-zinc-200 bg-zinc-900 border-2 border-black rounded-xl font-bold uppercase text-xs"
-                >
-                  <BarChart3 className="h-5 w-5 text-[#ffe600]" />
-                  <span>Analytics</span>
-                </Link>
+              {/* Mobile Drawer Nav Links */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-black uppercase text-zinc-500 tracking-wider px-1">Navigation</p>
+                {navLinks.map((link) => {
+                  const Icon = link.icon;
+                  return (
+                    <Link
+                      key={link.name}
+                      href={link.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={getMobileActiveLinkClass(link.href)}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span className="text-sm font-bold">{link.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
 
-                <Link
-                  href={`/profile/${user.id}`}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 text-zinc-200 bg-zinc-900 border-2 border-black rounded-xl font-bold uppercase text-xs"
-                >
-                  <User className="h-5 w-5 text-zinc-400" />
-                  <span>My Profile</span>
-                </Link>
+              {/* Account / Admin Links */}
+              {user && (
+                <div className="space-y-2 pt-2 border-t-2 border-zinc-800">
+                  <p className="text-[10px] font-black uppercase text-zinc-500 tracking-wider px-1">Account & Creator Tools</p>
+                  <Link
+                    href="/analytics"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-zinc-200 bg-zinc-900 hover:bg-zinc-800 border-2 border-black rounded-xl font-bold uppercase text-xs"
+                  >
+                    <BarChart3 className="h-4 w-4 text-[#ffe600]" />
+                    <span>Analytics</span>
+                  </Link>
 
+                  <Link
+                    href={`/profile/${user.id}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-zinc-200 bg-zinc-900 hover:bg-zinc-800 border-2 border-black rounded-xl font-bold uppercase text-xs"
+                  >
+                    <User className="h-4 w-4 text-zinc-400" />
+                    <span>My Profile</span>
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Sign Out */}
+            {user && (
+              <div className="pt-4 border-t-2 border-zinc-800">
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center gap-3 w-full px-4 py-3 text-rose-400 bg-zinc-900 border-2 border-black rounded-xl font-bold uppercase text-xs text-left"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-3 text-rose-400 bg-zinc-900 border-2 border-black rounded-xl font-black uppercase text-xs text-center hover:bg-rose-950/80 transition-colors"
                 >
-                  <LogOut className="h-5 w-5" />
+                  <LogOut className="h-4 w-4" />
                   <span>Sign Out</span>
                 </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                <Link
-                  href="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center py-3 bg-zinc-900 border-2 border-black rounded-xl text-xs font-black uppercase tracking-wider text-zinc-200 shadow-brutal-sm"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 py-3 bg-[#ffe600] text-zinc-950 border-2 border-black font-black uppercase text-xs tracking-wider rounded-xl shadow-brutal-sm"
-                >
-                  <Plus className="h-4 w-4 stroke-[3]" />
-                  <span>Pitch</span>
-                </Link>
               </div>
             )}
           </div>
