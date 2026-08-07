@@ -32,7 +32,7 @@ export interface StudioState {
   layers: StudioLayer[];
   selectedLayerId: string | null;
   canvasSettings: CanvasSettings;
-  activeTab: 'text' | 'fonts' | 'effects' | 'filters' | 'badges' | 'presets';
+  activeTab: 'media' | 'captions' | 'text' | 'fonts' | 'effects' | 'filters' | 'badges' | 'presets';
   past: Omit<StudioState, 'past' | 'future'>[];
   future: Omit<StudioState, 'past' | 'future'>[];
 }

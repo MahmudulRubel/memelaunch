@@ -10,17 +10,37 @@ export interface MemeStudioRef {
   getCanvasBlob: () => Promise<Blob | null>;
 }
 
+interface Template {
+  id: string;
+  name: string;
+  thumbnail_url: string;
+}
+
 interface Props {
   imageUrl: string | null;
   productLogoUrl?: string | null;
   textAbove?: string;
   textBelow?: string;
-  onTextAboveChange?: (val: string) => void;
-  onTextBelowChange?: (val: string) => void;
+  templates?: Template[];
+  selectedTemplateId?: string | null;
+  onSelectTemplate?: (tmpl: Template) => void;
+  onUploadCustomImage?: (file: File) => void;
 }
 
 export const MemeStudio = forwardRef<MemeStudioRef, Props>(
-  ({ imageUrl, productLogoUrl, textAbove = '', textBelow = '', onTextAboveChange, onTextBelowChange }, ref) => {
+  (
+    {
+      imageUrl,
+      productLogoUrl,
+      textAbove = '',
+      textBelow = '',
+      templates = [],
+      selectedTemplateId = null,
+      onSelectTemplate,
+      onUploadCustomImage,
+    },
+    ref
+  ) => {
     const [state, dispatch] = useReducer(memeStudioReducer, initialStudioState);
     const canvasRef = useRef<StudioCanvasRef>(null);
 
@@ -88,7 +108,15 @@ export const MemeStudio = forwardRef<MemeStudioRef, Props>(
 
           {/* Right Studio Sidebar Controls (6 Cols) */}
           <div className="lg:col-span-6 w-full">
-            <StudioSidebar state={state} dispatch={dispatch} />
+            <StudioSidebar
+              state={state}
+              dispatch={dispatch}
+              templates={templates}
+              selectedTemplateId={selectedTemplateId}
+              currentImageUrl={imageUrl}
+              onSelectTemplate={onSelectTemplate}
+              onUploadCustomImage={onUploadCustomImage}
+            />
           </div>
         </div>
       </div>
