@@ -32,6 +32,40 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
   const [bgImage, setBgImage] = useState<HTMLImageElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
+  // Keep stateRef fresh for non-passive event listeners
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  // Non-passive Native Mouse Wheel Event Listener to guarantee preventDefault & font scaling
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleNativeWheel = (e: WheelEvent) => {
+      const currentState = stateRef.current;
+      const selectedId = currentState.selectedLayerId;
+      if (!selectedId) return;
+
+      const selectedLayer = currentState.layers.find((l) => l.id === selectedId);
+      if (!selectedLayer || selectedLayer.type !== 'text') return;
+
+      // Prevent page scrolling over canvas
+      e.preventDefault();
+      e.stopPropagation();
+
+      const delta = e.deltaY < 0 ? 2 : -2;
+      const currentSize = selectedLayer.fontSize || 36;
+      const newSize = Math.max(14, Math.min(100, currentSize + delta));
+
+      dispatch({ type: 'UPDATE_LAYER', id: selectedId, patch: { fontSize: newSize } });
+    };
+
+    container.addEventListener('wheel', handleNativeWheel, { passive: false });
+    return () => {
+      container.removeEventListener('wheel', handleNativeWheel);
+    };
+  }, [dispatch]);
+
   // Load Google Fonts dynamically when layer fonts change
   useEffect(() => {
     state.layers.forEach((layer) => {
@@ -184,7 +218,7 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
 
         // Corner Resize Indicators
         ctx.fillStyle = '#a3e635';
-        const handleSize = 10;
+        const handleSize = 12;
         ctx.fillRect(boxX - handleSize / 2, boxY - handleSize / 2, handleSize, handleSize);
         ctx.fillRect(boxX + boxW - handleSize / 2, boxY - handleSize / 2, handleSize, handleSize);
         ctx.fillRect(boxX - handleSize / 2, boxY + boxH - handleSize / 2, handleSize, handleSize);
@@ -272,31 +306,57 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
     }
   };
 
-  // Mouse wheel font resizing on canvas
-  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    if (!state.selectedLayerId) return;
-    const selectedLayer = state.layers.find((l) => l.id === state.selectedLayerId);
-    if (!selectedLayer || selectedLayer.type !== 'text') return;
-
-    e.preventDefault();
-    const delta = e.deltaY < 0 ? 2 : -2;
-    const newSize = Math.max(16, Math.min(96, (selectedLayer.fontSize || 36) + delta));
-    dispatch({ type: 'UPDATE_LAYER', id: selectedLayer.id, patch: { fontSize: newSize } });
-  };
+  const selectedLayer = state.layers.find((l) => l.id === state.selectedLayerId);
 
   return (
     <div
       ref={containerRef}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
-      onWheel={handleWheel}
       className={`relative w-full aspect-square bg-zinc-950 border border-zinc-800/90 rounded-2xl overflow-hidden shadow-2xl select-none transition-all ${
         isDragging ? 'cursor-grabbing border-lime-400/50' : 'cursor-grab hover:border-zinc-700'
       }`}
     >
       <canvas ref={canvasRef} className="w-full h-full object-contain" />
-      <div className="absolute bottom-2 left-2 px-2 py-1 bg-zinc-950/80 backdrop-blur border border-zinc-800 rounded-lg text-[10px] font-mono text-zinc-400 pointer-events-none">
-        🎯 Drag text to position | Scroll wheel to resize
+
+      {/* Floating Canvas Controls for Quick Font Size Adjustments */}
+      {selectedLayer && selectedLayer.type === 'text' && (
+        <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-zinc-950/85 backdrop-blur border border-zinc-800 p-1 rounded-xl shadow-lg z-30">
+          <span className="text-[11px] font-mono text-zinc-400 px-2 font-bold">
+            Size: <span className="text-lime-400">{selectedLayer.fontSize || 36}px</span>
+          </span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              const newSize = Math.max(14, (selectedLayer.fontSize || 36) - 2);
+              dispatch({ type: 'UPDATE_LAYER', id: selectedLayer.id, patch: { fontSize: newSize } });
+            }}
+            className="w-6 h-6 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white flex items-center justify-center font-bold text-xs border border-zinc-750 transition-all cursor-pointer active:scale-95"
+            title="Decrease font size"
+          >
+            -
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              const newSize = Math.min(100, (selectedLayer.fontSize || 36) + 2);
+              dispatch({ type: 'UPDATE_LAYER', id: selectedLayer.id, patch: { fontSize: newSize } });
+            }}
+            className="w-6 h-6 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white flex items-center justify-center font-bold text-xs border border-zinc-750 transition-all cursor-pointer active:scale-95"
+            title="Increase font size"
+          >
+            +
+          </button>
+        </div>
+      )}
+
+      {/* Bottom Hint Tag */}
+      <div className="absolute bottom-2 left-2 px-2.5 py-1 bg-zinc-950/80 backdrop-blur border border-zinc-800 rounded-lg text-[10px] font-mono text-zinc-400 pointer-events-none z-30 flex items-center gap-1.5">
+        <span>🎯 Drag to position</span>
+        <span>•</span>
+        <span>🖱️ Scroll wheel / +/- to resize</span>
       </div>
     </div>
   );
