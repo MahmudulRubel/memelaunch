@@ -68,17 +68,17 @@ export function Navigation() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-4 sm:gap-8 shrink-0">
             <Link 
               href="/" 
-              className="flex items-center gap-2 group hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform"
+              className="flex items-center group hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform shrink-0"
               title="MemeLaunch Home"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src="/logo.png" 
                 alt="Launchme MemeLaunch Logo" 
-                className="h-10 sm:h-12 w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
+                className="h-9 sm:h-12 w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] shrink-0"
               />
             </Link>
 
@@ -219,7 +219,7 @@ export function Navigation() {
             {user && (
               <button
                 onClick={() => setIsPointsModalOpen(true)}
-                className="flex items-center gap-1 px-2.5 py-1.5 bg-zinc-900 border-2 border-black rounded-xl text-xs font-black uppercase text-[#ffe600] shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-900 border-2 border-black rounded-xl text-xs font-black uppercase text-[#ffe600] shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5 transition-all"
                 title="Earn points"
               >
                 <Zap className="h-3.5 w-3.5 fill-[#ffe600] text-[#ffe600]" />
@@ -227,9 +227,17 @@ export function Navigation() {
               </button>
             )}
 
+            <Link
+              href="/launch"
+              className="flex items-center gap-1 px-3 py-1.5 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 border-2 border-black font-black uppercase text-xs tracking-wider rounded-xl shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5 transition-all"
+            >
+              <Plus className="h-3.5 w-3.5 stroke-[3]" />
+              <span>Pitch</span>
+            </Link>
+
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-xl text-zinc-100 bg-zinc-900 border-2 border-black shadow-brutal-sm focus:outline-none transition-colors"
+              className="inline-flex items-center justify-center p-2 rounded-xl text-zinc-100 bg-zinc-900 border-2 border-black shadow-brutal-sm focus:outline-none transition-colors active:scale-95"
               aria-label="Open menu"
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -238,161 +246,104 @@ export function Navigation() {
         </div>
       </div>
 
-      {/* Fixed Bottom Mobile Navigation Bar (<768px) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t-4 border-black bg-zinc-950/95 backdrop-blur-md px-3 py-2 flex items-center justify-around">
-        <Link 
-          href="/" 
-          onClick={() => setMobileMenuOpen(false)}
-          className={`flex flex-col items-center gap-0.5 text-[10px] font-black uppercase transition-colors ${
-            pathname === '/' ? 'text-[#ffe600]' : 'text-zinc-400 hover:text-zinc-100'
-          }`}
-        >
-          <Compass className="h-5 w-5" />
-          <span>Feed</span>
-        </Link>
-
-        {/* Elevated Pitch CTA Button */}
-        <Link 
-          href="/launch" 
-          onClick={() => setMobileMenuOpen(false)}
-          className="flex flex-col items-center justify-center -mt-6 h-12 w-12 rounded-2xl bg-[#ffe600] text-zinc-950 border-2 border-black shadow-brutal hover:bg-yellow-300 transition-all active:scale-95"
-          title="Pitch a Meme"
-        >
-          <Plus className="h-6 w-6 stroke-[3]" />
-        </Link>
-
-        <Link 
-          href="/templates" 
-          onClick={() => setMobileMenuOpen(false)}
-          className={`flex flex-col items-center gap-0.5 text-[10px] font-black uppercase transition-colors ${
-            pathname === '/templates' ? 'text-[#ffe600]' : 'text-zinc-400 hover:text-zinc-100'
-          }`}
-        >
-          <Sparkles className="h-5 w-5" />
-          <span>Templates</span>
-        </Link>
-
-        <button 
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className={`flex flex-col items-center gap-0.5 text-[10px] font-black uppercase transition-colors ${
-            mobileMenuOpen ? 'text-[#ffe600]' : 'text-zinc-400 hover:text-zinc-100'
-          }`}
-        >
-          <User className="h-5 w-5" />
-          <span>Profile</span>
-        </button>
-      </nav>
-
-      {/* Mobile Slide-Over Drawer */}
+      {/* Desktop-like Mobile Top Dropdown Menu (<768px) */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex justify-end">
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200" 
-            onClick={() => setMobileMenuOpen(false)}
-          />
-
-          {/* Right Slide-over Sheet */}
-          <div className="relative w-80 max-w-[85vw] h-full bg-zinc-950 border-l-4 border-black p-6 space-y-6 flex flex-col justify-between overflow-y-auto z-10 shadow-2xl animate-in slide-in-from-right duration-200">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between border-b-2 border-zinc-800 pb-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">🚀</span>
-                  <span className="font-impact text-xl uppercase tracking-tight text-[#ffe600]">MemeLaunch</span>
-                </div>
-                <button
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* User Identity Header in Drawer */}
-              {user ? (
-                <div className="p-3 bg-zinc-900 rounded-xl border-2 border-black space-y-1">
-                  <p className="text-sm font-black text-zinc-100 truncate">
+        <div className="md:hidden border-t-2 border-black bg-zinc-950/98 backdrop-blur-xl p-4 shadow-brutal animate-in slide-in-from-top-2 duration-150">
+          <div className="space-y-4">
+            {/* User Info Bar if logged in */}
+            {user ? (
+              <div className="flex items-center justify-between p-3 bg-zinc-900 rounded-xl border-2 border-black">
+                <div className="min-w-0 flex-1 pr-2">
+                  <p className="text-xs font-black text-zinc-100 truncate">
                     {user.profile?.name || 'Founder'}
                   </p>
-                  <p className="text-xs text-zinc-400 truncate">{user.email}</p>
-                  <div className="pt-2 flex items-center justify-between">
-                    <span className="text-xs font-black text-[#ffe600] flex items-center gap-1">
-                      <Zap className="h-3.5 w-3.5 fill-[#ffe600]" /> {userPoints} Points
-                    </span>
-                    <button
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        setIsPointsModalOpen(true);
-                      }}
-                      className="text-[10px] font-bold uppercase bg-[#ffe600] text-zinc-950 px-2 py-0.5 rounded border border-black"
-                    >
-                      Earn More
-                    </button>
-                  </div>
+                  <p className="text-[11px] text-zinc-400 truncate">{user.email}</p>
                 </div>
-              ) : (
-                <div className="p-3 bg-zinc-900 rounded-xl border-2 border-black text-center space-y-2">
-                  <p className="text-xs font-bold text-zinc-300">Join MemeLaunch to pitch memes & earn points!</p>
-                  <Link
-                    href="/login"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block w-full py-2 bg-[#ffe600] text-zinc-950 font-black uppercase text-xs rounded-lg border border-black shadow-brutal-sm"
-                  >
-                    Sign In / Sign Up
-                  </Link>
-                </div>
-              )}
-
-              {/* Mobile Drawer Nav Links */}
-              <div className="space-y-2">
-                <p className="text-[10px] font-black uppercase text-zinc-500 tracking-wider px-1">Navigation</p>
-                {navLinks.map((link) => {
-                  const Icon = link.icon;
-                  return (
-                    <Link
-                      key={link.name}
-                      href={link.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={getMobileActiveLinkClass(link.href)}
-                    >
-                      <Icon className="h-5 w-5" />
-                      <span className="text-sm font-bold">{link.name}</span>
-                    </Link>
-                  );
-                })}
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setIsPointsModalOpen(true);
+                  }}
+                  className="flex items-center gap-1 text-xs font-black uppercase bg-[#ffe600] text-zinc-950 px-2.5 py-1 rounded-lg border-2 border-black shadow-brutal-sm"
+                >
+                  <Zap className="h-3.5 w-3.5 fill-zinc-950" />
+                  <span>{userPoints} Pts</span>
+                </button>
               </div>
+            ) : (
+              <div className="flex items-center justify-between p-3 bg-zinc-900 rounded-xl border-2 border-black">
+                <p className="text-xs font-bold text-zinc-300">Join MemeLaunch to pitch memes!</p>
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-3 py-1.5 bg-[#ffe600] text-zinc-950 font-black uppercase text-xs rounded-lg border-2 border-black shadow-brutal-sm"
+                >
+                  Sign In
+                </Link>
+              </div>
+            )}
 
-              {/* Account / Admin Links */}
+            {/* Desktop-style Navigation Grid */}
+            <div className="grid grid-cols-2 gap-2 pt-1 border-t-2 border-zinc-800">
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.name}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-2.5 p-3 rounded-xl border-2 border-black font-black uppercase text-xs tracking-wider transition-all ${
+                      isActive 
+                        ? 'bg-[#ffe600] text-zinc-950 shadow-brutal-sm' 
+                        : 'bg-zinc-900 text-zinc-200 hover:bg-zinc-800'
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{link.name}</span>
+                  </Link>
+                );
+              })}
+
+              <Link
+                href="/launch"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2.5 p-3 rounded-xl border-2 border-black bg-zinc-900 text-zinc-200 hover:bg-zinc-800 font-black uppercase text-xs tracking-wider transition-all"
+              >
+                <Plus className="h-4 w-4 text-[#ffe600] stroke-[3]" />
+                <span>Pitch a Meme</span>
+              </Link>
+
               {user && (
-                <div className="space-y-2 pt-2 border-t-2 border-zinc-800">
-                  <p className="text-[10px] font-black uppercase text-zinc-500 tracking-wider px-1">Account & Creator Tools</p>
-                  <Link
-                    href="/analytics"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-zinc-200 bg-zinc-900 hover:bg-zinc-800 border-2 border-black rounded-xl font-bold uppercase text-xs"
-                  >
-                    <BarChart3 className="h-4 w-4 text-[#ffe600]" />
-                    <span>Analytics</span>
-                  </Link>
-
-                  <Link
-                    href={`/profile/${user.id}`}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-zinc-200 bg-zinc-900 hover:bg-zinc-800 border-2 border-black rounded-xl font-bold uppercase text-xs"
-                  >
-                    <User className="h-4 w-4 text-zinc-400" />
-                    <span>My Profile</span>
-                  </Link>
-                </div>
+                <Link
+                  href="/analytics"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2.5 p-3 rounded-xl border-2 border-black bg-zinc-900 text-zinc-200 hover:bg-zinc-800 font-black uppercase text-xs tracking-wider transition-all"
+                >
+                  <BarChart3 className="h-4 w-4 text-[#ffe600]" />
+                  <span>Analytics</span>
+                </Link>
               )}
             </div>
 
-            {/* Bottom Sign Out */}
+            {/* Bottom User Profile & Sign Out Links */}
             {user && (
-              <div className="pt-4 border-t-2 border-zinc-800">
+              <div className="flex items-center justify-between pt-3 border-t-2 border-zinc-800 gap-2">
+                <Link
+                  href={`/profile/${user.id}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 bg-zinc-900 hover:bg-zinc-800 border-2 border-black rounded-xl font-black uppercase text-xs text-zinc-200"
+                >
+                  <User className="h-4 w-4 text-[#ffe600]" />
+                  <span>My Profile</span>
+                </Link>
+
                 <button
-                  onClick={handleSignOut}
-                  className="flex items-center justify-center gap-2 w-full px-4 py-3 text-rose-400 bg-zinc-900 border-2 border-black rounded-xl font-black uppercase text-xs text-center hover:bg-rose-950/80 transition-colors"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleSignOut();
+                  }}
+                  className="flex items-center justify-center gap-2 py-2.5 px-4 bg-zinc-900 hover:bg-rose-950 border-2 border-black rounded-xl font-black uppercase text-xs text-rose-400 hover:text-rose-100"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Sign Out</span>
