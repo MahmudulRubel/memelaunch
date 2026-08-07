@@ -737,6 +737,7 @@ function LaunchForm() {
           <h2 className="text-2xl font-extrabold text-zinc-100 tracking-tight">Mission Accomplished!</h2>
           <p className="text-zinc-400 text-sm leading-relaxed">{successMessage}</p>
         </div>
+      ) : (
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* TOP FULL-WIDTH SECTION: PROFESSIONAL MEME STUDIO */}
           <div className="w-full space-y-2">
