@@ -755,54 +755,53 @@ function LaunchForm() {
               />
             </div>
 
-                {/* Details Bar Mockup */}
-                <div className="p-4 bg-zinc-900/40 space-y-4">
-                  <div className="flex items-center gap-3">
-                    {productLogoPreview ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={productLogoPreview}
-                        alt="Logo preview"
-                        className="h-9 w-9 rounded-xl object-cover border border-zinc-850 bg-zinc-950 shrink-0 shadow-md"
-                      />
-                    ) : (
-                      <div className="h-9 w-9 rounded-xl border border-dashed border-zinc-800 bg-zinc-950 flex items-center justify-center text-zinc-650 font-mono text-[10px] uppercase tracking-wider font-extrabold shrink-0">
-                        Logo
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-extrabold text-base text-zinc-100 truncate">
-                          {productName || 'Product Name'}
-                        </h3>
-                        <span className="px-2 py-0.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-[10px] font-mono uppercase font-bold tracking-wider shrink-0">
-                          {pricing}
-                        </span>
-                      </div>
-                    </div>
+            {/* Details Bar Mockup */}
+            <div className="p-4 bg-zinc-900/40 space-y-4 rounded-2xl border border-zinc-800">
+              <div className="flex items-center gap-3">
+                {productLogoPreview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={productLogoPreview}
+                    alt="Logo preview"
+                    className="h-9 w-9 rounded-xl object-cover border border-zinc-850 bg-zinc-950 shrink-0 shadow-md"
+                  />
+                ) : (
+                  <div className="h-9 w-9 rounded-xl border border-dashed border-zinc-800 bg-zinc-950 flex items-center justify-center text-zinc-650 font-mono text-[10px] uppercase tracking-wider font-extrabold shrink-0">
+                    Logo
                   </div>
-
-                  <div className="flex flex-wrap gap-2 text-xs text-zinc-500">
-                    <span className="inline-flex items-center gap-1 bg-zinc-950/40 border border-zinc-800/60 px-2 py-0.5 rounded-md text-[11px]">
-                      <Tag className="h-3 w-3" />
-                      <span>{category || 'Category'}</span>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-extrabold text-base text-zinc-100 truncate">
+                      {productName || 'Product Name'}
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-[10px] font-mono uppercase font-bold tracking-wider shrink-0">
+                      {pricing}
                     </span>
-                  </div>
-
-                  {/* Fake Reactions panel */}
-                  <div className="flex items-center justify-between gap-1 bg-zinc-950/30 border border-zinc-800/40 rounded-xl p-1 pointer-events-none opacity-60">
-                    <div className="flex-1 flex items-center justify-center gap-1 py-1 rounded text-xs font-mono text-zinc-500">
-                      <span>🔥</span> 0
-                    </div>
-                    <div className="flex-1 flex items-center justify-center gap-1 py-1 rounded text-xs font-mono text-zinc-500">
-                      <span>😂</span> 0
-                    </div>
-                    <div className="flex-1 flex items-center justify-center gap-1 py-1 rounded text-xs font-mono text-zinc-500">
-                      <span>🤔</span> 0
-                    </div>
                   </div>
                 </div>
               </div>
+
+              <div className="flex flex-wrap gap-2 text-xs text-zinc-500">
+                <span className="inline-flex items-center gap-1 bg-zinc-950/40 border border-zinc-800/60 px-2 py-0.5 rounded-md text-[11px]">
+                  <Tag className="h-3 w-3" />
+                  <span>{category || 'Category'}</span>
+                </span>
+              </div>
+
+              {/* Fake Reactions panel */}
+              <div className="flex items-center justify-between gap-1 bg-zinc-950/30 border border-zinc-800/40 rounded-xl p-1 pointer-events-none opacity-60">
+                <div className="flex-1 flex items-center justify-center gap-1 py-1 rounded text-xs font-mono text-zinc-500">
+                  <span>🔥</span> 0
+                </div>
+                <div className="flex-1 flex items-center justify-center gap-1 py-1 rounded text-xs font-mono text-zinc-500">
+                  <span>😂</span> 0
+                </div>
+                <div className="flex-1 flex items-center justify-center gap-1 py-1 rounded text-xs font-mono text-zinc-500">
+                  <span>🤔</span> 0
+                </div>
+              </div>
+            </div>
 
             {/* Error display on submit failure */}
             {formErrors.submit && (
