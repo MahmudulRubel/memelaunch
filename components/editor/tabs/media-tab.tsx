@@ -3,19 +3,13 @@
 import React, { useRef } from 'react';
 import { Image as ImageIcon, Upload, Check } from 'lucide-react';
 
-interface Template {
-  id: string;
-  name: string;
-  thumbnail_url: string;
-  active_week?: number;
-  usage_count?: number;
-}
+import { MemeTemplate } from '../meme-studio';
 
 interface Props {
-  templates: Template[];
+  templates: MemeTemplate[];
   selectedTemplateId: string | null;
   currentImageUrl: string | null;
-  onSelectTemplate: (template: Template) => void;
+  onSelectTemplate: (template: MemeTemplate) => void;
   onUploadCustomImage: (file: File) => void;
 }
 

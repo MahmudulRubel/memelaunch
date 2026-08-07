@@ -11,21 +11,15 @@ import { ImageFiltersTab } from './tabs/image-filters-tab';
 import { StickersBadgesTab } from './tabs/stickers-badges-tab';
 import { PresetsTab } from './tabs/presets-tab';
 
-interface Template {
-  id: string;
-  name: string;
-  thumbnail_url: string;
-  active_week?: number;
-  usage_count?: number;
-}
+import { MemeTemplate } from '../meme-studio';
 
 interface Props {
   state: StudioState;
   dispatch: React.Dispatch<StudioAction>;
-  templates?: Template[];
+  templates?: MemeTemplate[];
   selectedTemplateId?: string | null;
   currentImageUrl?: string | null;
-  onSelectTemplate?: (tmpl: Template) => void;
+  onSelectTemplate?: (tmpl: MemeTemplate) => void;
   onUploadCustomImage?: (file: File) => void;
 }
 

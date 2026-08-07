@@ -10,12 +10,12 @@ export interface MemeStudioRef {
   getCanvasBlob: () => Promise<Blob | null>;
 }
 
-interface Template {
+export interface MemeTemplate {
   id: string;
   name: string;
   thumbnail_url: string;
-  active_week?: number;
-  usage_count?: number;
+  active_week: number;
+  usage_count: number;
 }
 
 interface Props {
@@ -23,9 +23,9 @@ interface Props {
   productLogoUrl?: string | null;
   textAbove?: string;
   textBelow?: string;
-  templates?: Template[];
+  templates?: MemeTemplate[];
   selectedTemplateId?: string | null;
-  onSelectTemplate?: (tmpl: Template) => void;
+  onSelectTemplate?: (tmpl: MemeTemplate) => void;
   onUploadCustomImage?: (file: File) => void;
 }
 
