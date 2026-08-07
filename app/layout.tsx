@@ -7,16 +7,22 @@ import { PostHogProvider } from "@/components/posthog-provider";
 const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
+  preload: true,
 });
 
 const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
+  display: "swap",
+  preload: true,
 });
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
+  display: "swap",
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -123,6 +129,8 @@ export default function RootLayout({
     >
       <head>
         {/* Resource hints for instant TLS handshake & asset fetching */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://fw47aqh3.ap-southeast.insforge.app" />
         <link rel="dns-prefetch" href="https://fw47aqh3.ap-southeast.insforge.app" />
         <link rel="preconnect" href="https://i.imgflip.com" />

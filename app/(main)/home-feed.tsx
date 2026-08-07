@@ -16,8 +16,13 @@ import {
   Plus,
   Rocket
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { parseCaption, getCaptionText } from '@/lib/meme';
-import { HowItWorksModal } from '@/components/how-it-works-modal';
+
+const HowItWorksModal = dynamic(
+  () => import('@/components/how-it-works-modal').then((m) => m.HowItWorksModal),
+  { ssr: false }
+);
 
 interface HomeFeedProps {
   initialLaunches: Launch[];
