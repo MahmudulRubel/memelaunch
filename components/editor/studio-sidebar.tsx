@@ -11,7 +11,7 @@ import { ImageFiltersTab } from './tabs/image-filters-tab';
 import { StickersBadgesTab } from './tabs/stickers-badges-tab';
 import { PresetsTab } from './tabs/presets-tab';
 
-import { MemeTemplate } from '../meme-studio';
+import { MemeTemplate } from './meme-studio';
 
 interface Props {
   state: StudioState;
