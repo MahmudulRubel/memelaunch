@@ -24,7 +24,7 @@ export function StudioSidebar({ state, dispatch }: Props) {
   ] as const;
 
   return (
-    <div className="w-full md:w-80 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden flex flex-col">
+    <div className="w-full bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden flex flex-col">
       {/* Sidebar Tab Navigation */}
       <div className="flex border-b border-zinc-800 bg-zinc-950/80 p-1 gap-1 overflow-x-auto">
         {TABS.map((t) => {
