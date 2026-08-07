@@ -38,6 +38,7 @@ export function StickersBadgesTab({ state, dispatch }: Props) {
           <ShieldCheck className="w-3.5 h-3.5 text-lime-400" /> Product Logo Badge
         </label>
         <button
+          type="button"
           onClick={handleToggleBadge}
           className={`w-full py-2.5 px-3 rounded-lg text-xs font-mono flex items-center justify-between border transition-colors ${
             badgeLayer

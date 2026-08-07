@@ -36,6 +36,7 @@ export function MediaTab({
           <Upload className="w-3.5 h-3.5 text-lime-400" /> Custom Meme Upload
         </label>
         <button
+          type="button"
           onClick={() => fileInputRef.current?.click()}
           className="w-full p-3 rounded-xl border border-dashed border-zinc-700 bg-zinc-950/60 hover:bg-zinc-900 hover:border-lime-400/50 transition-all flex items-center justify-center gap-2 text-xs font-mono text-zinc-300 group cursor-pointer"
         >
@@ -65,6 +66,7 @@ export function MediaTab({
             const isSelected = selectedTemplateId === tmpl.id;
             return (
               <button
+                type="button"
                 key={tmpl.id}
                 onClick={() => onSelectTemplate(tmpl)}
                 className={`relative aspect-square rounded-lg overflow-hidden border transition-all group/item cursor-pointer ${

@@ -22,6 +22,7 @@ export function CaptionsTab({ state, dispatch }: Props) {
         </label>
         <div className="grid grid-cols-2 gap-2">
           <button
+            type="button"
             onClick={() => dispatch({ type: 'SELECT_LAYER', id: 'top-text' })}
             className={`py-2 px-3 rounded-lg text-xs font-mono border transition-all ${
               state.selectedLayerId === 'top-text'
@@ -32,6 +33,7 @@ export function CaptionsTab({ state, dispatch }: Props) {
             Top Text Layer
           </button>
           <button
+            type="button"
             onClick={() => dispatch({ type: 'SELECT_LAYER', id: 'bottom-text' })}
             className={`py-2 px-3 rounded-lg text-xs font-mono border transition-all ${
               state.selectedLayerId === 'bottom-text'

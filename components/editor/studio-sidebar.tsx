@@ -51,6 +51,7 @@ export function StudioSidebar({
           const isActive = state.activeTab === t.id;
           return (
             <button
+              type="button"
               key={t.id}
               onClick={() => dispatch({ type: 'SET_ACTIVE_TAB', tab: t.id as any })}
               className={`flex-1 min-w-[65px] py-2 px-1.5 rounded-lg flex flex-col items-center gap-1 text-[11px] font-mono transition-all ${

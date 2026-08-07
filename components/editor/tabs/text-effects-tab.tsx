@@ -83,6 +83,7 @@ export function TextEffectsTab({ state, dispatch }: Props) {
             { label: 'Lime', val: '#a3e635' },
           ].map((b) => (
             <button
+              type="button"
               key={b.label}
               onClick={() => dispatch({ type: 'UPDATE_LAYER', id: selectedLayer.id, patch: { bgBoxColor: b.val } })}
               className={`py-2 text-xs font-mono rounded border transition-colors ${

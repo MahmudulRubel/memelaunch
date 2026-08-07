@@ -26,6 +26,7 @@ export function PresetsTab({ state, dispatch }: Props) {
           const Icon = p.icon;
           return (
             <button
+              type="button"
               key={p.id}
               onClick={() => dispatch({ type: 'APPLY_PRESET', preset: p.id })}
               className="w-full text-left p-3 rounded-lg border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800/80 hover:border-zinc-700 transition-all flex items-start gap-3 group"

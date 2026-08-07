@@ -27,6 +27,7 @@ export function ImageFiltersTab({ state, dispatch }: Props) {
             { id: 'grayscale', label: '📷 B&W Vintage', b: 100, c: 120, s: 0 },
           ].map((p) => (
             <button
+              type="button"
               key={p.id}
               onClick={() =>
                 dispatch({

@@ -18,6 +18,7 @@ export function StudioToolbar({ state, dispatch }: Props) {
       {/* Undo & Redo Controls */}
       <div className="flex items-center gap-1.5">
         <button
+          type="button"
           onClick={() => dispatch({ type: 'UNDO' })}
           disabled={!canUndo}
           className={`flex items-center gap-1 px-2.5 py-1.5 rounded border transition-colors ${
@@ -31,6 +32,7 @@ export function StudioToolbar({ state, dispatch }: Props) {
           <span>Undo</span>
         </button>
         <button
+          type="button"
           onClick={() => dispatch({ type: 'REDO' })}
           disabled={!canRedo}
           className={`flex items-center gap-1 px-2.5 py-1.5 rounded border transition-colors ${
@@ -49,6 +51,7 @@ export function StudioToolbar({ state, dispatch }: Props) {
       <div className="flex items-center gap-1">
         {state.layers.map((l) => (
           <button
+            type="button"
             key={l.id}
             onClick={() => dispatch({ type: 'SELECT_LAYER', id: l.id })}
             className={`px-2.5 py-1 rounded text-xs transition-colors ${

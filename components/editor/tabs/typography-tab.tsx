@@ -42,6 +42,7 @@ export function TypographyTab({ state, dispatch }: Props) {
         <div className="grid grid-cols-1 gap-1.5 max-h-48 overflow-y-auto pr-1">
           {GOOGLE_FONTS.map((f) => (
             <button
+              type="button"
               key={f.name}
               onClick={() => dispatch({ type: 'UPDATE_LAYER', id: selectedLayer.id, patch: { fontFamily: f.name } })}
               className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors border ${
@@ -79,6 +80,7 @@ export function TypographyTab({ state, dispatch }: Props) {
           <CaseUpper className="w-3.5 h-3.5 text-lime-400" /> Text Transform
         </label>
         <button
+          type="button"
           onClick={() => dispatch({ type: 'UPDATE_LAYER', id: selectedLayer.id, patch: { uppercase: !selectedLayer.uppercase } })}
           className={`w-full py-2 px-3 rounded-lg font-mono text-xs flex items-center justify-between border ${
             selectedLayer.uppercase
