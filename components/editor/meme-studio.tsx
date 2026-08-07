@@ -70,10 +70,10 @@ export const MemeStudio = forwardRef<MemeStudioRef, Props>(
         {/* Studio Top Toolbar */}
         <StudioToolbar state={state} dispatch={dispatch} />
 
-        {/* Studio Body: Canvas on top, Control Panel stacked below */}
-        <div className="flex flex-col gap-5 items-stretch">
-          {/* Main Canvas Viewport */}
-          <div className="flex-1 w-full space-y-3">
+        {/* Studio Body: Canvas Left (6 Cols), Control Sidebar Right (6 Cols) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Main Canvas Viewport (6 Cols) */}
+          <div className="lg:col-span-6 w-full space-y-3">
             <StudioCanvas
               ref={canvasRef}
               state={state}
@@ -86,8 +86,10 @@ export const MemeStudio = forwardRef<MemeStudioRef, Props>(
             </p>
           </div>
 
-          {/* Left Studio Sidebar Controls */}
-          <StudioSidebar state={state} dispatch={dispatch} />
+          {/* Right Studio Sidebar Controls (6 Cols) */}
+          <div className="lg:col-span-6 w-full">
+            <StudioSidebar state={state} dispatch={dispatch} />
+          </div>
         </div>
       </div>
     );

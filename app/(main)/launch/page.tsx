@@ -737,25 +737,26 @@ function LaunchForm() {
           <h2 className="text-2xl font-extrabold text-zinc-100 tracking-tight">Mission Accomplished!</h2>
           <p className="text-zinc-400 text-sm leading-relaxed">{successMessage}</p>
         </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* LEFT COLUMN: LIVE STUDIO EDITOR (5 Cols) */}
-          <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
-            <div className="space-y-2">
-              <span className="text-xs font-mono text-zinc-500 uppercase tracking-widest block">
-                Professional Meme Studio
-              </span>
-              
-              <MemeStudio
-                ref={memeStudioRef}
-                imageUrl={memePreviewSource ? resolveStorageUrl(memePreviewSource) : null}
-                productLogoUrl={productLogoPreview}
-                textAbove={textAbove}
-                textBelow={textBelow}
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* TOP FULL-WIDTH SECTION: PROFESSIONAL MEME STUDIO */}
+          <div className="w-full space-y-2">
+            <span className="text-xs font-mono text-zinc-500 uppercase tracking-widest block">
+              Professional Meme Studio
+            </span>
+            
+            <MemeStudio
+              ref={memeStudioRef}
+              imageUrl={memePreviewSource ? resolveStorageUrl(memePreviewSource) : null}
+              productLogoUrl={productLogoPreview}
+              textAbove={textAbove}
+              textBelow={textBelow}
+            />
+          </div>
 
-            {/* Details Bar Mockup */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* LEFT COLUMN: LIVE CARD PREVIEW (5 Cols) */}
+            <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
+              {/* Details Bar Mockup */}
             <div className="p-4 bg-zinc-900/40 space-y-4 rounded-2xl border border-zinc-800">
               <div className="flex items-center gap-3">
                 {productLogoPreview ? (
@@ -1540,7 +1541,8 @@ function LaunchForm() {
             </div>
 
           </div>
-        </form>
+        </div>
+      </form>
       )}
 
       {/* Earn Points Modal Popup */}
