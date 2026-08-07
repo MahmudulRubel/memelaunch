@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { insforge } from '@/lib/insforge';
+import { insforge, insforgeAdmin } from '@/lib/insforge';
 import { ProductView } from '@/components/product/product-view';
 import { AlertCircle, ArrowLeft, Rocket } from 'lucide-react';
 
@@ -28,7 +28,7 @@ export default async function ProductPage({ params }: PageProps) {
 
   try {
     // 1. Primary lookup: Case-insensitive search on product_name
-    const { data: nameMatch } = await insforge.database
+    const { data: nameMatch } = await insforgeAdmin.database
       .from('launches')
       .select('id')
       .ilike('product_name', decodedName)

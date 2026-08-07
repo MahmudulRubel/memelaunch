@@ -172,6 +172,9 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
         {/* Dynamic Overlaying Meme Caption */}
         {(() => {
           const captionData = parseCaption(launch.caption);
+          if (captionData.hideOverlay || launch.meme_image_url?.endsWith('.svg')) {
+            return null;
+          }
           const cardTextSize = Math.max(12, Math.min(captionData.size, 20));
           const isCustomAbove = typeof captionData.topAbove === 'number' && typeof captionData.leftAbove === 'number';
           const isCustomBelow = typeof captionData.topBelow === 'number' && typeof captionData.leftBelow === 'number';
@@ -226,20 +229,7 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
           );
         })()}
 
-        {/* World Cup Qualification Badge in top left */}
-        <div className="absolute top-2 left-3 z-20">
-          {reactions.length >= 10 ? (
-            <span className="inline-flex items-center gap-1 bg-amber-500 text-zinc-950 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-md">
-              <span>🏆</span> Top 16 Qualifier
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 bg-zinc-950/80 text-amber-400 border border-amber-500/40 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur">
-              <span>⚡</span> {10 - reactions.length} votes to Top 16
-            </span>
-          )}
-        </div>
-
-        {/* Watermark in bottom right */}
+        {/* Watermark in top right */}
         <div className="absolute top-2 right-3 text-[9px] font-mono text-zinc-400 font-extrabold tracking-widest uppercase bg-zinc-950/80 px-2 py-0.5 rounded border border-black">
           MEMELAUNCH
         </div>
@@ -280,6 +270,17 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
               <span className="text-[#ffe600]">◇</span>
               <span>{launch.category}</span>
             </span>
+
+            {/* World Cup Qualification Badge */}
+            {reactions.length >= 10 ? (
+              <span className="inline-flex items-center gap-1 bg-amber-400 text-zinc-950 border-2 border-black px-2.5 py-0.5 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-brutal-sm">
+                <span>🏆</span> Top 16 Qualifier
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 bg-zinc-900 text-amber-400 border-2 border-black px-2.5 py-0.5 rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-brutal-sm">
+                <span>⚡</span> {10 - reactions.length} votes to Top 16
+              </span>
+            )}
 
             {/* Product Link Icon */}
             {launch.product_url && (

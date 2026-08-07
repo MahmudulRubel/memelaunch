@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { insforge } from '@/lib/insforge';
+import { insforge, insforgeAdmin } from '@/lib/insforge';
 import { Search, Shield, ShieldOff, Loader2, User as UserIcon, Award } from 'lucide-react';
 
 interface UserRecord {
@@ -22,7 +22,7 @@ export function AdminUsersTab() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const { data, error } = await insforge.database
+      const { data, error } = await insforgeAdmin.database
         .from('users')
         .select('id, name, avatar, points, is_admin, created_at')
         .order('created_at', { ascending: false });
@@ -43,12 +43,19 @@ export function AdminUsersTab() {
   const handleToggleAdmin = async (userId: string, currentAdmin: boolean) => {
     setActioningId(userId);
     try {
-      const { error } = await insforge.database
-        .from('users')
-        .update({ is_admin: !currentAdmin })
-        .eq('id', userId);
+      const res = await fetch('/api/admin/toggle-admin-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          targetUserId: userId,
+          is_admin: !currentAdmin,
+        }),
+      });
 
-      if (error) throw error;
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Failed to update admin role');
+      }
 
       setUsers((prev) =>
         prev.map((u) => (u.id === userId ? { ...u, is_admin: !currentAdmin } : u))

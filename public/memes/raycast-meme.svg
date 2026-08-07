@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <rect width="600" height="600" fill="#140909"/>
+  <!-- Top Panel -->
+  <g transform="translate(40, 60)">
+    <rect width="520" height="210" rx="16" fill="#241212" stroke="#3b1c1c" stroke-width="3"/>
+    <text x="30" y="45" fill="#f87171" font-family="sans-serif" font-size="18" font-weight="bold">USING MOUSE FOR EVERYTHING:</text>
+    <text x="30" y="85" fill="#fca5a5" font-family="sans-serif" font-size="15">🖱️ Move hand to mouse, click browser tab</text>
+    <text x="30" y="115" fill="#fca5a5" font-family="sans-serif" font-size="15">🖱️ Move hand to mouse, click calculator app</text>
+    <text x="30" y="170" fill="#ef4444" font-family="sans-serif" font-size="16" font-weight="bold">❌ Carpal tunnel by 3:00 PM</text>
+  </g>
+  
+  <line x1="40" y1="300" x2="560" y2="300" stroke="#3b1c1c" stroke-width="4" stroke-dasharray="10 10"/>
+  
+  <!-- Bottom Panel -->
+  <g transform="translate(40, 330)">
+    <rect width="520" height="210" rx="16" fill="#2d1212" stroke="#ff6363" stroke-width="3"/>
+    <text x="30" y="45" fill="#fca5a5" font-family="sans-serif" font-size="18" font-weight="bold">OPTION+SPACE IN RAYCAST:</text>
+    <text x="30" y="85" fill="#ffffff" font-family="monospace" font-size="15">Option + Space ➔ 'calc 250 * 1.15' ➔ Done</text>
+    <text x="30" y="115" fill="#ffffff" font-family="monospace" font-size="15">Option + Space ➔ 'kill server' ➔ Done</text>
+    <text x="30" y="165" fill="#ff6363" font-family="sans-serif" font-size="18" font-weight="bold">🚀 Operating macOS at 100x developer speed</text>
+  </g>
+</svg>

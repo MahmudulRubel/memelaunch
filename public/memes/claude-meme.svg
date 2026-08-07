@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <rect width="600" height="600" fill="#140f09"/>
+  <!-- Top Panel -->
+  <g transform="translate(40, 60)">
+    <rect width="520" height="210" rx="16" fill="#241a0f" stroke="#3b2a18" stroke-width="3"/>
+    <text x="30" y="45" fill="#fb923c" font-family="sans-serif" font-size="18" font-weight="bold">DEBUGGING ALONE AT 2 AM:</text>
+    <text x="30" y="85" fill="#fdba74" font-family="monospace" font-size="14">30 console.log statements added,</text>
+    <text x="30" y="110" fill="#fdba74" font-family="monospace" font-size="14">StackOverflow answers from 2012 open in 40 tabs</text>
+    <text x="30" y="165" fill="#f97316" font-family="sans-serif" font-size="16" font-weight="bold">❌ Still don't know why array is undefined</text>
+  </g>
+  
+  <line x1="40" y1="300" x2="560" y2="300" stroke="#3b2a18" stroke-width="4" stroke-dasharray="10 10"/>
+  
+  <!-- Bottom Panel -->
+  <g transform="translate(40, 330)">
+    <rect width="520" height="210" rx="16" fill="#2d1c0a" stroke="#d97706" stroke-width="3"/>
+    <text x="30" y="45" fill="#fde68a" font-family="sans-serif" font-size="18" font-weight="bold">CLAUDE 3.5 SONNET:</text>
+    <text x="30" y="85" fill="#ffffff" font-family="sans-serif" font-size="15">"Here is the issue: line 42 passes an async promise</text>
+    <text x="30" y="112" fill="#ffffff" font-family="sans-serif" font-size="15">without await. Here is the clean 2-line fix."</text>
+    <text x="30" y="165" fill="#fbbf24" font-family="sans-serif" font-size="18" font-weight="bold">🧠 Instant senior engineer level resolution!</text>
+  </g>
+</svg>

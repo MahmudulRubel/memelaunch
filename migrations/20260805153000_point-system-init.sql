@@ -29,8 +29,10 @@ ALTER TABLE public.point_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_completed_tasks ENABLE ROW LEVEL SECURITY;
 
 -- 5. RLS Policies
+DROP POLICY IF EXISTS select_own_transactions ON public.point_transactions;
 CREATE POLICY select_own_transactions ON public.point_transactions 
   FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS select_own_completed_tasks ON public.user_completed_tasks;
 CREATE POLICY select_own_completed_tasks ON public.user_completed_tasks 
   FOR SELECT TO authenticated USING (auth.uid() = user_id);

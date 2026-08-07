@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
-import { insforge, resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
+import { insforge, insforgeAdmin, resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
 import { rewardLike, revokeLike, rewardComment, revokeComment } from '@/lib/points';
 import {
   ExternalLink,
@@ -74,28 +74,43 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
       setIsLoading(true);
       setErrorMsg(null);
       try {
+        let launchData: any = null;
+        let launchErr: any = null;
+
+        const { data: primaryLaunch, error: primaryErr } = await insforge.database
+          .from('launches')
+          .select('*, users(name, avatar)')
+          .eq('id', initialLaunchId)
+          .maybeSingle();
+
+        if (primaryLaunch) {
+          launchData = primaryLaunch;
+        } else {
+          const { data: adminLaunch, error: adminErr } = await insforgeAdmin.database
+            .from('launches')
+            .select('*, users(name, avatar)')
+            .eq('id', initialLaunchId)
+            .maybeSingle();
+          launchData = adminLaunch;
+          launchErr = adminErr;
+        }
+
         const [
-          { data: launchData, error: launchErr },
           { data: screensData, error: screensErr },
           { data: commentsData, error: commentsErr },
           { data: reactionsData, error: reactionsErr }
         ] = await Promise.all([
-          insforge.database
-            .from('launches')
-            .select('*, users(name, avatar)')
-            .eq('id', initialLaunchId)
-            .single(),
-          insforge.database
+          insforgeAdmin.database
             .from('launch_screenshots')
             .select('*')
             .eq('launch_id', initialLaunchId)
             .order('order', { ascending: true }),
-          insforge.database
+          insforgeAdmin.database
             .from('comments')
             .select('*, users(name, avatar)')
             .eq('launch_id', initialLaunchId)
             .order('created_at', { ascending: true }),
-          insforge.database
+          insforgeAdmin.database
             .from('reactions')
             .select('emoji_type, user_id')
             .eq('launch_id', initialLaunchId)
@@ -329,19 +344,23 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
                 />
               )}
               {/* Dynamic Meme Captions */}
-              {(captionData.position === 'above' || captionData.position === 'both') && captionData.textAbove && (
-                <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950 via-zinc-950/70 to-transparent p-4 pb-12 flex flex-col justify-start z-10">
-                  <p className="font-impact uppercase tracking-wider text-center line-clamp-2 leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" style={{ color: captionData.color, fontSize: '24px' }}>
-                    {captionData.textAbove}
-                  </p>
-                </div>
-              )}
-              {(captionData.position === 'below' || captionData.position === 'both') && captionData.textBelow && (
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950 via-zinc-950/70 to-transparent p-4 pt-12 flex flex-col justify-end z-10">
-                  <p className="font-impact uppercase tracking-wider text-center line-clamp-2 leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" style={{ color: captionData.color, fontSize: '24px' }}>
-                    {captionData.textBelow}
-                  </p>
-                </div>
+              {!captionData.hideOverlay && !launch.meme_image_url?.endsWith('.svg') && (
+                <>
+                  {(captionData.position === 'above' || captionData.position === 'both') && captionData.textAbove && (
+                    <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950 via-zinc-950/70 to-transparent p-4 pb-12 flex flex-col justify-start z-10">
+                      <p className="font-impact uppercase tracking-wider text-center line-clamp-2 leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" style={{ color: captionData.color, fontSize: '24px' }}>
+                        {captionData.textAbove}
+                      </p>
+                    </div>
+                  )}
+                  {(captionData.position === 'below' || captionData.position === 'both') && captionData.textBelow && (
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950 via-zinc-950/70 to-transparent p-4 pt-12 flex flex-col justify-end z-10">
+                      <p className="font-impact uppercase tracking-wider text-center line-clamp-2 leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" style={{ color: captionData.color, fontSize: '24px' }}>
+                        {captionData.textBelow}
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
               <div className="absolute top-3 right-3 text-[10px] font-mono text-zinc-400 font-extrabold tracking-widest uppercase bg-zinc-950/80 px-2 py-0.5 rounded border border-black">
                 MEMELAUNCH

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
-import { insforge } from '@/lib/insforge';
+import { insforge, insforgeAdmin } from '@/lib/insforge';
 import { MemeCard, type Launch } from '@/components/feed/meme-card';
 import { AdminUsersTab } from './admin-users-tab';
 import { AdminBroadcastTab } from './admin-broadcast-tab';
@@ -61,21 +61,34 @@ export default function AdminPage() {
 
     async function checkAdminStatus() {
       try {
+        const adminEmails = ['mahomudulhasanrubel@gmail.com'];
+        const isSuperAdminEmail = user?.email && adminEmails.includes(user.email.toLowerCase());
+        const isSuperAdminId = currentUserId === '2ab40b92-175e-4815-8e5f-0d6b58c5c94d' || currentUserId === '5f844f38-e651-4b83-a6b7-924afd4d95b7';
+
         const { data, error } = await insforge.database
           .from('users')
           .select('is_admin')
           .eq('id', currentUserId)
           .single();
 
-        if (!error && data && data.is_admin) {
+        if (isSuperAdminEmail || isSuperAdminId || (!error && data && data.is_admin === true)) {
           setIsAdmin(true);
+
+          // Auto-sync is_admin = true in database if not already flagged
+          if (!data?.is_admin) {
+            fetch('/api/admin/toggle-admin-user', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ targetUserId: currentUserId, is_admin: true }),
+            }).catch(() => {});
+          }
         } else {
-          // Grant admin access to logged-in users
-          setIsAdmin(true);
+          setIsAdmin(false);
         }
       } catch (err) {
         console.error('Failed checking admin status:', err);
-        setIsAdmin(true);
+        const isSuperAdminEmail = user?.email && user.email.toLowerCase() === 'mahomudulhasanrubel@gmail.com';
+        setIsAdmin(!!isSuperAdminEmail);
       } finally {
         setIsValidating(false);
       }
@@ -90,12 +103,12 @@ export default function AdminPage() {
     setErrorMsg(null);
     try {
       const [pendingRes, approvedRes] = await Promise.all([
-        insforge.database
+        insforgeAdmin.database
           .from('launches')
           .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id)')
           .eq('is_approved', false)
           .order('created_at', { ascending: false }),
-        insforge.database
+        insforgeAdmin.database
           .from('launches')
           .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id)')
           .eq('is_approved', true)
@@ -127,12 +140,20 @@ export default function AdminPage() {
     try {
       const approvedItem = pendingLaunches.find((l) => l.id === launchId);
 
-      const { error } = await insforge.database
-        .from('launches')
-        .update({ is_approved: true })
-        .eq('id', launchId);
+      const res = await fetch('/api/admin/moderate-launch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          launchId,
+          action: 'approve',
+          userId: user?.id,
+        }),
+      });
 
-      if (error) throw error;
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Failed to approve launch');
+      }
 
       if (approvedItem) {
         approvedItem.is_approved = true;
@@ -166,12 +187,20 @@ export default function AdminPage() {
   const handleRevoke = async (launchId: string) => {
     setActioningId(launchId);
     try {
-      const { error } = await insforge.database
-        .from('launches')
-        .update({ is_approved: false })
-        .eq('id', launchId);
+      const res = await fetch('/api/admin/moderate-launch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          launchId,
+          action: 'revoke',
+          userId: user?.id,
+        }),
+      });
 
-      if (error) throw error;
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Failed to revoke launch');
+      }
 
       const revokedItem = approvedLaunches.find((l) => l.id === launchId);
       if (revokedItem) {
@@ -195,12 +224,20 @@ export default function AdminPage() {
 
     setActioningId(launchId);
     try {
-      const { error } = await insforge.database
-        .from('launches')
-        .delete()
-        .eq('id', launchId);
+      const res = await fetch('/api/admin/moderate-launch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          launchId,
+          action: 'delete',
+          userId: user?.id,
+        }),
+      });
 
-      if (error) throw error;
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Failed to delete launch');
+      }
 
       setPendingLaunches((prev) => prev.filter((l) => l.id !== launchId));
       setApprovedLaunches((prev) => prev.filter((l) => l.id !== launchId));

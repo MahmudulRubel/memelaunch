@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <rect width="600" height="600" fill="#090d16"/>
+  <!-- Top Panel: Expectation vs Paint -->
+  <g transform="translate(40, 60)">
+    <rect width="520" height="210" rx="16" fill="#111827" stroke="#374151" stroke-width="3"/>
+    <text x="30" y="45" fill="#f87171" font-family="sans-serif" font-size="20" font-weight="bold">MY ARTISTIC SKILLS IN MS PAINT:</text>
+    <circle cx="120" cy="120" r="35" stroke="#9ca3af" stroke-width="3" fill="none"/>
+    <line x1="120" y1="155" x2="120" y2="190" stroke="#9ca3af" stroke-width="3"/>
+    <line x1="100" y1="170" x2="140" y2="170" stroke="#9ca3af" stroke-width="3"/>
+    <text x="200" y="130" fill="#9ca3af" font-family="sans-serif" font-size="16">"Look guys, I drew a cat!"</text>
+  </g>
+
+  <!-- Bottom Panel: Midjourney Prompt -->
+  <g transform="translate(40, 330)">
+    <rect width="520" height="210" rx="16" fill="#1e1b4b" stroke="#818cf8" stroke-width="3"/>
+    <text x="30" y="45" fill="#c084fc" font-family="sans-serif" font-size="20" font-weight="bold">MIDJOURNEY v6 PROMPT:</text>
+    <text x="30" y="85" fill="#e0e7ff" font-family="monospace" font-size="14">/imagine photorealistic cyberpunk warrior cat,</text>
+    <text x="30" y="110" fill="#e0e7ff" font-family="monospace" font-size="14">neon lighting, 8k resolution, octane render --v 6.0</text>
+    <text x="30" y="165" fill="#a78bfa" font-family="sans-serif" font-size="18" font-weight="bold">🎨 Instant masterpiece created in 15 seconds</text>
+  </g>
+</svg>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <rect width="600" height="600" fill="#0f0f11"/>
+  <!-- Top Panel -->
+  <g transform="translate(40, 60)">
+    <rect width="520" height="210" rx="16" fill="#18181b" stroke="#3f3f46" stroke-width="3"/>
+    <text x="30" y="45" fill="#f43f5e" font-family="sans-serif" font-size="18" font-weight="bold">STAGE 1: NOTION SETUP (2 HOURS)</text>
+    <text x="30" y="85" fill="#e4e4e7" font-family="sans-serif" font-size="15">🎨 Adding custom aesthetic cover image</text>
+    <text x="30" y="115" fill="#e4e4e7" font-family="sans-serif" font-size="15">✨ Picked 40 animated GIF icons for databases</text>
+    <text x="30" y="145" fill="#e4e4e7" font-family="sans-serif" font-size="15">📊 Built complex formula relations for tasks</text>
+    <text x="30" y="180" fill="#fb7185" font-family="sans-serif" font-size="16" font-weight="bold">Result: Page looks 10/10 aesthetic masterpiece</text>
+  </g>
+  
+  <line x1="40" y1="300" x2="560" y2="300" stroke="#3f3f46" stroke-width="4" stroke-dasharray="10 10"/>
+  
+  <!-- Bottom Panel -->
+  <g transform="translate(40, 330)">
+    <rect width="520" height="210" rx="16" fill="#1e1b4b" stroke="#6366f1" stroke-width="3"/>
+    <text x="30" y="45" fill="#a5b4fc" font-family="sans-serif" font-size="18" font-weight="bold">STAGE 2: ACTUAL CODE WRITTEN</text>
+    <text x="30" y="100" fill="#f43f5e" font-family="monospace" font-size="28" font-weight="bold">0 Lines of Code 😭</text>
+    <text x="30" y="155" fill="#c7d2fe" font-family="sans-serif" font-size="16">"Bro I spent all day setting up my SaaS roadmap!"</text>
+  </g>
+</svg>

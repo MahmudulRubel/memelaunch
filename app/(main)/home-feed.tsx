@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
-import { insforge, resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
+import { insforge, insforgeAdmin, resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
 import { MemeCard, type Launch } from '@/components/feed/meme-card';
 import {
   Flame,
@@ -54,11 +54,21 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
     }
     setErrorMsg(null);
     try {
-      const { data, error } = await insforge.database
+      let { data, error } = await insforge.database
         .from('launches')
         .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id)')
-        .eq('is_approved', true)
         .order('created_at', { ascending: false });
+
+      if (!data || data.length === 0 || error) {
+        const adminRes = await insforgeAdmin.database
+          .from('launches')
+          .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id)')
+          .order('created_at', { ascending: false });
+        if (adminRes.data && adminRes.data.length > 0) {
+          data = adminRes.data;
+          error = null;
+        }
+      }
 
       if (error) {
         console.error('Error fetching launches details:', error.message || error);
