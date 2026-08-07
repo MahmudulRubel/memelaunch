@@ -27,6 +27,8 @@ interface Props {
   selectedTemplateId?: string | null;
   onSelectTemplate?: (tmpl: MemeTemplate) => void;
   onUploadCustomImage?: (file: File) => void;
+  onTextAboveChange?: (val: string) => void;
+  onTextBelowChange?: (val: string) => void;
 }
 
 export const MemeStudio = forwardRef<MemeStudioRef, Props>(
@@ -40,6 +42,8 @@ export const MemeStudio = forwardRef<MemeStudioRef, Props>(
       selectedTemplateId = null,
       onSelectTemplate,
       onUploadCustomImage,
+      onTextAboveChange,
+      onTextBelowChange,
     },
     ref
   ) => {
@@ -118,6 +122,8 @@ export const MemeStudio = forwardRef<MemeStudioRef, Props>(
               currentImageUrl={imageUrl}
               onSelectTemplate={onSelectTemplate}
               onUploadCustomImage={onUploadCustomImage}
+              onTextAboveChange={onTextAboveChange}
+              onTextBelowChange={onTextBelowChange}
             />
           </div>
         </div>

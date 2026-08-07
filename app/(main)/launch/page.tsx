@@ -762,6 +762,8 @@ function LaunchForm() {
                 setImageSource('upload');
                 setMemePreview(URL.createObjectURL(file));
               }}
+              onTextAboveChange={setTextAbove}
+              onTextBelowChange={setTextBelow}
             />
           </div>
 
@@ -786,12 +788,32 @@ function LaunchForm() {
                 {/* Meme Thumbnail Header */}
                 <div className="relative aspect-[16/10] bg-zinc-900 overflow-hidden border-b border-zinc-800/80 group">
                   {memePreviewSource ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={resolveStorageUrl(memePreviewSource)}
-                      alt="Meme Preview"
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={resolveStorageUrl(memePreviewSource)}
+                        alt="Meme Preview"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+
+                      {/* Top Text Caption Overlay */}
+                      {textAbove && (
+                        <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950/80 via-zinc-950/40 to-transparent p-2.5 pb-6 flex flex-col justify-start z-10 pointer-events-none">
+                          <p className="font-impact uppercase tracking-wider text-center line-clamp-2 leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] text-white text-base md:text-lg">
+                            {textAbove}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Bottom Text Caption Overlay */}
+                      {textBelow && (
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950/80 via-zinc-950/40 to-transparent p-2.5 pt-6 flex flex-col justify-end z-10 pointer-events-none">
+                          <p className="font-impact uppercase tracking-wider text-center line-clamp-2 leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] text-white text-base md:text-lg">
+                            {textBelow}
+                          </p>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-zinc-900">
                       <Sparkles className="w-8 h-8 text-zinc-700 mb-2 animate-pulse" />
@@ -801,7 +823,7 @@ function LaunchForm() {
                   )}
 
                   {/* Strategy Badge Overlay */}
-                  <div className="absolute top-3 right-3">
+                  <div className="absolute top-3 right-3 z-20">
                     {preferredCycle === 'current' ? (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 backdrop-blur-md shadow-lg">
                         🏆 Current Week Entry

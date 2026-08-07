@@ -21,6 +21,8 @@ interface Props {
   currentImageUrl?: string | null;
   onSelectTemplate?: (tmpl: MemeTemplate) => void;
   onUploadCustomImage?: (file: File) => void;
+  onTextAboveChange?: (val: string) => void;
+  onTextBelowChange?: (val: string) => void;
 }
 
 export function StudioSidebar({
@@ -31,6 +33,8 @@ export function StudioSidebar({
   currentImageUrl = null,
   onSelectTemplate,
   onUploadCustomImage,
+  onTextAboveChange,
+  onTextBelowChange,
 }: Props) {
   const TABS = [
     { id: 'media', label: 'Media', icon: ImageIcon },
@@ -78,7 +82,14 @@ export function StudioSidebar({
             onUploadCustomImage={onUploadCustomImage || (() => {})}
           />
         )}
-        {state.activeTab === 'captions' && <CaptionsTab state={state} dispatch={dispatch} />}
+        {state.activeTab === 'captions' && (
+          <CaptionsTab
+            state={state}
+            dispatch={dispatch}
+            onTextAboveChange={onTextAboveChange}
+            onTextBelowChange={onTextBelowChange}
+          />
+        )}
         {state.activeTab === 'text' && <TypographyTab state={state} dispatch={dispatch} />}
         {state.activeTab === 'effects' && <TextEffectsTab state={state} dispatch={dispatch} />}
         {state.activeTab === 'filters' && <ImageFiltersTab state={state} dispatch={dispatch} />}
