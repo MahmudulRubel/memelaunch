@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
-import { insforge, resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
+import { insforge, insforgeAdmin, resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
 import { MemeCard, type Launch } from '@/components/feed/meme-card';
 import {
   Flame,
@@ -54,11 +54,21 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
     }
     setErrorMsg(null);
     try {
-      const { data, error } = await insforge.database
+      let { data, error } = await insforge.database
         .from('launches')
         .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id)')
-        .eq('is_approved', true)
         .order('created_at', { ascending: false });
+
+      if (!data || data.length === 0 || error) {
+        const adminRes = await insforgeAdmin.database
+          .from('launches')
+          .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id)')
+          .order('created_at', { ascending: false });
+        if (adminRes.data && adminRes.data.length > 0) {
+          data = adminRes.data;
+          error = null;
+        }
+      }
 
       if (error) {
         console.error('Error fetching launches details:', error.message || error);
@@ -247,21 +257,31 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
             <div className="flex flex-wrap items-center gap-3 w-full max-w-md mt-2">
               <Link
                 href="/world-cup"
-                className="flex-1 bg-gradient-to-r from-amber-500/20 via-zinc-900 to-amber-500/10 border-2 border-amber-500/50 p-3 rounded-2xl flex items-center justify-between shadow-brutal hover:border-amber-400 transition-all group"
+                className="relative flex-1 group overflow-hidden bg-gradient-to-r from-amber-500/25 via-zinc-950 to-amber-500/15 border-2 border-amber-400 p-3.5 rounded-2xl flex items-center justify-between shadow-brutal hover:shadow-brutal-lg hover:border-amber-300 hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200"
               >
-                <div className="flex items-center gap-3 text-left">
-                  <span className="text-2xl animate-bounce">🏆</span>
+                {/* Shimmer sweep glow on hover */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-400/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+
+                <div className="flex items-center gap-3.5 text-left relative z-10">
+                  <div className="relative flex items-center justify-center w-11 h-11 rounded-xl bg-amber-500/20 border-2 border-amber-400/60 shadow-brutal-sm group-hover:scale-105 transition-transform shrink-0">
+                    <span className="text-2xl animate-bounce">🏆</span>
+                  </div>
                   <div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                       <span className="text-xs font-black text-amber-400 uppercase tracking-wider">World Cup #32 Live</span>
-                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                      <span className="relative flex h-2.5 w-2.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400" />
+                      </span>
                     </div>
-                    <p className="text-xs text-zinc-300 font-medium">16 Products battling in Knockout Bracket</p>
+                    <p className="text-xs text-zinc-200 font-bold tracking-tight">16 Products battling in Knockout Bracket</p>
                   </div>
                 </div>
-                <span className="text-xs font-black bg-amber-500 text-zinc-950 px-2.5 py-1 rounded-xl uppercase tracking-wider group-hover:scale-105 transition-transform">
-                  Vote ➔
-                </span>
+
+                <div className="relative z-10 flex items-center gap-1 bg-[#ffe600] text-zinc-950 font-black text-xs uppercase px-3 py-2 rounded-xl border-2 border-black shadow-brutal-sm group-hover:bg-yellow-300 group-hover:scale-105 active:scale-95 transition-all shrink-0 ml-2">
+                  <span>Vote</span>
+                  <span className="text-sm font-extrabold group-hover:translate-x-1 transition-transform">➔</span>
+                </div>
               </Link>
 
               <button

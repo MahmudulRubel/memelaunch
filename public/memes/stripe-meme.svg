@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <rect width="600" height="600" fill="#090d16"/>
+  <!-- Top Panel -->
+  <g transform="translate(40, 60)">
+    <rect width="520" height="210" rx="16" fill="#111827" stroke="#374151" stroke-width="3"/>
+    <text x="30" y="45" fill="#f87171" font-family="sans-serif" font-size="18" font-weight="bold">OLD BANK GATEWAY INTEGRATION:</text>
+    <text x="30" y="85" fill="#9ca3af" font-family="monospace" font-size="14">XML payload parsing, SOAP handshakes,</text>
+    <text x="30" y="110" fill="#9ca3af" font-family="monospace" font-size="14">3-D Secure v1 redirect loops &amp; merchant approval</text>
+    <text x="30" y="165" fill="#ef4444" font-family="sans-serif" font-size="16" font-weight="bold">❌ 3 Months of nightmare code before first sale</text>
+  </g>
+  
+  <line x1="40" y1="300" x2="560" y2="300" stroke="#374151" stroke-width="4" stroke-dasharray="10 10"/>
+  
+  <!-- Bottom Panel -->
+  <g transform="translate(40, 330)">
+    <rect width="520" height="210" rx="16" fill="#0f172a" stroke="#635bff" stroke-width="3"/>
+    <text x="30" y="45" fill="#818cf8" font-family="sans-serif" font-size="18" font-weight="bold">STRIPE CHECKOUT API:</text>
+    <text x="30" y="85" fill="#e0e7ff" font-family="monospace" font-size="15">const session = await stripe.checkout.create(...);</text>
+    <text x="30" y="115" fill="#e0e7ff" font-family="monospace" font-size="15">res.redirect(303, session.url);</text>
+    <text x="30" y="165" fill="#34d399" font-family="sans-serif" font-size="18" font-weight="bold">💳 First $1,000 processed in 5 minutes!</text>
+  </g>
+</svg>

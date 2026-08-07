@@ -89,7 +89,7 @@ export function KnockoutBracket({ matches }: KnockoutBracketProps) {
           </p>
         </div>
         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] font-bold uppercase tracking-wider self-start sm:self-auto md:hidden">
-          <span>↔</span>
+          <span>{'\u2194'}</span>
           <span>Swipe to view bracket</span>
         </div>
       </div>

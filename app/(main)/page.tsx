@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Metadata } from 'next';
-import { insforge } from '@/lib/insforge';
+import { insforge, insforgeAdmin } from '@/lib/insforge';
 import HomeFeed from './home-feed';
 import type { Launch } from '@/components/feed/meme-card';
 
@@ -41,10 +41,9 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   let initialLaunches: Launch[] = [];
   try {
-    const { data, error } = await insforge.database
+    const { data, error } = await insforgeAdmin.database
       .from('launches')
       .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id)')
-      .eq('is_approved', true)
       .order('created_at', { ascending: false });
 
     if (!error && data) {

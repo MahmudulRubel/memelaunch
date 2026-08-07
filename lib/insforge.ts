@@ -17,6 +17,13 @@ export const insforge = createClient({
   timeout: 10000, // Fail fast on slow networks/timeouts
 });
 
+export const insforgeAdmin = createClient({
+  baseUrl: baseUrl || 'https://placeholder.insforge.app',
+  anonKey: process.env.INSFORGE_SERVER_KEY || 'ik_df9cb12db0c6c080dcc8c64ffb5b7b0c',
+  functionsUrl: `${baseUrl || 'https://placeholder.insforge.app'}/functions`,
+  timeout: 10000,
+});
+
 /**
  * Utility to resolve InsForge storage URLs to our local Next.js API proxy,
  * bypassing CloudFront CDN 403 Forbidden errors.
