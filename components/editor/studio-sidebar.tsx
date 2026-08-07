@@ -2,13 +2,12 @@
 
 import React from 'react';
 import { StudioState, StudioAction } from '@/lib/meme-studio-state';
-import { Image as ImageIcon, MessageSquareText, Type, Sparkles, Sliders, ShieldCheck, Wand2 } from 'lucide-react';
+import { Image as ImageIcon, MessageSquareText, Type, Sparkles, Sliders, Wand2 } from 'lucide-react';
 import { MediaTab } from './tabs/media-tab';
 import { CaptionsTab } from './tabs/captions-tab';
 import { TypographyTab } from './tabs/typography-tab';
 import { TextEffectsTab } from './tabs/text-effects-tab';
 import { ImageFiltersTab } from './tabs/image-filters-tab';
-import { StickersBadgesTab } from './tabs/stickers-badges-tab';
 import { PresetsTab } from './tabs/presets-tab';
 
 import { MemeTemplate } from './meme-studio';
@@ -42,7 +41,6 @@ export function StudioSidebar({
     { id: 'text', label: 'Fonts', icon: Type },
     { id: 'effects', label: 'Effects', icon: Sparkles },
     { id: 'filters', label: 'Filters', icon: Sliders },
-    { id: 'badges', label: 'Badges', icon: ShieldCheck },
     { id: 'presets', label: 'Presets', icon: Wand2 },
   ] as const;
 
@@ -93,7 +91,6 @@ export function StudioSidebar({
         {state.activeTab === 'text' && <TypographyTab state={state} dispatch={dispatch} />}
         {state.activeTab === 'effects' && <TextEffectsTab state={state} dispatch={dispatch} />}
         {state.activeTab === 'filters' && <ImageFiltersTab state={state} dispatch={dispatch} />}
-        {state.activeTab === 'badges' && <StickersBadgesTab state={state} dispatch={dispatch} />}
         {state.activeTab === 'presets' && <PresetsTab state={state} dispatch={dispatch} />}
       </div>
     </div>

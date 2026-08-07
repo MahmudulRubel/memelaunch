@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
-import { StudioState, StudioAction, StudioLayer } from '@/lib/meme-studio-state';
+import { StudioState, StudioAction } from '@/lib/meme-studio-state';
 
 export interface StudioCanvasRef {
   getCanvasBlob: () => Promise<Blob | null>;
@@ -26,11 +26,11 @@ function loadGoogleFont(fontName: string) {
   LOADED_FONTS.add(fontName);
 }
 
-export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatch, imageUrl, productLogoUrl }, ref) => {
+export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatch, imageUrl }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [bgImage, setBgImage] = useState<HTMLImageElement | null>(null);
-  const [logoImage, setLogoImage] = useState<HTMLImageElement | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Load Google Fonts dynamically when layer fonts change
   useEffect(() => {
@@ -50,34 +50,35 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
     img.onload = () => setBgImage(img);
   }, [imageUrl]);
 
-  // Load Product Logo Badge Image
-  useEffect(() => {
-    if (!productLogoUrl) return;
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = productLogoUrl;
-    img.onload = () => setLogoImage(img);
-  }, [productLogoUrl]);
-
   // Expose High-Res Export Function
   useImperativeHandle(ref, () => ({
     getCanvasBlob: async () => {
       const canvas = canvasRef.current;
       if (!canvas) return null;
+
+      // Render clean canvas without bounding box guides for final export
+      renderCanvas(canvas, state, bgImage, false);
+
       return new Promise<Blob | null>((resolve) => {
-        canvas.toBlob((blob) => resolve(blob), 'image/png', 0.95);
+        canvas.toBlob((blob) => {
+          // Re-render with guides after export
+          renderCanvas(canvas, state, bgImage, true);
+          resolve(blob);
+        }, 'image/png', 0.95);
       });
     },
   }));
 
-  // Render Canvas Loop
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  // Master Render Canvas Function
+  const renderCanvas = (
+    canvas: HTMLCanvasElement,
+    currentState: StudioState,
+    bgImg: HTMLImageElement | null,
+    drawGuides: boolean
+  ) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Fixed High-Res Canvas Size
     const width = 800;
     const height = 800;
     canvas.width = width;
@@ -86,104 +87,217 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
     ctx.clearRect(0, 0, width, height);
 
     // Apply Filter Pipeline
-    const { brightness, contrast, saturation } = state.canvasSettings.filter;
+    const { brightness, contrast, saturation } = currentState.canvasSettings.filter;
     ctx.filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
 
-    // Draw Background Template Image or Placeholder
-    if (bgImage) {
-      ctx.drawImage(bgImage, 0, 0, width, height);
+    // Draw Background Template Image or Dark Grid Placeholder
+    if (bgImg) {
+      ctx.drawImage(bgImg, 0, 0, width, height);
     } else {
-      ctx.fillStyle = '#18181b';
+      ctx.fillStyle = '#09090b';
       ctx.fillRect(0, 0, width, height);
-      ctx.fillStyle = '#71717a';
-      ctx.font = '24px monospace';
+
+      // Grid Lines
+      ctx.strokeStyle = '#18181b';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < width; i += 80) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, height);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(width, i);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#a1a1aa';
+      ctx.font = '700 22px monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('Select a template to begin', width / 2, height / 2);
+      ctx.fillText('Select a template or upload an image to begin', width / 2, height / 2);
     }
 
-    // Reset filter for layers
+    // Reset filter for text layers
     ctx.filter = 'none';
 
-    // Draw Layers
-    state.layers.forEach((layer) => {
+    // Draw Text Layers
+    currentState.layers.forEach((layer) => {
+      if (layer.type !== 'text' || !layer.text) return;
+
       ctx.save();
       const posX = (layer.x / 100) * width;
       const posY = (layer.y / 100) * height;
 
-      if (layer.type === 'text' && layer.text) {
-        const textToDraw = layer.uppercase ? layer.text.toUpperCase() : layer.text;
-        const fontSize = (layer.fontSize || 36) * 1.5; // Scale for 800px canvas
-        const fontName = layer.fontFamily || 'Impact';
+      const textToDraw = layer.uppercase ? layer.text.toUpperCase() : layer.text;
+      const fontSize = (layer.fontSize || 36) * 1.5;
+      const fontName = layer.fontFamily || 'Impact';
 
-        ctx.font = `${layer.fontWeight || '900'} ${fontSize}px '${fontName}', sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
+      ctx.font = `${layer.fontWeight || '900'} ${fontSize}px '${fontName}', sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
 
-        // Background Pill Highlight Box
-        if (layer.bgBoxColor && layer.bgBoxColor !== 'transparent') {
-          const metrics = ctx.measureText(textToDraw);
-          const bgWidth = metrics.width + 30;
-          const bgHeight = fontSize + 20;
-          ctx.fillStyle = layer.bgBoxColor;
-          ctx.fillRect(posX - bgWidth / 2, posY - bgHeight / 2, bgWidth, bgHeight);
-        }
+      const metrics = ctx.measureText(textToDraw);
+      const textWidth = metrics.width;
+      const textHeight = fontSize;
 
-        // Drop Shadow / Glow
-        if (layer.shadowBlur && layer.shadowBlur > 0) {
-          ctx.shadowColor = layer.shadowColor || '#000000';
-          ctx.shadowBlur = layer.shadowBlur * 1.5;
-        }
+      // Background Pill Highlight Box
+      if (layer.bgBoxColor && layer.bgBoxColor !== 'transparent') {
+        const bgWidth = textWidth + 30;
+        const bgHeight = textHeight + 20;
+        ctx.fillStyle = layer.bgBoxColor;
+        ctx.fillRect(posX - bgWidth / 2, posY - bgHeight / 2, bgWidth, bgHeight);
+      }
 
-        // Outline Stroke
-        if (layer.strokeWidth && layer.strokeWidth > 0) {
-          ctx.strokeStyle = layer.strokeColor || '#000000';
-          ctx.lineWidth = layer.strokeWidth * 1.5;
-          ctx.strokeText(textToDraw, posX, posY);
-        }
+      // Drop Shadow / Glow
+      if (layer.shadowBlur && layer.shadowBlur > 0) {
+        ctx.shadowColor = layer.shadowColor || '#000000';
+        ctx.shadowBlur = layer.shadowBlur * 1.5;
+      }
 
-        // Fill Text
-        ctx.fillStyle = layer.color || '#ffffff';
-        ctx.fillText(textToDraw, posX, posY);
-      } else if (layer.type === 'badge' && logoImage) {
-        const badgeSize = 100 * (layer.scale || 1);
-        ctx.drawImage(logoImage, posX - badgeSize / 2, posY - badgeSize / 2, badgeSize, badgeSize);
+      // Outline Stroke
+      if (layer.strokeWidth && layer.strokeWidth > 0) {
+        ctx.strokeStyle = layer.strokeColor || '#000000';
+        ctx.lineWidth = layer.strokeWidth * 1.5;
+        ctx.strokeText(textToDraw, posX, posY);
+      }
+
+      // Fill Text
+      ctx.fillStyle = layer.color || '#ffffff';
+      ctx.fillText(textToDraw, posX, posY);
+
+      // Bounding Box Guides for Selected Layer
+      if (drawGuides && currentState.selectedLayerId === layer.id) {
+        const boxPadding = 16;
+        const boxW = Math.max(textWidth + boxPadding * 2, 120);
+        const boxH = textHeight + boxPadding * 2;
+        const boxX = posX - boxW / 2;
+        const boxY = posY - boxH / 2;
+
+        ctx.restore();
+        ctx.save();
+
+        // Dashed Selection Box
+        ctx.strokeStyle = '#a3e635';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([8, 6]);
+        ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+        // Corner Resize Indicators
+        ctx.fillStyle = '#a3e635';
+        const handleSize = 10;
+        ctx.fillRect(boxX - handleSize / 2, boxY - handleSize / 2, handleSize, handleSize);
+        ctx.fillRect(boxX + boxW - handleSize / 2, boxY - handleSize / 2, handleSize, handleSize);
+        ctx.fillRect(boxX - handleSize / 2, boxY + boxH - handleSize / 2, handleSize, handleSize);
+        ctx.fillRect(boxX + boxW - handleSize / 2, boxY + boxH - handleSize / 2, handleSize, handleSize);
       }
 
       ctx.restore();
     });
-  }, [state, bgImage, logoImage]);
+  };
 
-  // Drag-to-Position Handlers
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+  // Render Loop Trigger
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      renderCanvas(canvas, state, bgImage, true);
+    }
+  }, [state, bgImage]);
+
+  // Click & Drag Handler
+  const startDrag = (clientX: number, clientY: number) => {
     const container = containerRef.current;
-    if (!container || !state.selectedLayerId) return;
+    if (!container) return;
 
     const rect = container.getBoundingClientRect();
-    const activeLayer = state.layers.find((l) => l.id === state.selectedLayerId);
-    if (!activeLayer) return;
+    const clickXPercent = ((clientX - rect.left) / rect.width) * 100;
+    const clickYPercent = ((clientY - rect.top) / rect.height) * 100;
 
-    const onMouseMove = (moveEvent: MouseEvent) => {
-      const xPercent = Math.max(5, Math.min(95, ((moveEvent.clientX - rect.left) / rect.width) * 100));
-      const yPercent = Math.max(5, Math.min(95, ((moveEvent.clientY - rect.top) / rect.height) * 100));
-      dispatch({ type: 'UPDATE_LAYER', id: activeLayer.id, patch: { x: Math.round(xPercent), y: Math.round(yPercent) } });
+    // Find clicked layer or pick closest layer
+    let targetLayer = state.layers.find((l) => {
+      const dx = Math.abs(l.x - clickXPercent);
+      const dy = Math.abs(l.y - clickYPercent);
+      return dx < 25 && dy < 15;
+    });
+
+    if (!targetLayer && state.layers.length > 0) {
+      targetLayer = state.layers[0];
+    }
+
+    if (!targetLayer) return;
+
+    // Select the layer
+    dispatch({ type: 'SELECT_LAYER', id: targetLayer.id });
+    setIsDragging(true);
+
+    const activeId = targetLayer.id;
+
+    const onMove = (moveX: number, moveY: number) => {
+      const xPercent = Math.max(5, Math.min(95, ((moveX - rect.left) / rect.width) * 100));
+      const yPercent = Math.max(5, Math.min(95, ((moveY - rect.top) / rect.height) * 100));
+      dispatch({
+        type: 'UPDATE_LAYER',
+        id: activeId,
+        patch: { x: Math.round(xPercent), y: Math.round(yPercent) },
+      });
     };
 
-    const onMouseUp = () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
+    const handleMouseMove = (e: MouseEvent) => onMove(e.clientX, e.clientY);
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches[0]) {
+        onMove(e.touches[0].clientX, e.touches[0].clientY);
+      }
     };
 
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
+    const stopDrag = () => {
+      setIsDragging(false);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', stopDrag);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', stopDrag);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', stopDrag);
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', stopDrag);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    startDrag(e.clientX, e.clientY);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches[0]) {
+      startDrag(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  };
+
+  // Mouse wheel font resizing on canvas
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (!state.selectedLayerId) return;
+    const selectedLayer = state.layers.find((l) => l.id === state.selectedLayerId);
+    if (!selectedLayer || selectedLayer.type !== 'text') return;
+
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? 2 : -2;
+    const newSize = Math.max(16, Math.min(96, (selectedLayer.fontSize || 36) + delta));
+    dispatch({ type: 'UPDATE_LAYER', id: selectedLayer.id, patch: { fontSize: newSize } });
   };
 
   return (
     <div
       ref={containerRef}
       onMouseDown={handleMouseDown}
-      className="relative w-full aspect-square bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl cursor-grab active:cursor-grabbing group"
+      onTouchStart={handleTouchStart}
+      onWheel={handleWheel}
+      className={`relative w-full aspect-square bg-zinc-950 border border-zinc-800/90 rounded-2xl overflow-hidden shadow-2xl select-none transition-all ${
+        isDragging ? 'cursor-grabbing border-lime-400/50' : 'cursor-grab hover:border-zinc-700'
+      }`}
     >
       <canvas ref={canvasRef} className="w-full h-full object-contain" />
+      <div className="absolute bottom-2 left-2 px-2 py-1 bg-zinc-950/80 backdrop-blur border border-zinc-800 rounded-lg text-[10px] font-mono text-zinc-400 pointer-events-none">
+        🎯 Drag text to position | Scroll wheel to resize
+      </div>
     </div>
   );
 });
