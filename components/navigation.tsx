@@ -71,10 +71,15 @@ export function Navigation() {
           <div className="flex items-center gap-8">
             <Link 
               href="/" 
-              className="font-impact text-xl sm:text-2xl uppercase tracking-tight text-zinc-950 bg-[#ffe600] border-2 border-black px-3 py-1 rounded-xl shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all select-none flex items-center gap-2"
+              className="flex items-center gap-2 group hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform"
+              title="MemeLaunch Home"
             >
-              <span>🚀</span>
-              <span>MemeLaunch</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src="/logo.png" 
+                alt="Launchme MemeLaunch Logo" 
+                className="h-10 sm:h-12 w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
+              />
             </Link>
 
             {/* Desktop Navigation Links */}

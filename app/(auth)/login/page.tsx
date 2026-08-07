@@ -72,9 +72,14 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-zinc-950 text-zinc-50">
       <div className="w-full max-w-md bg-zinc-900/60 backdrop-blur-md border border-zinc-800/80 rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-        <div className="text-center mb-8">
-          <Link href="/" className="text-3xl font-extrabold uppercase tracking-tight text-lime-400 hover:text-lime-300 transition-colors">
-            MemeLaunch
+        <div className="text-center mb-8 flex flex-col items-center">
+          <Link href="/" className="inline-block group hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src="/logo.png" 
+              alt="Launchme MemeLaunch Logo" 
+              className="h-12 w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
+            />
           </Link>
           <p className="text-zinc-400 mt-2 text-sm">
             Where SaaS meets shitposting. Stop building in silence.

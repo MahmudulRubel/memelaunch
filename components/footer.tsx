@@ -11,10 +11,15 @@ export function Footer() {
             <Link 
               id="footer-logo"
               href="/" 
-              className="inline-flex items-center gap-2 font-impact text-xl uppercase tracking-tight text-zinc-950 bg-[#ffe600] border-2 border-black px-3 py-1 rounded-xl shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all select-none"
+              className="inline-block group hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform"
+              title="MemeLaunch Home"
             >
-              <span>🚀</span>
-              <span>MemeLaunch</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src="/logo.png" 
+                alt="Launchme MemeLaunch Logo" 
+                className="h-10 w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
+              />
             </Link>
             <p className="text-zinc-400 text-xs font-medium leading-relaxed max-w-xs pt-1">
               Building the future of product discovery, one elite meme at a time. Where SaaS founders pitch with humor.
