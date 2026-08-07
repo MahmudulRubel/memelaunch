@@ -765,384 +765,456 @@ function LaunchForm() {
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* LEFT COLUMN: LIVE CARD PREVIEW (5 Cols) */}
-            <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
-              {/* Details Bar Mockup */}
-            <div className="p-4 bg-zinc-900/40 space-y-4 rounded-2xl border border-zinc-800">
-              <div className="flex items-center gap-3">
-                {productLogoPreview ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={productLogoPreview}
-                    alt="Logo preview"
-                    className="h-9 w-9 rounded-xl object-cover border border-zinc-850 bg-zinc-950 shrink-0 shadow-md"
-                  />
-                ) : (
-                  <div className="h-9 w-9 rounded-xl border border-dashed border-zinc-800 bg-zinc-950 flex items-center justify-center text-zinc-650 font-mono text-[10px] uppercase tracking-wider font-extrabold shrink-0">
-                    Logo
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-extrabold text-base text-zinc-100 truncate">
-                      {productName || 'Product Name'}
-                    </h3>
-                    <span className="px-2 py-0.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-[10px] font-mono uppercase font-bold tracking-wider shrink-0">
-                      {pricing}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2 text-xs text-zinc-500">
-                <span className="inline-flex items-center gap-1 bg-zinc-950/40 border border-zinc-800/60 px-2 py-0.5 rounded-md text-[11px]">
-                  <Tag className="h-3 w-3" />
-                  <span>{category || 'Category'}</span>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pt-4">
+            {/* LEFT COLUMN: LIVE PRODUCT CARD PREVIEW (5 Cols - Sticky) */}
+            <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-24">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-xs font-mono text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-lime-400"></span>
+                  </span>
+                  Live Feed Card Preview
+                </span>
+                <span className="text-[10px] font-mono text-zinc-500 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded-full">
+                  Feed Appearance
                 </span>
               </div>
 
-              {/* Fake Reactions panel */}
-              <div className="flex items-center justify-between gap-1 bg-zinc-950/30 border border-zinc-800/40 rounded-xl p-1 pointer-events-none opacity-60">
-                <div className="flex-1 flex items-center justify-center gap-1 py-1 rounded text-xs font-mono text-zinc-500">
-                  <span>🔥</span> 0
-                </div>
-                <div className="flex-1 flex items-center justify-center gap-1 py-1 rounded text-xs font-mono text-zinc-500">
-                  <span>😂</span> 0
-                </div>
-                <div className="flex-1 flex items-center justify-center gap-1 py-1 rounded text-xs font-mono text-zinc-500">
-                  <span>🤔</span> 0
-                </div>
-              </div>
-            </div>
-
-            {/* Error display on submit failure */}
-            {formErrors.submit && (
-              <div className="p-4 bg-red-950/40 border border-red-800/50 rounded-2xl flex gap-3 text-red-400 text-sm">
-                <AlertCircle className="h-5 w-5 shrink-0" />
-                <div className="space-y-1">
-                  <p className="font-bold">Launch Failed</p>
-                  <p className="text-xs text-red-300/90">{formErrors.submit}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Status Message Overlay when uploading */}
-            {isSubmitting && statusMessage && (
-              <div className="p-4 bg-lime-950/30 border border-lime-500/20 rounded-2xl flex items-center gap-3 text-lime-400 text-sm font-mono shadow-md animate-pulse">
-                <Loader2 className="h-4 w-4 animate-spin text-lime-400" />
-                <span>{statusMessage}</span>
-              </div>
-            )}
-          </div>
-
-          {/* RIGHT COLUMN: FIELDS & UPLOADS (7 Cols) */}
-          <div className="lg:col-span-7 bg-zinc-900/30 border border-zinc-800/80 rounded-2xl p-6 md:p-8 space-y-8">
-            
-            {/* World Cup Strategy Selector */}
-            <div className="space-y-3 p-4 bg-gradient-to-r from-amber-500/10 via-zinc-950 to-amber-500/5 border border-amber-500/30 rounded-2xl">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🏆</span>
-                <label className="text-sm font-extrabold text-white">
-                  World Cup Entry Strategy
-                </label>
-                <span className="text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold ml-auto">
-                  48h Strategy Choice
-                </span>
-              </div>
-              <p className="text-xs text-zinc-400">
-                Choose how your launch enters the weekly World Cup qualification race:
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setPreferredCycle('current')}
-                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                    preferredCycle === 'current'
-                      ? 'bg-amber-500/20 border-amber-500 text-white shadow-md'
-                      : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5 font-bold text-xs text-amber-400">
-                    <span>🚀</span>
-                    <span>I&apos;m Confident! (This Week)</span>
-                  </div>
-                  <p className="text-[11px] text-zinc-400 mt-1 leading-snug">
-                    Enter this week&apos;s race immediately. Great if you have an audience ready to vote!
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPreferredCycle('next')}
-                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                    preferredCycle === 'next'
-                      ? 'bg-amber-500/20 border-amber-500 text-white shadow-md'
-                      : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5 font-bold text-xs text-amber-400">
-                    <span>🛡️</span>
-                    <span>Safe Play (Next Week)</span>
-                  </div>
-                  <p className="text-[11px] text-zinc-400 mt-1 leading-snug">
-                    Get a full 7 days on the main feed to accumulate reactions naturally for next week.
-                  </p>
-                </button>
-              </div>
-            </div>
-
-            {/* Section 2: Product Specifications */}
-            <div className="space-y-6">
-              <h2 className="text-xl font-bold border-b border-zinc-800 pb-3 flex items-center gap-2 text-zinc-200">
-                <Tag className="h-5 w-5 text-lime-400" />
-                <span>Specs (Hidden Underneath)</span>
-              </h2>
-
-              {/* Product Logo Upload */}
-              <div className="space-y-2" id="err-productLogo">
-                <label className="block text-sm font-bold text-zinc-300">
-                  Product Logo
-                </label>
-                <div className="flex items-center gap-4">
-                  <div 
-                    onClick={() => logoInputRef.current?.click()}
-                    className={`flex-1 border-2 border-dashed ${formErrors.productLogo ? 'border-rose-500/50 bg-rose-950/5' : 'border-zinc-800 hover:border-zinc-700 bg-zinc-950/20'} rounded-2xl p-4 text-center cursor-pointer transition-all hover:bg-zinc-950/40`}
-                  >
-                    <input
-                      ref={logoInputRef}
-                      type="file"
-                      id="logo-upload"
-                      accept="image/*"
-                      onChange={handleLogoChange}
-                      className="hidden"
+              {/* Feed Card Mockup Container */}
+              <div className="bg-zinc-950 border border-zinc-800/90 rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 hover:border-zinc-700">
+                {/* Meme Thumbnail Header */}
+                <div className="relative aspect-[16/10] bg-zinc-900 overflow-hidden border-b border-zinc-800/80 group">
+                  {memePreviewSource ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={resolveStorageUrl(memePreviewSource)}
+                      alt="Meme Preview"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
-                    <Upload className="h-5 w-5 text-zinc-500 mx-auto mb-1 stroke-[1.5]" />
-                    <p className="text-xs font-semibold text-zinc-305">
-                      {productLogoFile ? productLogoFile.name : 'Upload logo image (1:1 aspect recommended)'}
-                    </p>
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-zinc-900">
+                      <Sparkles className="w-8 h-8 text-zinc-700 mb-2 animate-pulse" />
+                      <p className="text-xs font-mono text-zinc-500">Meme Canvas Live Preview</p>
+                      <p className="text-[11px] text-zinc-600 mt-1">Design your meme in the studio above</p>
+                    </div>
+                  )}
+
+                  {/* Strategy Badge Overlay */}
+                  <div className="absolute top-3 right-3">
+                    {preferredCycle === 'current' ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 backdrop-blur-md shadow-lg">
+                        🏆 Current Week Entry
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-blue-500/20 text-blue-300 border border-blue-500/40 backdrop-blur-md shadow-lg">
+                        🛡️ Next Week Entry
+                      </span>
+                    )}
                   </div>
-                  {productLogoPreview && (
-                    <div className="relative h-16 w-16 rounded-2xl overflow-hidden border border-zinc-850 shrink-0 bg-zinc-950 shadow-md">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                </div>
+
+                {/* Card Content Details */}
+                <div className="p-5 space-y-4">
+                  {/* Header Row: Logo, Name, Category & Price */}
+                  <div className="flex items-start gap-3">
+                    {productLogoPreview ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={productLogoPreview}
-                        alt="Logo preview"
-                        className="h-full w-full object-cover"
+                        alt="Product Logo"
+                        className="h-10 w-10 rounded-xl object-cover border border-zinc-800 bg-zinc-900 shrink-0 shadow-md"
                       />
-                    </div>
-                  )}
-                </div>
-                {formErrors.productLogo && (
-                  <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {formErrors.productLogo}
-                  </p>
-                )}
-              </div>
+                    ) : (
+                      <div className="h-10 w-10 rounded-xl border border-dashed border-zinc-800 bg-zinc-900 flex items-center justify-center text-zinc-600 font-mono text-[10px] uppercase font-bold shrink-0">
+                        Logo
+                      </div>
+                    )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Product Name */}
-                <div className="space-y-1.5" id="err-productName">
-                  <label htmlFor="productName" className="block text-sm font-bold text-zinc-300">
-                    Product Name
-                  </label>
-                  <input
-                    id="productName"
-                    type="text"
-                    required
-                    placeholder="MemeLaunch"
-                    value={productName}
-                    onChange={(e) => setProductName(e.target.value)}
-                    className={`w-full px-4 py-2.5 bg-zinc-950 border ${formErrors.productName ? 'border-rose-500/60' : 'border-zinc-800'} rounded-xl text-sm focus:outline-none focus:border-lime-500 text-zinc-100 placeholder-zinc-650 transition-colors`}
-                  />
-                  {formErrors.productName && (
-                    <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      {formErrors.productName}
-                    </p>
-                  )}
-                </div>
-
-                {/* Category Dropdown */}
-                <div className="space-y-1.5" id="err-category">
-                  <label htmlFor="category" className="block text-sm font-bold text-zinc-300">
-                    Category
-                  </label>
-                  <div className="relative">
-                    <select
-                      id="category"
-                      required
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className={`w-full px-4 py-2.5 bg-zinc-950 border ${formErrors.category ? 'border-rose-500/60' : 'border-zinc-800'} rounded-xl text-sm focus:outline-none focus:border-lime-500 text-zinc-100 placeholder-zinc-650 transition-colors cursor-pointer appearance-none`}
-                    >
-                      <option value="" disabled className="text-zinc-600">Select a category</option>
-                      {CATEGORIES.map((cat) => (
-                        <option key={cat} value={cat} className="bg-zinc-950 text-zinc-150">
-                          {cat}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-500">
-                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                      </svg>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="font-extrabold text-base text-zinc-100 truncate">
+                          {productName || 'Product Name'}
+                        </h3>
+                        <span className={`px-2.5 py-0.5 rounded-full border text-[10px] font-mono uppercase font-bold tracking-wider shrink-0 ${
+                          pricing === 'free'
+                            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+                            : pricing === 'freemium'
+                            ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-400'
+                            : 'border-purple-500/30 bg-purple-500/10 text-purple-400'
+                        }`}>
+                          {pricing === 'free' ? 'Free' : pricing === 'freemium' ? 'Freemium' : 'Paid'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="inline-flex items-center gap-1 text-xs text-zinc-400 font-mono">
+                          <Tag className="h-3 w-3 text-lime-400" />
+                          <span>{category || 'Uncategorized'}</span>
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  {formErrors.category && (
-                    <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      {formErrors.category}
-                    </p>
+
+                  {/* Description Preview */}
+                  <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
+                    {productDescription || 'Your product description will appear here on the community launch feed...'}
+                  </p>
+
+                  {/* Product URL & Website Link Mockup */}
+                  {productUrl && (
+                    <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400 pt-1">
+                      <span className="truncate max-w-[200px] text-zinc-500">{productUrl}</span>
+                      <span className="text-lime-400 font-bold hover:underline flex items-center gap-1">
+                        Visit Site <ArrowRight className="w-3 h-3" />
+                      </span>
+                    </div>
                   )}
+
+                  {/* Reaction Bar Mockup */}
+                  <div className="flex items-center justify-between gap-2 bg-zinc-900/60 border border-zinc-800/60 rounded-xl p-1.5 pointer-events-none">
+                    <div className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-lg text-xs font-mono text-zinc-400 bg-zinc-950/40">
+                      <span>🔥</span> <span className="font-bold text-zinc-300">0</span>
+                    </div>
+                    <div className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-lg text-xs font-mono text-zinc-400 bg-zinc-950/40">
+                      <span>😂</span> <span className="font-bold text-zinc-300">0</span>
+                    </div>
+                    <div className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-lg text-xs font-mono text-zinc-400 bg-zinc-950/40">
+                      <span>🚀</span> <span className="font-bold text-zinc-300">0</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Product URL */}
-              <div className="space-y-1.5" id="err-productUrl">
-                <label htmlFor="productUrl" className="block text-sm font-bold text-zinc-300">
-                  Product Link (URL)
-                </label>
-                <div className="relative">
-                  <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-                  <input
-                    id="productUrl"
-                    type="url"
-                    required
-                    placeholder="https://memelaunch.dev"
-                    value={productUrl}
-                    onChange={(e) => setProductUrl(e.target.value)}
-                    className={`w-full pl-10 pr-4 py-2.5 bg-zinc-950 border ${formErrors.productUrl ? 'border-rose-500/60' : 'border-zinc-800'} rounded-xl text-sm focus:outline-none focus:border-lime-500 text-zinc-100 placeholder-zinc-650 transition-colors`}
-                  />
+              {/* Error display on submit failure */}
+              {formErrors.submit && (
+                <div className="p-4 bg-rose-950/40 border border-rose-800/50 rounded-2xl flex gap-3 text-rose-400 text-sm shadow-xl">
+                  <AlertCircle className="h-5 w-5 shrink-0" />
+                  <div className="space-y-1">
+                    <p className="font-bold">Launch Failed</p>
+                    <p className="text-xs text-rose-300/90">{formErrors.submit}</p>
+                  </div>
                 </div>
-                {formErrors.productUrl && (
-                  <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {formErrors.productUrl}
-                  </p>
-                )}
-              </div>
+              )}
 
-              {/* Product Description */}
-              <div className="space-y-1.5" id="err-productDescription">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="productDescription" className="block text-sm font-bold text-zinc-300">
-                    Product Description
-                  </label>
-                  <span className={`text-[11px] font-mono ${productDescription.length > 500 ? 'text-rose-400' : 'text-zinc-500'}`}>
-                    {productDescription.length}/500 chars
-                  </span>
+              {/* Status Message Overlay when uploading */}
+              {isSubmitting && statusMessage && (
+                <div className="p-4 bg-lime-950/30 border border-lime-500/30 rounded-2xl flex items-center gap-3 text-lime-400 text-sm font-mono shadow-xl animate-pulse">
+                  <Loader2 className="h-4 w-4 animate-spin text-lime-400" />
+                  <span>{statusMessage}</span>
                 </div>
-                <textarea
-                  id="productDescription"
-                  rows={3}
-                  maxLength={500}
-                  required
-                  placeholder="Tell us what your product does. Keep it punchy, clear, and direct."
-                  value={productDescription}
-                  onChange={(e) => {
-                    setProductDescription(e.target.value);
-                    if (formErrors.productDescription) {
-                      setFormErrors((prev) => {
-                        const copy = { ...prev };
-                        delete copy.productDescription;
-                        return copy;
-                      });
-                    }
-                  }}
-                  className={`w-full px-4 py-2.5 bg-zinc-950 border ${formErrors.productDescription ? 'border-rose-500/60' : 'border-zinc-800'} rounded-xl text-sm focus:outline-none focus:border-lime-500 text-zinc-100 placeholder-zinc-650 transition-colors resize-none`}
-                />
-                {formErrors.productDescription && (
-                  <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {formErrors.productDescription}
-                  </p>
-                )}
-              </div>
-
-              {/* Pricing selector */}
-              <div className="space-y-3">
-                <label className="block text-sm font-bold text-zinc-300">
-                  Pricing Model
-                </label>
-                
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { id: 'free', label: 'Free' },
-                    { id: 'freemium', label: 'Freemium' },
-                    { id: 'paid', label: 'Paid Only' }
-                  ].map((item) => {
-                    const isSelected = pricing === item.id;
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => setPricing(item.id as any)}
-                        className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all gap-1 cursor-pointer ${
-                          isSelected 
-                            ? 'bg-zinc-850/50 border-lime-400 text-lime-400 font-extrabold shadow-[0_0_15px_rgba(163,230,53,0.1)]' 
-                            : 'bg-zinc-950 border-zinc-850 text-zinc-400 hover:border-zinc-700'
-                        }`}
-                      >
-                        <DollarSign className="h-4 w-4 stroke-[2]" />
-                        <span className="text-xs font-mono">{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* Section 3: Verified Screenshots (2-3) */}
-            <div className="space-y-6">
-              <div className="border-b border-zinc-800 pb-3 flex items-center justify-between">
-                <h2 className="text-xl font-bold flex items-center gap-2 text-zinc-200">
-                  <Upload className="h-5 w-5 text-lime-400" />
-                  <span>Product Screenshots</span>
-                </h2>
-                <span className="text-xs font-mono text-zinc-500">
-                  {`${screenshotPreviews.length}/3 uploaded (2 required)`}
-                </span>
+            {/* RIGHT COLUMN: PRODUCT SPECIFICATIONS & FORM (7 Cols) */}
+            <div className="lg:col-span-7 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 md:p-8 space-y-8 shadow-2xl backdrop-blur-sm">
+              
+              {/* World Cup Strategy Selector */}
+              <div className="space-y-4 p-5 bg-gradient-to-br from-amber-500/10 via-zinc-950 to-amber-500/5 border border-amber-500/30 rounded-2xl">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🏆</span>
+                  <label className="text-sm font-extrabold text-white">
+                    World Cup Entry Strategy
+                  </label>
+                  <span className="text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2.5 py-0.5 rounded-full font-bold ml-auto">
+                    48h Race Choice
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  Choose how your product enters the weekly Meme World Cup qualification race:
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPreferredCycle('current')}
+                    className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      preferredCycle === 'current'
+                        ? 'bg-amber-500/20 border-amber-400 text-white shadow-[0_0_15px_rgba(245,158,11,0.2)] font-bold'
+                        : 'bg-zinc-950/80 border-zinc-800 text-zinc-400 hover:border-zinc-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 font-bold text-xs text-amber-400">
+                      <span>🚀</span>
+                      <span>I&apos;m Confident! (This Week)</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400 mt-1.5 leading-snug">
+                      Enter this week&apos;s race immediately. Great if you have an audience ready to vote!
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPreferredCycle('next')}
+                    className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      preferredCycle === 'next'
+                        ? 'bg-blue-500/20 border-blue-400 text-white shadow-[0_0_15px_rgba(59,130,246,0.2)] font-bold'
+                        : 'bg-zinc-950/80 border-zinc-800 text-zinc-400 hover:border-zinc-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 font-bold text-xs text-blue-400">
+                      <span>🛡️</span>
+                      <span>Safe Play (Next Week)</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400 mt-1.5 leading-snug">
+                      Get a full 7 days on the main feed to accumulate reactions naturally for next week.
+                    </p>
+                  </button>
+                </div>
               </div>
 
-              {/* Previews & Drop Area */}
-              <div className="space-y-4" id="err-screenshots">
-                {screenshotPreviews.length < 3 && (
-                  <div 
-                    onClick={() => screenshotInputRef.current?.click()}
-                    className={`border-2 border-dashed ${formErrors.screenshots ? 'border-rose-500/50 bg-rose-950/5' : 'border-zinc-800 hover:border-zinc-700 bg-zinc-950/20'} rounded-2xl p-6 text-center cursor-pointer transition-all hover:bg-zinc-950/40`}
-                  >
-                    <input
-                      ref={screenshotInputRef}
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleScreenshotChange}
-                      className="hidden"
-                    />
-                    <Upload className="h-6 w-6 text-zinc-500 mx-auto mb-2 stroke-[1.5]" />
-                    <p className="text-sm font-semibold text-zinc-300">
-                      Upload product screenshots
-                    </p>
-                    <p className="text-xs text-zinc-500 mt-1 font-mono">
-                      Please select 2 or 3 screenshots showing the real app.
-                    </p>
-                  </div>
-                )}
+              {/* Product Specifications Section */}
+              <div className="space-y-6">
+                <div className="border-b border-zinc-800 pb-3 flex items-center justify-between">
+                  <h2 className="text-lg font-extrabold flex items-center gap-2 text-zinc-100">
+                    <Tag className="h-5 w-5 text-lime-400" />
+                    <span>Product Details</span>
+                  </h2>
+                  <span className="text-[11px] font-mono text-zinc-500">Public Product Info</span>
+                </div>
 
-                {/* Previews grid */}
-                {screenshotPreviews.length > 0 && (
-                  <div className="grid grid-cols-3 gap-3">
-                    {screenshotPreviews.map((preview, index) => (
-                      <div key={index} className="group relative aspect-[16/10] bg-zinc-950 rounded-xl overflow-hidden border border-zinc-800 shadow">
+                {/* Product Logo Upload */}
+                <div className="space-y-2" id="err-productLogo">
+                  <label className="block text-xs font-mono uppercase tracking-wider text-zinc-300">
+                    Product Logo
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <div 
+                      onClick={() => logoInputRef.current?.click()}
+                      className={`flex-1 border-2 border-dashed ${formErrors.productLogo ? 'border-rose-500/50 bg-rose-950/5' : 'border-zinc-800 hover:border-lime-400/50 bg-zinc-950'} rounded-2xl p-4 text-center cursor-pointer transition-all hover:bg-zinc-900/40 group`}
+                    >
+                      <input
+                        ref={logoInputRef}
+                        type="file"
+                        id="logo-upload"
+                        accept="image/*"
+                        onChange={handleLogoChange}
+                        className="hidden"
+                      />
+                      <Upload className="h-5 w-5 text-zinc-500 group-hover:text-lime-400 mx-auto mb-1 stroke-[1.5] transition-colors" />
+                      <p className="text-xs font-semibold text-zinc-300">
+                        {productLogoFile ? productLogoFile.name : 'Upload logo image (1:1 square recommended)'}
+                      </p>
+                    </div>
+                    {productLogoPreview && (
+                      <div className="relative h-16 w-16 rounded-2xl overflow-hidden border border-zinc-800 shrink-0 bg-zinc-950 shadow-md">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={preview}
-                          alt={`Screenshot ${index + 1}`}
-                          className="w-full h-full object-cover"
+                          src={productLogoPreview}
+                          alt="Logo preview"
+                          className="h-full w-full object-cover"
                         />
+                      </div>
+                    )}
+                  </div>
+                  {formErrors.productLogo && (
+                    <p className="text-xs text-rose-400 mt-1 flex items-center gap-1 font-mono">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      {formErrors.productLogo}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Product Name */}
+                  <div className="space-y-1.5" id="err-productName">
+                    <label htmlFor="productName" className="block text-xs font-mono uppercase tracking-wider text-zinc-300">
+                      Product Name
+                    </label>
+                    <input
+                      id="productName"
+                      type="text"
+                      required
+                      placeholder="e.g. MemeLaunch"
+                      value={productName}
+                      onChange={(e) => setProductName(e.target.value)}
+                      className={`w-full px-4 py-2.5 bg-zinc-950 border ${formErrors.productName ? 'border-rose-500/60' : 'border-zinc-800/80'} rounded-xl text-sm focus:outline-none focus:border-lime-400 text-zinc-100 placeholder-zinc-600 transition-colors`}
+                    />
+                    {formErrors.productName && (
+                      <p className="text-xs text-rose-400 mt-1 flex items-center gap-1 font-mono">
+                        <AlertCircle className="h-3.5 w-3.5" />
+                        {formErrors.productName}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Category Dropdown */}
+                  <div className="space-y-1.5" id="err-category">
+                    <label htmlFor="category" className="block text-xs font-mono uppercase tracking-wider text-zinc-300">
+                      Category
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="category"
+                        required
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        className={`w-full px-4 py-2.5 bg-zinc-950 border ${formErrors.category ? 'border-rose-500/60' : 'border-zinc-800/80'} rounded-xl text-sm focus:outline-none focus:border-lime-400 text-zinc-100 transition-colors cursor-pointer appearance-none`}
+                      >
+                        <option value="" disabled className="text-zinc-600">Select a category</option>
+                        {CATEGORIES.map((cat) => (
+                          <option key={cat} value={cat} className="bg-zinc-950 text-zinc-100">
+                            {cat}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-500">
+                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                          <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                        </svg>
+                      </div>
+                    </div>
+                    {formErrors.category && (
+                      <p className="text-xs text-rose-400 mt-1 flex items-center gap-1 font-mono">
+                        <AlertCircle className="h-3.5 w-3.5" />
+                        {formErrors.category}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Product URL */}
+                <div className="space-y-1.5" id="err-productUrl">
+                  <label htmlFor="productUrl" className="block text-xs font-mono uppercase tracking-wider text-zinc-300">
+                    Product Link (URL)
+                  </label>
+                  <div className="relative">
+                    <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                    <input
+                      id="productUrl"
+                      type="url"
+                      required
+                      placeholder="https://yourproduct.com"
+                      value={productUrl}
+                      onChange={(e) => setProductUrl(e.target.value)}
+                      className={`w-full pl-10 pr-4 py-2.5 bg-zinc-950 border ${formErrors.productUrl ? 'border-rose-500/60' : 'border-zinc-800/80'} rounded-xl text-sm focus:outline-none focus:border-lime-400 text-zinc-100 placeholder-zinc-600 transition-colors`}
+                    />
+                  </div>
+                  {formErrors.productUrl && (
+                    <p className="text-xs text-rose-400 mt-1 flex items-center gap-1 font-mono">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      {formErrors.productUrl}
+                    </p>
+                  )}
+                </div>
+
+                {/* Product Description */}
+                <div className="space-y-1.5" id="err-productDescription">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="productDescription" className="block text-xs font-mono uppercase tracking-wider text-zinc-300">
+                      Product Description
+                    </label>
+                    <span className={`text-[11px] font-mono ${productDescription.length > 500 ? 'text-rose-400' : 'text-zinc-500'}`}>
+                      {productDescription.length}/500 chars
+                    </span>
+                  </div>
+                  <textarea
+                    id="productDescription"
+                    rows={3}
+                    maxLength={500}
+                    required
+                    placeholder="Tell us what your product does. Keep it punchy, clear, and direct."
+                    value={productDescription}
+                    onChange={(e) => {
+                      setProductDescription(e.target.value);
+                      if (formErrors.productDescription) {
+                        setFormErrors((prev) => {
+                          const copy = { ...prev };
+                          delete copy.productDescription;
+                          return copy;
+                        });
+                      }
+                    }}
+                    className={`w-full px-4 py-2.5 bg-zinc-950 border ${formErrors.productDescription ? 'border-rose-500/60' : 'border-zinc-800/80'} rounded-xl text-sm focus:outline-none focus:border-lime-400 text-zinc-100 placeholder-zinc-600 transition-colors resize-none`}
+                  />
+                  {formErrors.productDescription && (
+                    <p className="text-xs text-rose-400 mt-1 flex items-center gap-1 font-mono">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      {formErrors.productDescription}
+                    </p>
+                  )}
+                </div>
+
+                {/* Pricing Selector */}
+                <div className="space-y-2">
+                  <label className="block text-xs font-mono uppercase tracking-wider text-zinc-300">
+                    Pricing Model
+                  </label>
+                  
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { id: 'free', label: 'Free' },
+                      { id: 'freemium', label: 'Freemium' },
+                      { id: 'paid', label: 'Paid Only' }
+                    ].map((item) => {
+                      const isSelected = pricing === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => setPricing(item.id as any)}
+                          className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all gap-1 cursor-pointer ${
+                            isSelected 
+                              ? 'bg-lime-400/10 border-lime-400 text-lime-400 font-bold shadow-[0_0_15px_rgba(163,230,53,0.15)]' 
+                              : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700'
+                          }`}
+                        >
+                          <DollarSign className="h-4 w-4 stroke-[2]" />
+                          <span className="text-xs font-mono">{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Product Screenshots Section (2-3) */}
+              <div className="space-y-4 pt-4 border-t border-zinc-800/80">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-extrabold flex items-center gap-2 text-zinc-100">
+                    <Upload className="h-5 w-5 text-lime-400" />
+                    <span>Product Screenshots</span>
+                  </h2>
+                  <span className="text-xs font-mono text-zinc-500">
+                    {`${screenshotPreviews.length}/3 uploaded (2 required)`}
+                  </span>
+                </div>
+
+                {/* Dropzone & Previews */}
+                <div className="space-y-4" id="err-screenshots">
+                  {screenshotPreviews.length < 3 && (
+                    <div 
+                      onClick={() => screenshotInputRef.current?.click()}
+                      className={`border-2 border-dashed ${formErrors.screenshots ? 'border-rose-500/50 bg-rose-950/5' : 'border-zinc-800 hover:border-lime-400/50 bg-zinc-950'} rounded-2xl p-6 text-center cursor-pointer transition-all hover:bg-zinc-900/40 group`}
+                    >
+                      <input
+                        ref={screenshotInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleScreenshotChange}
+                        className="hidden"
+                      />
+                      <Upload className="h-6 w-6 text-zinc-500 group-hover:text-lime-400 mx-auto mb-2 stroke-[1.5] transition-colors" />
+                      <p className="text-sm font-semibold text-zinc-300">
+                        Upload product screenshots
+                      </p>
+                      <p className="text-xs text-zinc-500 mt-1 font-mono">
+                        Upload 2 or 3 app screenshots to showcase your product features.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Previews grid */}
+                  {screenshotPreviews.length > 0 && (
+                    <div className="grid grid-cols-3 gap-3">
+                      {screenshotPreviews.map((preview, index) => (
+                        <div key={index} className="group relative aspect-[16/10] bg-zinc-950 rounded-xl overflow-hidden border border-zinc-800 shadow">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={preview}
+                            alt={`Screenshot ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
                           <button
                             type="button"
                             onClick={() => removeScreenshot(index)}
@@ -1151,46 +1223,51 @@ function LaunchForm() {
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
-                        <div className="absolute bottom-1 left-2 bg-zinc-950/80 px-1.5 py-0.5 rounded font-mono text-[9px] text-zinc-400 border border-zinc-800">
-                          #{index + 1}
+                          <div className="absolute bottom-1 left-2 bg-zinc-950/80 px-1.5 py-0.5 rounded font-mono text-[9px] text-zinc-400 border border-zinc-800">
+                            #{index + 1}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
 
-                {formErrors.screenshots && (
-                  <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {formErrors.screenshots}
-                  </p>
-                )}
+                  {formErrors.screenshots && (
+                    <p className="text-xs text-rose-400 mt-1 flex items-center gap-1 font-mono">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      {formErrors.screenshots}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Launch CTA Button */}
-            <div className="pt-4 border-t border-zinc-800 flex items-center justify-end">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-6 py-3 font-extrabold uppercase text-xs tracking-wider rounded-xl transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-lime-400 hover:bg-lime-300 text-zinc-950 shadow-[0_0_20px_rgba(163,230,53,0.15)] hover:shadow-[0_0_35px_rgba(163,230,53,0.3)]"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin stroke-[2.5]" />
-                    <span>Launching...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Publish Launch</span>
-                    <ArrowRight className="h-4 w-4 stroke-[2.5]" />
-                  </>
-                )}
-              </button>
-            </div>
+              {/* Launch CTA Action Bar */}
+              <div className="pt-6 border-t border-zinc-800/80 flex items-center justify-between gap-4">
+                <div className="text-xs font-mono text-zinc-500">
+                  <span>Entry Fee: </span>
+                  <span className="text-lime-400 font-bold">-15 Points</span>
+                </div>
 
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-6 py-3 font-extrabold uppercase text-xs tracking-wider rounded-xl transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-lime-400 hover:bg-lime-300 text-zinc-950 shadow-[0_0_25px_rgba(163,230,53,0.2)] hover:shadow-[0_0_40px_rgba(163,230,53,0.35)]"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin stroke-[2.5]" />
+                      <span>Publishing Launch...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Launch Product & Enter Race</span>
+                      <ArrowRight className="h-4 w-4 stroke-[2.5]" />
+                    </>
+                  )}
+                </button>
+              </div>
+
+            </div>
           </div>
-        </div>
       </form>
       )}
 
