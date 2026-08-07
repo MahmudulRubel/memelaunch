@@ -760,7 +760,7 @@ function LaunchForm() {
               onUploadCustomImage={(file) => {
                 setMemeFile(file);
                 setImageSource('upload');
-                setMemeFilePreview(URL.createObjectURL(file));
+                setMemePreview(URL.createObjectURL(file));
               }}
             />
           </div>

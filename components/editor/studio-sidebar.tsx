@@ -15,6 +15,8 @@ interface Template {
   id: string;
   name: string;
   thumbnail_url: string;
+  active_week?: number;
+  usage_count?: number;
 }
 
 interface Props {
