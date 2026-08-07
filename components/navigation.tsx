@@ -7,7 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
 import { getUserPoints } from '@/lib/points';
-import { Menu, X, LogOut, User, Plus, Compass, Trophy, Settings, Zap, BarChart3, Sparkles } from 'lucide-react';
+import { Menu, X, LogOut, User, Plus, Compass, Trophy, LayoutGrid, Settings, Zap, BarChart3, Sparkles } from 'lucide-react';
 
 const EarnPointsModal = dynamic(
   () => import('@/components/points/earn-points-modal').then((m) => m.EarnPointsModal),
@@ -45,8 +45,7 @@ export function Navigation() {
 
   const navLinks = [
     { name: 'Feed', href: '/', icon: Compass },
-    { name: 'World Cup 🏆', href: '/world-cup', icon: Trophy },
-    { name: 'Templates', href: '/templates', icon: Trophy },
+    { name: 'Templates', href: '/templates', icon: LayoutGrid },
     { name: 'Rules', href: '/rules', icon: Settings },
   ];
 
@@ -245,17 +244,6 @@ export function Navigation() {
         >
           <Compass className="h-5 w-5" />
           <span>Feed</span>
-        </Link>
-
-        <Link 
-          href="/world-cup" 
-          onClick={() => setMobileMenuOpen(false)}
-          className={`flex flex-col items-center gap-0.5 text-[10px] font-black uppercase transition-colors ${
-            pathname === '/world-cup' ? 'text-[#ffe600]' : 'text-zinc-400 hover:text-zinc-100'
-          }`}
-        >
-          <Trophy className="h-5 w-5 text-amber-400" />
-          <span>Cup</span>
         </Link>
 
         {/* Elevated Pitch CTA Button */}
