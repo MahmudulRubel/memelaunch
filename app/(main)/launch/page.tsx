@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
+import { MemeStudio, MemeStudioRef } from '@/components/editor/meme-studio';
 import { insforge, resolveStorageUrl } from '@/lib/insforge';
 import { compressImage } from '@/lib/image';
 import { getUserPoints, deductPointsForLaunch } from '@/lib/points';
@@ -99,6 +100,7 @@ function LaunchForm() {
   const [widthBelow, setWidthBelow] = useState(90);
   const [preferredCycle, setPreferredCycle] = useState<'current' | 'next'>('current');
   const previewContainerRef = useRef<HTMLDivElement>(null);
+  const memeStudioRef = useRef<MemeStudioRef>(null);
 
   // Drag handler for caption positioning
   const handleStartDrag = (type: 'above' | 'below', e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
@@ -494,9 +496,23 @@ function LaunchForm() {
         logoUrl = logoUploadData.url;
       }
 
-      // Step A: Compress and Upload Meme Image
+      // Step A: Export & Upload Canvas Meme Image from MemeStudio
       let memeImageUrl = '';
-      if (imageSource === 'upload' && memeFile) {
+      const studioCanvasBlob = memeStudioRef.current ? await memeStudioRef.current.getCanvasBlob() : null;
+
+      if (studioCanvasBlob) {
+        setStatusMessage('Exporting studio canvas meme...');
+        const studioMemeFile = new File([studioCanvasBlob], `meme_${Date.now()}.png`, { type: 'image/png' });
+        const memePath = `${user.id}/${Date.now()}_studio_meme.png`;
+        const { data: uploadData, error: uploadError } = await insforge.storage
+          .from('memes')
+          .upload(memePath, studioMemeFile);
+
+        if (uploadError || !uploadData) {
+          throw new Error(uploadError?.message || 'Meme canvas upload failed.');
+        }
+        memeImageUrl = uploadData.url;
+      } else if (imageSource === 'upload' && memeFile) {
         setStatusMessage('Compressing meme image...');
         const compressedMemeBlob = await compressImage(memeFile, 1200, 0.8);
         const compressedMemeFile = new File([compressedMemeBlob], memeFile.name, {
@@ -723,134 +739,21 @@ function LaunchForm() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* LEFT COLUMN: LIVE CARD PREVIEW (5 Cols) */}
+          {/* LEFT COLUMN: LIVE STUDIO EDITOR (5 Cols) */}
           <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
             <div className="space-y-2">
               <span className="text-xs font-mono text-zinc-500 uppercase tracking-widest block">
-                Live Meme Preview
+                Professional Meme Studio
               </span>
               
-              {/* Meme Card Mockup */}
-              <div className="relative flex flex-col bg-zinc-900/60 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl">
-                {/* Aspect ratio block for image preview */}
-                <div 
-                  ref={previewContainerRef}
-                  className="relative aspect-square w-full bg-zinc-950 flex items-center justify-center overflow-hidden border-b border-zinc-800/60"
-                >
-                  <div className="absolute inset-0 bg-radial-gradient from-lime-400/5 to-transparent opacity-40 pointer-events-none" />
-                  
-                  {memePreviewSource ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={resolveStorageUrl(memePreviewSource)}
-                      alt="Meme preview"
-                      className="w-full h-full object-cover select-none pointer-events-none"
-                    />
-                  ) : (
-                    <div className="p-8 text-center space-y-2 text-zinc-600 pointer-events-none">
-                      <ImageIcon className="h-12 w-12 mx-auto stroke-[1.2]" />
-                      <p className="font-mono text-xs">Meme preview will appear here</p>
-                    </div>
-                  )}
-
-                  {/* Watermark */}
-                  <div className="absolute top-2 right-3 text-[9px] font-mono text-zinc-400/30 tracking-widest uppercase pointer-events-none">
-                    MEMELAUNCH
-                  </div>
-
-                  {/* Dynamic Caption Overlays */}
-                  {(captionPosition === 'above' || captionPosition === 'both') && (
-                    <div 
-                      onMouseDown={(e) => handleStartDrag('above', e)}
-                      onTouchStart={(e) => handleStartDrag('above', e)}
-                      className="absolute group/caption select-none cursor-grab active:cursor-grabbing z-20 border border-transparent hover:border-lime-400/50 hover:bg-lime-400/5 rounded p-1.5 transition-all text-center"
-                      style={{
-                        left: `${leftAbove}%`,
-                        top: `${topAbove}%`,
-                        transform: 'translate(-50%, -50%)',
-                        width: `${widthAbove}%`,
-                        maxWidth: '100%',
-                        touchAction: 'none',
-                      }}
-                    >
-                      <p 
-                        className="font-impact uppercase tracking-wider text-center break-words drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] leading-snug select-none pointer-events-none"
-                        style={{
-                          color: textColor,
-                          fontSize: `${textSize}px`,
-                        }}
-                      >
-                        {textAbove || 'YOUR ABOVE CAPTION HERE'}
-                      </p>
-                      
-                      {/* Left Resize Handle */}
-                      <div 
-                        onMouseDown={(e) => handleStartResize('above', e)}
-                        onTouchStart={(e) => handleStartResize('above', e)}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 bg-lime-400 border-2 border-zinc-950 rounded-full cursor-ew-resize opacity-0 group-hover/caption:opacity-100 transition-opacity z-30 shadow-md hover:scale-125"
-                        title="Drag to adjust width"
-                      />
-                      
-                      {/* Right Resize Handle */}
-                      <div 
-                        onMouseDown={(e) => handleStartResize('above', e)}
-                        onTouchStart={(e) => handleStartResize('above', e)}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3 h-3 bg-lime-400 border-2 border-zinc-950 rounded-full cursor-ew-resize opacity-0 group-hover/caption:opacity-100 transition-opacity z-30 shadow-md hover:scale-125"
-                        title="Drag to adjust width"
-                      />
-
-                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-zinc-950/90 border border-zinc-800 text-[9px] text-lime-400 px-1.5 py-0.5 rounded font-mono opacity-0 group-hover/caption:opacity-100 transition-opacity whitespace-nowrap pointer-events-none uppercase">
-                        Drag to move / Pull edges to resize
-                      </div>
-                    </div>
-                  )}
-
-                  {(captionPosition === 'below' || captionPosition === 'both') && (
-                    <div 
-                      onMouseDown={(e) => handleStartDrag('below', e)}
-                      onTouchStart={(e) => handleStartDrag('below', e)}
-                      className="absolute group/caption select-none cursor-grab active:cursor-grabbing z-20 border border-transparent hover:border-lime-400/50 hover:bg-lime-400/5 rounded p-1.5 transition-all text-center"
-                      style={{
-                        left: `${leftBelow}%`,
-                        top: `${topBelow}%`,
-                        transform: 'translate(-50%, -50%)',
-                        width: `${widthBelow}%`,
-                        maxWidth: '100%',
-                        touchAction: 'none',
-                      }}
-                    >
-                      <p 
-                        className="font-impact uppercase tracking-wider text-center break-words drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] leading-snug select-none pointer-events-none"
-                        style={{
-                          color: textColor,
-                          fontSize: `${textSize}px`,
-                        }}
-                      >
-                        {textBelow || 'YOUR BELOW CAPTION HERE'}
-                      </p>
-
-                      {/* Left Resize Handle */}
-                      <div 
-                        onMouseDown={(e) => handleStartResize('below', e)}
-                        onTouchStart={(e) => handleStartResize('below', e)}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 bg-lime-400 border-2 border-zinc-950 rounded-full cursor-ew-resize opacity-0 group-hover/caption:opacity-100 transition-opacity z-30 shadow-md hover:scale-125"
-                        title="Drag to adjust width"
-                      />
-                      
-                      {/* Right Resize Handle */}
-                      <div 
-                        onMouseDown={(e) => handleStartResize('below', e)}
-                        onTouchStart={(e) => handleStartResize('below', e)}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3 h-3 bg-lime-400 border-2 border-zinc-950 rounded-full cursor-ew-resize opacity-0 group-hover/caption:opacity-100 transition-opacity z-30 shadow-md hover:scale-125"
-                        title="Drag to adjust width"
-                      />
-
-                      <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 bg-zinc-950/90 border border-zinc-800 text-[9px] text-lime-400 px-1.5 py-0.5 rounded font-mono opacity-0 group-hover/caption:opacity-100 transition-opacity whitespace-nowrap pointer-events-none uppercase">
-                        Drag to move / Pull edges to resize
-                      </div>
-                    </div>
-                  )}
-                </div>
+              <MemeStudio
+                ref={memeStudioRef}
+                imageUrl={memePreviewSource ? resolveStorageUrl(memePreviewSource) : null}
+                productLogoUrl={productLogoPreview}
+                textAbove={textAbove}
+                textBelow={textBelow}
+              />
+            </div>
 
                 {/* Details Bar Mockup */}
                 <div className="p-4 bg-zinc-900/40 space-y-4">
