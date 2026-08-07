@@ -31,7 +31,7 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
   const containerRef = useRef<HTMLDivElement>(null);
   const [bgImage, setBgImage] = useState<HTMLImageElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [hoverCursor, setHoverCursor] = useState<'grab' | 'nwse-resize' | 'nesw-resize'>('grab');
+  const [hoverCursor, setHoverCursor] = useState<'move' | 'nwse-resize'>('move');
 
   // Keep stateRef fresh for non-passive event listeners
   const stateRef = useRef(state);
@@ -207,8 +207,8 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
 
       // Bounding Box Guides for Selected Layer
       if (drawGuides && currentState.selectedLayerId === layer.id) {
-        const boxPadding = 16;
-        const boxW = Math.max(textWidth + boxPadding * 2, 120);
+        const boxPadding = 18;
+        const boxW = Math.max(textWidth + boxPadding * 2, 140);
         const boxH = textHeight + boxPadding * 2;
         const boxX = posX - boxW / 2;
         const boxY = posY - boxH / 2;
@@ -216,28 +216,32 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
         ctx.restore();
         ctx.save();
 
-        // Dashed Selection Box
+        // Dashed Selection Box Outline
         ctx.strokeStyle = '#a3e635';
         ctx.lineWidth = 3;
         ctx.setLineDash([8, 6]);
         ctx.strokeRect(boxX, boxY, boxW, boxH);
 
-        // Corner Resize Handles (Bigger 16px Squares for Easy Dragging)
+        // Edge Drag Handles (Corners + Edge Mids)
         ctx.fillStyle = '#a3e635';
         ctx.strokeStyle = '#09090b';
         ctx.lineWidth = 2;
 
         const handleSize = 16;
-        const corners = [
-          { x: boxX, y: boxY },
-          { x: boxX + boxW, y: boxY },
-          { x: boxX, y: boxY + boxH },
-          { x: boxX + boxW, y: boxY + boxH },
+        const handles = [
+          { x: boxX, y: boxY }, // Top-Left
+          { x: boxX + boxW, y: boxY }, // Top-Right
+          { x: boxX, y: boxY + boxH }, // Bottom-Left
+          { x: boxX + boxW, y: boxY + boxH }, // Bottom-Right
+          { x: boxX + boxW / 2, y: boxY }, // Top-Mid
+          { x: boxX + boxW / 2, y: boxY + boxH }, // Bottom-Mid
+          { x: boxX, y: boxY + boxH / 2 }, // Left-Mid
+          { x: boxX + boxW, y: boxY + boxH / 2 }, // Right-Mid
         ];
 
-        corners.forEach((c) => {
-          ctx.fillRect(c.x - handleSize / 2, c.y - handleSize / 2, handleSize, handleSize);
-          ctx.strokeRect(c.x - handleSize / 2, c.y - handleSize / 2, handleSize, handleSize);
+        handles.forEach((h) => {
+          ctx.fillRect(h.x - handleSize / 2, h.y - handleSize / 2, handleSize, handleSize);
+          ctx.strokeRect(h.x - handleSize / 2, h.y - handleSize / 2, handleSize, handleSize);
         });
       }
 
@@ -253,32 +257,32 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
     }
   }, [state, bgImage]);
 
-  // Helper to check if canvas point (cX, cY) is near corner handles of selected layer
-  const isNearCornerHandle = (cX: number, cY: number, layer: StudioLayer, ctx: CanvasRenderingContext2D) => {
+  // Helper: Detect if point (cX, cY) is near any edge, corner handle, or outer boundary of selected layer
+  const isNearEdgeOrHandle = (cX: number, cY: number, layer: StudioLayer, ctx: CanvasRenderingContext2D) => {
     const width = 800;
-    const height = 800;
     const posX = (layer.x / 100) * width;
-    const posY = (layer.y / 100) * height;
+    const posY = (layer.y / 100) * width;
 
     const fontSize = (layer.fontSize || 36) * 1.5;
     const textToDraw = layer.uppercase ? layer.text?.toUpperCase() || '' : layer.text || '';
     ctx.font = `${layer.fontWeight || '900'} ${fontSize}px '${layer.fontFamily || 'Impact'}', sans-serif`;
     const metrics = ctx.measureText(textToDraw);
 
-    const boxPadding = 16;
-    const boxW = Math.max(metrics.width + boxPadding * 2, 120);
+    const boxPadding = 18;
+    const boxW = Math.max(metrics.width + boxPadding * 2, 140);
     const boxH = fontSize + boxPadding * 2;
     const boxX = posX - boxW / 2;
     const boxY = posY - boxH / 2;
 
-    const corners = [
-      { x: boxX, y: boxY },
-      { x: boxX + boxW, y: boxY },
-      { x: boxX, y: boxY + boxH },
-      { x: boxX + boxW, y: boxY + boxH },
-    ];
+    // Check distance to bounding box center vs edges
+    const margin = 24;
+    const isInsideOuterBox = cX >= boxX - margin && cX <= boxX + boxW + margin && cY >= boxY - margin && cY <= boxY + boxH + margin;
+    const innerW = boxW * 0.35;
+    const innerH = boxH * 0.35;
+    const isInsideCenterCore = cX >= posX - innerW && cX <= posX + innerW && cY >= posY - innerH && cY <= posY + innerH;
 
-    return corners.some((c) => Math.hypot(cX - c.x, cY - c.y) <= 24);
+    // Edge/Handle resizing triggers if touching edges/outer zone of text box
+    return isInsideOuterBox && !isInsideCenterCore;
   };
 
   // Mouse Hover Cursor Update
@@ -295,14 +299,14 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
     const cY = ((e.clientY - rect.top) / rect.height) * 800;
 
     const selectedLayer = state.layers.find((l) => l.id === state.selectedLayerId);
-    if (selectedLayer && selectedLayer.type === 'text' && isNearCornerHandle(cX, cY, selectedLayer, ctx)) {
+    if (selectedLayer && selectedLayer.type === 'text' && isNearEdgeOrHandle(cX, cY, selectedLayer, ctx)) {
       setHoverCursor('nwse-resize');
     } else {
-      setHoverCursor('grab');
+      setHoverCursor('move');
     }
   };
 
-  // Click / Touch Start Handler (Supports both Moving & Corner Handle Resizing)
+  // Click / Touch Start Handler (Supports Moving from Center & Resizing from Any Edge/Corner)
   const startDrag = (clientX: number, clientY: number) => {
     const container = containerRef.current;
     const canvas = canvasRef.current;
@@ -317,11 +321,11 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
     const clickXPercent = (cX / 800) * 100;
     const clickYPercent = (cY / 800) * 100;
 
-    // Check if clicking near current selected layer's corner handles
+    // Check if clicking near current selected layer's edges or handles
     const currentSelected = state.layers.find((l) => l.id === state.selectedLayerId);
     let dragMode: 'move' | 'resize' = 'move';
 
-    if (currentSelected && currentSelected.type === 'text' && isNearCornerHandle(cX, cY, currentSelected, ctx)) {
+    if (currentSelected && currentSelected.type === 'text' && isNearEdgeOrHandle(cX, cY, currentSelected, ctx)) {
       dragMode = 'resize';
     }
 
@@ -354,7 +358,7 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
       const moveCY = ((moveClientY - rect.top) / rect.height) * 800;
 
       if (dragMode === 'resize') {
-        // Corner handle drag resize calculation
+        // Edge / Corner drag resize calculation (drag away = bigger, drag in = smaller)
         const currentDist = Math.hypot(moveCX - startPosX, moveCY - startPosY);
         const ratio = currentDist / Math.max(15, startDist);
         const newFontSize = Math.max(12, Math.min(120, Math.round(startFontSize * ratio)));
@@ -364,7 +368,7 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
           patch: { fontSize: newFontSize },
         });
       } else {
-        // Position move calculation
+        // Center drag position move calculation
         const xPercent = Math.max(5, Math.min(95, (moveCX / 800) * 100));
         const yPercent = Math.max(5, Math.min(95, (moveCY / 800) * 100));
         dispatch({
@@ -419,9 +423,9 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
 
       {/* Bottom Hint Tag */}
       <div className="absolute bottom-2 left-2 px-2.5 py-1 bg-zinc-950/80 backdrop-blur border border-zinc-800 rounded-lg text-[10px] font-mono text-zinc-400 pointer-events-none z-30 flex items-center gap-1.5">
-        <span>🎯 Drag text center to position</span>
+        <span>🎯 Drag center to move</span>
         <span>•</span>
-        <span className="text-lime-400 font-bold">📐 Pull corner handles or scroll wheel to resize</span>
+        <span className="text-lime-400 font-bold">📐 Drag any edge/corner to resize</span>
       </div>
     </div>
   );
