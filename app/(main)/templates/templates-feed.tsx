@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   Trophy,
+  LayoutGrid,
   Sparkles,
   Flame,
   Plus,
@@ -97,7 +98,7 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-zinc-800/80 pb-6">
         <div>
           <h1 className="font-impact text-3xl md:text-5xl uppercase tracking-tight text-zinc-50 flex items-center gap-3">
-            <Trophy className="h-8 w-8 md:h-12 md:w-12 text-lime-400 stroke-[1.5]" />
+            <LayoutGrid className="h-8 w-8 md:h-12 md:w-12 text-lime-400 stroke-[1.5]" />
             <span>Meme <span className="text-lime-400">Templates</span></span>
           </h1>
           <p className="text-zinc-400 text-sm mt-1 max-w-xl">

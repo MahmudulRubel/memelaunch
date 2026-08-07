@@ -16,7 +16,7 @@ import {
   Plus,
   Rocket
 } from 'lucide-react';
-import { getCaptionText } from '@/lib/meme';
+import { parseCaption, getCaptionText } from '@/lib/meme';
 import { HowItWorksModal } from '@/components/how-it-works-modal';
 
 interface HomeFeedProps {
@@ -256,38 +256,17 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
             {/* Action Buttons Row */}
             <div className="flex flex-wrap items-center gap-3 w-full max-w-md mt-2">
               <Link
-                href="/world-cup"
-                className="relative flex-1 group overflow-hidden bg-gradient-to-r from-amber-500/25 via-zinc-950 to-amber-500/15 border-2 border-amber-400 p-3.5 rounded-2xl flex items-center justify-between shadow-brutal hover:shadow-brutal-lg hover:border-amber-300 hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200"
+                href="/launch"
+                className="px-6 py-3.5 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 font-black text-xs uppercase tracking-wider rounded-2xl border-2 border-black shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                {/* Shimmer sweep glow on hover */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-400/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
-
-                <div className="flex items-center gap-3.5 text-left relative z-10">
-                  <div className="relative flex items-center justify-center w-11 h-11 rounded-xl bg-amber-500/20 border-2 border-amber-400/60 shadow-brutal-sm group-hover:scale-105 transition-transform shrink-0">
-                    <span className="text-2xl animate-bounce">🏆</span>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-black text-amber-400 uppercase tracking-wider">World Cup #32 Live</span>
-                      <span className="relative flex h-2.5 w-2.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400" />
-                      </span>
-                    </div>
-                    <p className="text-xs text-zinc-200 font-bold tracking-tight">16 Products battling in Knockout Bracket</p>
-                  </div>
-                </div>
-
-                <div className="relative z-10 flex items-center gap-1 bg-[#ffe600] text-zinc-950 font-black text-xs uppercase px-3 py-2 rounded-xl border-2 border-black shadow-brutal-sm group-hover:bg-yellow-300 group-hover:scale-105 active:scale-95 transition-all shrink-0 ml-2">
-                  <span>Vote</span>
-                  <span className="text-sm font-extrabold group-hover:translate-x-1 transition-transform">➔</span>
-                </div>
+                <Rocket className="h-4 w-4 stroke-[2.5]" />
+                <span>Pitch a Meme Now</span>
               </Link>
 
               <button
                 type="button"
                 onClick={() => setIsHowItWorksOpen(true)}
-                className="w-full sm:w-auto px-4 py-3 bg-zinc-900 border-2 border-black hover:bg-[#ffe600] hover:text-zinc-950 text-zinc-200 font-black text-xs uppercase tracking-wider rounded-2xl shadow-brutal-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="px-5 py-3.5 bg-zinc-900 border-2 border-black hover:bg-zinc-800 text-zinc-200 font-black text-xs uppercase tracking-wider rounded-2xl shadow-brutal-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>How It Works</span>
                 <span className="text-base">ℹ️</span>
@@ -320,7 +299,69 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   )}
-                  <div className="absolute top-2 right-2 text-[9px] font-mono text-zinc-400 font-extrabold tracking-widest uppercase bg-zinc-950/80 px-2 py-0.5 rounded border border-black">
+
+                  {/* Dynamic Caption Overlay */}
+                  {(() => {
+                    const captionData = parseCaption(topFeaturedLaunch.caption);
+                    if (captionData.hideOverlay || topFeaturedLaunch.meme_image_url?.endsWith('.svg')) {
+                      return null;
+                    }
+                    const heroTextSize = Math.max(12, Math.min(captionData.size, 22));
+                    const isCustomAbove = typeof captionData.topAbove === 'number' && typeof captionData.leftAbove === 'number';
+                    const isCustomBelow = typeof captionData.topBelow === 'number' && typeof captionData.leftBelow === 'number';
+
+                    return (
+                      <>
+                        {(captionData.position === 'above' || captionData.position === 'both') && captionData.textAbove && (
+                          <div 
+                            className={isCustomAbove ? "absolute z-10 text-center pointer-events-none" : "absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950 via-zinc-950/60 to-transparent p-3 pb-8 flex flex-col justify-start z-10 pointer-events-none"}
+                            style={isCustomAbove ? {
+                              left: `${captionData.leftAbove}%`,
+                              top: `${captionData.topAbove}%`,
+                              transform: 'translate(-50%, -50%)',
+                              width: `${captionData.widthAbove ?? 90}%`,
+                              maxWidth: '100%',
+                            } : undefined}
+                          >
+                            <p 
+                              className="font-impact uppercase tracking-wider text-center line-clamp-2 leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]"
+                              style={{
+                                color: captionData.color,
+                                fontSize: `${heroTextSize}px`,
+                              }}
+                            >
+                              {captionData.textAbove}
+                            </p>
+                          </div>
+                        )}
+
+                        {(captionData.position === 'below' || captionData.position === 'both') && captionData.textBelow && (
+                          <div 
+                            className={isCustomBelow ? "absolute z-10 text-center pointer-events-none" : "absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent p-3 pt-8 flex flex-col justify-end z-10 pointer-events-none"}
+                            style={isCustomBelow ? {
+                              left: `${captionData.leftBelow}%`,
+                              top: `${captionData.topBelow}%`,
+                              transform: 'translate(-50%, -50%)',
+                              width: `${captionData.widthBelow ?? 90}%`,
+                              maxWidth: '100%',
+                            } : undefined}
+                          >
+                            <p 
+                              className="font-impact uppercase tracking-wider text-center line-clamp-2 leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]"
+                              style={{
+                                color: captionData.color,
+                                fontSize: `${heroTextSize}px`,
+                              }}
+                            >
+                              {captionData.textBelow}
+                            </p>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+
+                  <div className="absolute top-2 right-2 text-[9px] font-mono text-zinc-400 font-extrabold tracking-widest uppercase bg-zinc-950/80 px-2 py-0.5 rounded border border-black z-20">
                     MEMELAUNCH
                   </div>
                 </div>
@@ -408,17 +449,6 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
             <span>Fresh</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab('qualifiers')}
-            className={`flex items-center gap-2 px-3.5 py-2.5 min-h-[44px] rounded-lg text-xs font-black uppercase tracking-wider transition-all border-2 border-black cursor-pointer shrink-0 whitespace-nowrap ${
-              activeTab === 'qualifiers'
-                ? 'bg-amber-500 text-zinc-950 shadow-brutal-sm font-extrabold'
-                : 'bg-transparent text-amber-400 hover:text-amber-300 border-transparent'
-            }`}
-          >
-            <span>🏆</span>
-            <span>Top 16 Qualifiers</span>
-          </button>
         </div>
 
         {/* Search & Category Filter Controls */}

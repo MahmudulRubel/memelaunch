@@ -331,18 +331,6 @@ export default function AdminPage() {
         </button>
 
         <button
-          onClick={() => setSuiteTab('worldcup')}
-          className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
-            suiteTab === 'worldcup'
-              ? 'bg-amber-500 text-zinc-950 shadow-md font-extrabold'
-              : 'bg-zinc-900/60 border border-zinc-800/80 text-amber-400 hover:text-amber-300 hover:bg-zinc-850'
-          }`}
-        >
-          <span>🏆</span>
-          <span>World Cup Qualifiers</span>
-        </button>
-
-        <button
           onClick={() => setSuiteTab('users')}
           className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
             suiteTab === 'users'
