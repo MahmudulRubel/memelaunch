@@ -803,7 +803,6 @@ function LaunchForm() {
                   </div>
                 </div>
               </div>
-            </div>
 
             {/* Error display on submit failure */}
             {formErrors.submit && (
