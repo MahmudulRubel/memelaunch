@@ -18,6 +18,8 @@ const FALLBACK_URLS: Record<string, string> = {
   'exit12.jpg': 'https://i.imgflip.com/22bdq6.jpg',
 };
 
+const FALLBACK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect width="400" height="400" fill="#18181b"/><circle cx="200" cy="170" r="48" fill="#27272a"/><path d="M100 320 C100 240, 300 240, 300 320" fill="#27272a"/><text x="200" y="360" font-family="sans-serif" font-size="14" font-weight="bold" fill="#71717a" text-anchor="middle">Image Not Found</text></svg>`;
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ bucket: string; key: string[] }> }
@@ -45,7 +47,13 @@ export async function GET(
         });
       }
       console.error(`Proxy download error or timeout for ${bucket}/${objectKey}:`, error);
-      return new NextResponse('Not Found', { status: 404 });
+      return new NextResponse(FALLBACK_SVG, {
+        status: 200,
+        headers: {
+          'Content-Type': 'image/svg+xml',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        },
+      });
     }
 
     const arrayBuffer = await data.arrayBuffer();
@@ -64,6 +72,12 @@ export async function GET(
       });
     }
     console.error(`Proxy exception for ${bucket}/${objectKey}:`, err);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    return new NextResponse(FALLBACK_SVG, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/svg+xml',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+      },
+    });
   }
 }

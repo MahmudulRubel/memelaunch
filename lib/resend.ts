@@ -1,6 +1,9 @@
 import { Resend } from 'resend';
 import {
   renderWelcomeEmailHtml,
+  renderEmailVerificationHtml,
+  renderPasswordResetEmailHtml,
+  renderSubscriptionConfirmationHtml,
   renderUpvoteEmailHtml,
   renderLaunchApprovedEmailHtml,
   renderWeeklyDigestEmailHtml,
@@ -10,7 +13,9 @@ import {
 // Initialize Resend SDK
 export const resend = new Resend(process.env.RESEND_API_KEY || 're_xxxxxxxxx');
 
-const DEFAULT_SENDER = 'MemeLaunch <onboarding@resend.dev>';
+// Sender address — set RESEND_FROM_EMAIL in production after verifying your domain in Resend dashboard.
+// Default uses Resend's sandbox domain for development.
+const DEFAULT_SENDER = process.env.RESEND_FROM_EMAIL || 'MemeLaunch <onboarding@resend.dev>';
 
 /**
  * Generic email sender wrapper
@@ -34,19 +39,82 @@ export async function sendEmail({
   });
 }
 
+// ─── Transactional Email Senders ────────────────────────────────────────
+
 /**
- * 1. Send Welcome & Guidelines Email
+ * 1. Welcome & Guidelines Email
+ * Sent after a user successfully verifies their email and completes signup.
  */
 export async function sendWelcomeEmail(toEmail: string, userName?: string) {
   return await sendEmail({
     to: toEmail,
-    subject: '🚀 Welcome to MemeLaunch! Here is how to launch & win',
+    subject: '🚀 Welcome to MemeLaunch! Here\'s how to launch & win',
     html: renderWelcomeEmailHtml(userName),
   });
 }
 
 /**
- * 2. Send Upvote / Reaction Email
+ * 2. Email Verification (OTP Code)
+ * Branded version of InsForge's default verification email.
+ */
+export async function sendEmailVerificationEmail({
+  toEmail,
+  code,
+  userName,
+}: {
+  toEmail: string;
+  code: string;
+  userName?: string;
+}) {
+  return await sendEmail({
+    to: toEmail,
+    subject: `🔐 Your MemeLaunch verification code: ${code}`,
+    html: renderEmailVerificationHtml({ code, userName }),
+  });
+}
+
+/**
+ * 3. Password Reset Email
+ * Branded password reset with 6-digit OTP code.
+ */
+export async function sendPasswordResetEmail({
+  toEmail,
+  code,
+  userName,
+}: {
+  toEmail: string;
+  code: string;
+  userName?: string;
+}) {
+  return await sendEmail({
+    to: toEmail,
+    subject: `🔑 Reset your MemeLaunch password`,
+    html: renderPasswordResetEmailHtml({ code, userName }),
+  });
+}
+
+/**
+ * 4. Subscription Confirmation Email
+ * Double opt-in confirmation for newsletter/product updates.
+ */
+export async function sendSubscriptionConfirmationEmail({
+  toEmail,
+  userName,
+  confirmUrl,
+}: {
+  toEmail: string;
+  userName?: string;
+  confirmUrl: string;
+}) {
+  return await sendEmail({
+    to: toEmail,
+    subject: '📬 Confirm your MemeLaunch subscription',
+    html: renderSubscriptionConfirmationHtml({ userName, confirmUrl }),
+  });
+}
+
+/**
+ * 5. Upvote / Reaction Notification Email
  */
 export async function sendUpvoteNotificationEmail({
   toEmail,
@@ -67,7 +135,7 @@ export async function sendUpvoteNotificationEmail({
 }
 
 /**
- * 3. Send Launch Approved Email
+ * 6. Launch Approved Email
  */
 export async function sendLaunchApprovedEmail({
   toEmail,
@@ -84,7 +152,7 @@ export async function sendLaunchApprovedEmail({
 }
 
 /**
- * 4. Send Weekly Performance Digest Email
+ * 7. Weekly Performance Digest Email
  */
 export async function sendWeeklyDigestEmail({
   toEmail,
@@ -115,7 +183,7 @@ export async function sendWeeklyDigestEmail({
 }
 
 /**
- * 5. Send Community Update / Announcement Email
+ * 8. Community Update / Announcement Email
  */
 export async function sendCommunityBroadcastEmail({
   toEmail,

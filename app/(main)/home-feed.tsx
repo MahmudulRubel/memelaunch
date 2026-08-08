@@ -235,37 +235,37 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
       <div className="absolute -top-10 right-1/4 w-[400px] h-[400px] bg-rose-500/5 rounded-full blur-[100px] pointer-events-none -z-10" />
 
       {/* Hero Section - Unique 2-Column Split Layout */}
-      <section className="relative overflow-hidden rounded-3xl border-4 border-black bg-zinc-950 p-6 md:p-10 shadow-brutal-lg">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      <section className="relative overflow-hidden rounded-3xl border-4 border-black bg-zinc-950 p-4 sm:p-6 md:p-10 shadow-brutal-lg w-full max-w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center w-full min-w-0">
           
           {/* Left Column: Headline, Copy, Trust Pills & Launch Form */}
-          <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left space-y-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900 border-2 border-black text-xs font-black text-[#ffe600] shadow-brutal-sm">
-              <Sparkles className="h-4 w-4 text-[#ffe600]" />
-              <span className="tracking-wider uppercase">🥊 THE WEEKLY INDIE BUILDER ARENA</span>
+          <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left space-y-4 w-full min-w-0">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900 border-2 border-black text-[10px] sm:text-xs font-black text-[#ffe600] shadow-brutal-sm max-w-full">
+              <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[#ffe600] shrink-0" />
+              <span className="tracking-wider uppercase truncate sm:whitespace-normal">🥊 THE WEEKLY INDIE BUILDER ARENA</span>
             </div>
             
-            <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-zinc-50 leading-none">
-              BUILD IN PUBLIC. <br className="hidden sm:inline" />
+            <h1 className="font-heading text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-zinc-50 leading-tight break-words w-full">
+              BUILD IN PUBLIC.<br className="block" />
               LAUNCH IN HUMOR.
             </h1>
 
-            <p className="font-extrabold text-[#ffe600] relative inline-block text-xl sm:text-2xl md:text-3xl">
+            <p className="font-extrabold text-[#ffe600] relative inline-block text-lg sm:text-2xl md:text-3xl max-w-full break-words">
               Where solo founders become viral legends 🏆
               <svg className="text-[#ffe600] pointer-events-none absolute -bottom-2 left-0 h-3 w-full" viewBox="0 0 320 14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" preserveAspectRatio="none" aria-hidden="true">
                 <path d="M3 9 C 60 2, 120 12, 180 6 S 280 11, 317 4"></path>
               </svg>
             </p>
             
-            <p className="text-zinc-300 text-sm sm:text-base max-w-xl leading-relaxed font-medium pt-1">
+            <p className="text-zinc-300 text-sm sm:text-base w-full max-w-xl leading-relaxed font-medium pt-1">
               Building in public is tough when nobody notices your tweets. MemeLaunch is the weekly battleground where indie hackers drop their funniest product memes, compete for top gold badges, and win real customers.
             </p>
 
             {/* Action Buttons Row */}
-            <div className="flex flex-wrap items-center gap-3 w-full max-w-md mt-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 w-full max-w-md mt-2">
               <Link
                 href="/launch"
-                className="px-6 py-3.5 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 font-black text-xs uppercase tracking-wider rounded-2xl border-2 border-black shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto px-6 py-3.5 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 font-black text-xs uppercase tracking-wider rounded-2xl border-2 border-black shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Rocket className="h-4 w-4 stroke-[2.5]" />
                 <span>Pitch a Meme Now</span>
@@ -274,7 +274,7 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
               <button
                 type="button"
                 onClick={() => setIsHowItWorksOpen(true)}
-                className="px-5 py-3.5 bg-zinc-900 border-2 border-black hover:bg-zinc-800 text-zinc-200 font-black text-xs uppercase tracking-wider rounded-2xl shadow-brutal-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto px-5 py-3.5 bg-zinc-900 border-2 border-black hover:bg-zinc-800 text-zinc-200 font-black text-xs uppercase tracking-wider rounded-2xl shadow-brutal-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>How It Works</span>
                 <span className="text-base">ℹ️</span>
