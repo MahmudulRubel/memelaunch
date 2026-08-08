@@ -68,6 +68,17 @@ export function Footer() {
                   FAQ & Support
                 </Link>
               </li>
+              <li>
+                <a
+                  id="footer-link-x"
+                  href="https://x.com/intent/follow?screen_name=launchme_me"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#ffe600] transition-colors"
+                >
+                  Follow @launchme_me on X
+                </a>
+              </li>
             </ul>
           </div>
 

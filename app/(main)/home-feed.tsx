@@ -301,6 +301,8 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
                     <img
                       src={resolveStorageUrl(topFeaturedLaunch.meme_image_url)}
                       alt={topFeaturedLaunch.product_name}
+                      loading="eager"
+                      fetchPriority="high"
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   )}

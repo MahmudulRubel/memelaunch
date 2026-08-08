@@ -251,17 +251,33 @@ export function EarnPointsModal({
   const pointsTarget = 15;
   const progressPercent = Math.min(100, Math.round((points / pointsTarget) * 100));
 
-  const shareText = encodeURIComponent('Check out LaunchMeme - the viral product launch platform! 🚀');
+  // Craft engaging, high-converting prefilled copywriting per social channel
+  const shareTextX = encodeURIComponent(
+    '🔥 Discovering viral tech products & pitching SaaS with memes on @launchme_me! 🚀 Built for indie hackers & creators to launch with humor & win real users. Check it out 👇'
+  );
+  const shareTextFB = encodeURIComponent(
+    '🚀 Check out LaunchMeme (@launchme_me) — the viral product launch arena where founders pitch software with memes! Join the community & discover top tech products:'
+  );
+  const shareTextLinkedIn = encodeURIComponent(
+    '🚀 Discovering the future of product discovery on LaunchMeme (@launchme_me)! Where indie hackers and founders build in public and launch with viral memes. Check out the live feed:'
+  );
+  const shareTextReddit = encodeURIComponent(
+    '🚀 Discovering software & launching products with viral memes on LaunchMeme (@launchme_me)!'
+  );
+  const shareTextWhatsApp = encodeURIComponent(
+    '🚀 Check out LaunchMeme (@launchme_me) — the viral meme-powered product launch platform! Pitch software with humor & discover top tech products:'
+  );
+
   const originUrl = typeof window !== 'undefined' ? encodeURIComponent(window.location.origin) : 'https://memelaunch.app';
 
   const socialTasks = [
     {
       key: 'follow_launchmeme_x',
-      title: 'Follow LaunchMeme on X',
-      desc: 'Claim +5 points one-time bonus',
+      title: 'Follow LaunchMeme (@launchme_me) on X',
+      desc: 'Follow @launchme_me on X & claim +5 points one-time bonus',
       points: 5,
       bg: 'bg-cyan-400/10 border-cyan-400/30 text-cyan-400',
-      url: 'https://x.com/intent/follow?screen_name=launchmeme',
+      url: 'https://x.com/intent/follow?screen_name=launchme_me',
       icon: (
         <svg className="h-4 w-4 fill-cyan-400" viewBox="0 0 24 24">
           <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -271,7 +287,7 @@ export function EarnPointsModal({
     {
       key: 'follow_founder_x',
       title: 'Follow Founder on X',
-      desc: 'Claim +5 points one-time bonus',
+      desc: 'Follow founder on X & claim +5 points one-time bonus',
       points: 5,
       bg: 'bg-purple-400/10 border-purple-400/30 text-purple-400',
       url: 'https://x.com/intent/follow?screen_name=builtwithrubel',
@@ -280,10 +296,10 @@ export function EarnPointsModal({
     {
       key: 'share_launch_x',
       title: 'Share on X / Twitter',
-      desc: 'Share LaunchMeme post for +5 points',
+      desc: 'Post with @launchme_me tag for +5 points',
       points: 5,
       bg: 'bg-sky-400/10 border-sky-400/30 text-sky-400',
-      url: `https://x.com/intent/tweet?text=${shareText}&url=${originUrl}`,
+      url: `https://x.com/intent/tweet?text=${shareTextX}&url=${originUrl}`,
       icon: (
         <svg className="h-4 w-4 fill-sky-400" viewBox="0 0 24 24">
           <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -293,10 +309,10 @@ export function EarnPointsModal({
     {
       key: 'share_launch_facebook',
       title: 'Share on Facebook',
-      desc: 'Share on Facebook for +5 points',
+      desc: 'Share LaunchMeme on Facebook for +5 points',
       points: 5,
       bg: 'bg-blue-500/10 border-blue-500/30 text-blue-400',
-      url: `https://www.facebook.com/sharer/sharer.php?u=${originUrl}`,
+      url: `https://www.facebook.com/sharer/sharer.php?u=${originUrl}&quote=${shareTextFB}`,
       icon: (
         <svg className="h-4 w-4 fill-blue-400" viewBox="0 0 24 24">
           <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
@@ -306,7 +322,7 @@ export function EarnPointsModal({
     {
       key: 'share_launch_instagram',
       title: 'Share on Instagram',
-      desc: 'Post or story on Instagram for +5 points',
+      desc: 'Post or story tagging @launchme_me for +5 points',
       points: 5,
       bg: 'bg-pink-500/10 border-pink-500/30 text-pink-400',
       url: 'https://www.instagram.com/',
@@ -335,7 +351,7 @@ export function EarnPointsModal({
       desc: 'Submit post on Reddit for +5 points',
       points: 5,
       bg: 'bg-orange-500/10 border-orange-500/30 text-orange-400',
-      url: `https://www.reddit.com/submit?url=${originUrl}&title=${shareText}`,
+      url: `https://www.reddit.com/submit?url=${originUrl}&title=${shareTextReddit}`,
       icon: (
         <svg className="h-4 w-4 fill-orange-400" viewBox="0 0 24 24">
           <path d="M12 0C5.373 0 0 5.373 0 12c0 3.314 1.343 6.314 3.515 8.485l-2.286 2.286A.75.75 0 0 0 1.758 24h6.584A11.936 11.936 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm4.5 9a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm-9 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm4.5 8.25c-2.485 0-4.5-1.343-4.5-3h9c0 1.657-2.015 3-4.5 3z" />
@@ -348,7 +364,7 @@ export function EarnPointsModal({
       desc: 'Send to contacts or groups for +5 points',
       points: 5,
       bg: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400',
-      url: `https://api.whatsapp.com/send?text=${shareText}%20${originUrl}`,
+      url: `https://api.whatsapp.com/send?text=${shareTextWhatsApp}%20${originUrl}`,
       icon: (
         <svg className="h-4 w-4 fill-emerald-400" viewBox="0 0 24 24">
           <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z" />

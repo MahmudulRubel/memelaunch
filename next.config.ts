@@ -18,20 +18,25 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['lucide-react'],
   },
   images: {
+    unoptimized: true,
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 31536000,
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**.insforge.app',
+        hostname: '*.insforge.app',
       },
       {
         protocol: 'https',
-        hostname: '**.unsplash.com',
+        hostname: '*.ap-southeast.insforge.app',
       },
       {
         protocol: 'https',
-        hostname: '**.imgflip.com',
+        hostname: '*.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.imgflip.com',
       },
       {
         protocol: 'https',
@@ -39,14 +44,14 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: '**.googleusercontent.com',
+        hostname: '*.googleusercontent.com',
       },
     ],
   },
   async headers() {
     return [
       {
-        source: '/:path*',
+        source: '/:path((?!_next/static|_next/image).*)',
         headers: [
           {
             key: 'Content-Security-Policy',

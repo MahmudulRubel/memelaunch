@@ -76,7 +76,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "MemeLaunch — Build in Public. Launch in Humor. Win the Week.",
     description: "The playful, high-contrast alternative to Product Hunt. Pitch your SaaS or dev tool using viral memes.",
-    creator: "@launchmeme",
+    creator: "@launchme_me",
     images: ["https://memelaunch.insforge.app/logo.png"],
   },
   icons: {
@@ -104,7 +104,7 @@ export default function RootLayout({
     url: "https://memelaunch.insforge.app",
     logo: "https://memelaunch.insforge.app/favicon.ico",
     sameAs: [
-      "https://x.com/launchmeme",
+      "https://x.com/launchme_me",
       "https://x.com/builtwithrubel"
     ],
     description: "Meme-native product launch arena for indie hackers and startup founders.",

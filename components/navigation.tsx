@@ -82,6 +82,7 @@ export function Navigation() {
                 height={48}
                 priority
                 className="h-9 sm:h-12 w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] shrink-0"
+                style={{ width: 'auto' }}
               />
             </Link>
 
