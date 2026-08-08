@@ -31,13 +31,18 @@ export async function GET(
   const objectKey = decodeURIComponent(key.join('/'));
 
   try {
-    const { data, error } = await insforge.storage.from(bucket).download(objectKey);
+    const downloadPromise = insforge.storage.from(bucket).download(objectKey);
+    const timeoutPromise = new Promise<{ data: null; error: { message: string } }>((resolve) =>
+      setTimeout(() => resolve({ data: null, error: { message: 'Storage download timeout' } }), 5000)
+    );
+
+    const { data, error } = await Promise.race([downloadPromise, timeoutPromise]);
 
     if (error || !data) {
       if (FALLBACK_URLS[objectKey]) {
         return NextResponse.redirect(FALLBACK_URLS[objectKey]);
       }
-      console.error(`Proxy download error for ${bucket}/${objectKey}:`, error);
+      console.error(`Proxy download error or timeout for ${bucket}/${objectKey}:`, error);
       return new NextResponse('Not Found', { status: 404 });
     }
 

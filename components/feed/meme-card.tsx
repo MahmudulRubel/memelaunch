@@ -56,10 +56,14 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
   // Local state for optimistic reaction updates
   const [reactions, setReactions] = useState<Reaction[]>(launch.reactions || []);
   const [isReacting, setIsReacting] = useState<Record<string, boolean>>({});
+  const [imgSrc, setImgSrc] = useState<string>(resolveStorageUrl(launch.meme_image_url));
+  const [logoSrc, setLogoSrc] = useState<string>(resolveStorageUrl(launch.product_logo_url));
 
   useEffect(() => {
     setReactions(launch.reactions || []);
-  }, [launch.reactions]);
+    setImgSrc(resolveStorageUrl(launch.meme_image_url));
+    setLogoSrc(resolveStorageUrl(launch.product_logo_url));
+  }, [launch.reactions, launch.meme_image_url, launch.product_logo_url]);
 
   // Compute counts
   const fireCount = reactions.filter((r) => r.emoji_type === '🔥').length;
@@ -155,13 +159,14 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
         {/* Meme Image */}
         {launch.meme_image_url ? (
           <Image
-            src={resolveStorageUrl(launch.meme_image_url)}
+            src={imgSrc || 'https://i.imgflip.com/30b1gx.jpg'}
             alt={getCaptionText(launch.caption)}
             fill
             unoptimized
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             priority={false}
+            onError={() => setImgSrc('https://i.imgflip.com/30b1gx.jpg')}
           />
         ) : (
           <div className="p-8 text-center bg-zinc-900 rounded-xl border-2 border-black">
@@ -242,12 +247,13 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
             {launch.product_logo_url && (
               <div className="relative h-9 w-9 rounded-xl overflow-hidden shrink-0 border-2 border-black bg-zinc-900 shadow-brutal-sm">
                 <Image
-                  src={resolveStorageUrl(launch.product_logo_url)}
+                  src={logoSrc || '/logo.png'}
                   alt={`${launch.product_name} logo`}
                   fill
                   unoptimized
                   sizes="36px"
                   className="object-cover"
+                  onError={() => setLogoSrc('/logo.png')}
                 />
               </div>
             )}

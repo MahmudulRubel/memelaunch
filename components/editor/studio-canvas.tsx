@@ -31,7 +31,7 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
   const containerRef = useRef<HTMLDivElement>(null);
   const [bgImage, setBgImage] = useState<HTMLImageElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [hoverCursor, setHoverCursor] = useState<'move' | 'nwse-resize'>('move');
+  const [hoverCursor, setHoverCursor] = useState<'move' | 'nwse-resize' | 'default'>('move');
 
   // Keep stateRef fresh for non-passive event listeners
   const stateRef = useRef(state);
@@ -257,15 +257,17 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
     }
   }, [state, bgImage]);
 
-  // Helper: Detect if point (cX, cY) is near any edge, corner handle, or outer boundary of selected layer
-  const isNearEdgeOrHandle = (cX: number, cY: number, layer: StudioLayer, ctx: CanvasRenderingContext2D) => {
+  // Helper: Calculate exact bounding box and handle positions for a text layer
+  const getLayerGeometry = (layer: StudioLayer, ctx: CanvasRenderingContext2D) => {
     const width = 800;
+    const height = 800;
     const posX = (layer.x / 100) * width;
-    const posY = (layer.y / 100) * width;
+    const posY = (layer.y / 100) * height;
 
-    const fontSize = (layer.fontSize || 36) * 1.5;
     const textToDraw = layer.uppercase ? layer.text?.toUpperCase() || '' : layer.text || '';
-    ctx.font = `${layer.fontWeight || '900'} ${fontSize}px '${layer.fontFamily || 'Impact'}', sans-serif`;
+    const fontSize = (layer.fontSize || 36) * 1.5;
+    const fontName = layer.fontFamily || 'Impact';
+    ctx.font = `${layer.fontWeight || '900'} ${fontSize}px '${fontName}', sans-serif`;
     const metrics = ctx.measureText(textToDraw);
 
     const boxPadding = 18;
@@ -274,15 +276,35 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
     const boxX = posX - boxW / 2;
     const boxY = posY - boxH / 2;
 
-    // Check distance to bounding box center vs edges
-    const margin = 24;
-    const isInsideOuterBox = cX >= boxX - margin && cX <= boxX + boxW + margin && cY >= boxY - margin && cY <= boxY + boxH + margin;
-    const innerW = boxW * 0.35;
-    const innerH = boxH * 0.35;
-    const isInsideCenterCore = cX >= posX - innerW && cX <= posX + innerW && cY >= posY - innerH && cY <= posY + innerH;
+    const handles = [
+      { x: boxX, y: boxY }, // Top-Left
+      { x: boxX + boxW, y: boxY }, // Top-Right
+      { x: boxX, y: boxY + boxH }, // Bottom-Left
+      { x: boxX + boxW, y: boxY + boxH }, // Bottom-Right
+      { x: boxX + boxW / 2, y: boxY }, // Top-Mid
+      { x: boxX + boxW / 2, y: boxY + boxH }, // Bottom-Mid
+      { x: boxX, y: boxY + boxH / 2 }, // Left-Mid
+      { x: boxX + boxW, y: boxY + boxH / 2 }, // Right-Mid
+    ];
 
-    // Edge/Handle resizing triggers if touching edges/outer zone of text box
-    return isInsideOuterBox && !isInsideCenterCore;
+    return { posX, posY, boxX, boxY, boxW, boxH, handles };
+  };
+
+  // Check if point (cX, cY) is near any resize handle of the specified layer
+  const isNearHandle = (cX: number, cY: number, layer: StudioLayer, ctx: CanvasRenderingContext2D, hitRadius = 28) => {
+    const { handles } = getLayerGeometry(layer, ctx);
+    return handles.some((h) => Math.hypot(cX - h.x, cY - h.y) <= hitRadius);
+  };
+
+  // Check if point (cX, cY) is inside or near a layer's bounding box
+  const isInsideLayerBox = (cX: number, cY: number, layer: StudioLayer, ctx: CanvasRenderingContext2D, padding = 20) => {
+    const { boxX, boxY, boxW, boxH } = getLayerGeometry(layer, ctx);
+    return (
+      cX >= boxX - padding &&
+      cX <= boxX + boxW + padding &&
+      cY >= boxY - padding &&
+      cY <= boxY + boxH + padding
+    );
   };
 
   // Mouse Hover Cursor Update
@@ -299,15 +321,21 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
     const cY = ((e.clientY - rect.top) / rect.height) * 800;
 
     const selectedLayer = state.layers.find((l) => l.id === state.selectedLayerId);
-    if (selectedLayer && selectedLayer.type === 'text' && isNearEdgeOrHandle(cX, cY, selectedLayer, ctx)) {
-      setHoverCursor('nwse-resize');
-    } else {
-      setHoverCursor('move');
+    if (selectedLayer && selectedLayer.type === 'text') {
+      if (isNearHandle(cX, cY, selectedLayer, ctx, 20)) {
+        setHoverCursor('nwse-resize');
+        return;
+      }
+      if (isInsideLayerBox(cX, cY, selectedLayer, ctx, 10)) {
+        setHoverCursor('move');
+        return;
+      }
     }
+    setHoverCursor('default');
   };
 
-  // Click / Touch Start Handler (Supports Moving from Center & Resizing from Any Edge/Corner)
-  const startDrag = (clientX: number, clientY: number) => {
+  // Unified Click / Touch Start Handler for Smooth Desktop & Mobile Dragging
+  const startDrag = (clientX: number, clientY: number, isTouch = false) => {
     const container = containerRef.current;
     const canvas = canvasRef.current;
     if (!container || !canvas) return;
@@ -318,47 +346,64 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
     const rect = container.getBoundingClientRect();
     const cX = ((clientX - rect.left) / rect.width) * 800;
     const cY = ((clientY - rect.top) / rect.height) * 800;
-    const clickXPercent = (cX / 800) * 100;
-    const clickYPercent = (cY / 800) * 100;
 
-    // Check if clicking near current selected layer's edges or handles
     const currentSelected = state.layers.find((l) => l.id === state.selectedLayerId);
     let dragMode: 'move' | 'resize' = 'move';
+    let targetLayer: StudioLayer | undefined = undefined;
 
-    if (currentSelected && currentSelected.type === 'text' && isNearEdgeOrHandle(cX, cY, currentSelected, ctx)) {
+    // Hit radius for corner/edge handles (slightly larger on touch screens for finger accuracy)
+    const handleHitRadius = isTouch ? 28 : 20;
+
+    // Check if user clicked/touched directly on a handle of the selected layer
+    if (currentSelected && currentSelected.type === 'text' && isNearHandle(cX, cY, currentSelected, ctx, handleHitRadius)) {
       dragMode = 'resize';
-    }
+      targetLayer = currentSelected;
+    } else {
+      // Check if hitting the currently selected layer box first
+      if (currentSelected && currentSelected.type === 'text' && isInsideLayerBox(cX, cY, currentSelected, ctx, 20)) {
+        targetLayer = currentSelected;
+      } else {
+        // Search through all text layers to see if any box was hit
+        targetLayer = state.layers.find((l) => l.type === 'text' && isInsideLayerBox(cX, cY, l, ctx, 20));
+      }
 
-    // If moving, find targeted layer
-    let targetLayer = currentSelected;
-    if (dragMode === 'move') {
-      const clicked = state.layers.find((l) => {
-        const dx = Math.abs(l.x - clickXPercent);
-        const dy = Math.abs(l.y - clickYPercent);
-        return dx < 25 && dy < 15;
-      });
-      if (clicked) targetLayer = clicked;
-      if (!targetLayer && state.layers.length > 0) targetLayer = state.layers[0];
+      // Fallback: pick the closest text layer if user touched nearby on canvas
+      if (!targetLayer) {
+        let minDistance = Infinity;
+        state.layers.forEach((l) => {
+          if (l.type !== 'text') return;
+          const lX = (l.x / 100) * 800;
+          const lY = (l.y / 100) * 800;
+          const dist = Math.hypot(cX - lX, cY - lY);
+          if (dist < minDistance) {
+            minDistance = dist;
+            targetLayer = l;
+          }
+        });
+      }
     }
 
     if (!targetLayer) return;
 
-    // Select the layer
+    // Select target layer
     dispatch({ type: 'SELECT_LAYER', id: targetLayer.id });
     setIsDragging(true);
 
     const activeId = targetLayer.id;
     const startPosX = (targetLayer.x / 100) * 800;
     const startPosY = (targetLayer.y / 100) * 800;
+    const offsetX = cX - startPosX;
+    const offsetY = cY - startPosY;
     const startDist = Math.hypot(cX - startPosX, cY - startPosY);
     const startFontSize = targetLayer.fontSize || 36;
 
     const onMove = (moveClientX: number, moveClientY: number) => {
-      const moveCX = ((moveClientX - rect.left) / rect.width) * 800;
-      const moveCY = ((moveClientY - rect.top) / rect.height) * 800;
+      const currentRect = container.getBoundingClientRect();
+      const moveCX = ((moveClientX - currentRect.left) / currentRect.width) * 800;
+      const moveCY = ((moveClientY - currentRect.top) / currentRect.height) * 800;
 
       if (dragMode === 'resize') {
-        // Edge / Corner drag resize calculation (drag away = bigger, drag in = smaller)
+        // Edge / Corner drag resize calculation
         const currentDist = Math.hypot(moveCX - startPosX, moveCY - startPosY);
         const ratio = currentDist / Math.max(15, startDist);
         const newFontSize = Math.max(12, Math.min(120, Math.round(startFontSize * ratio)));
@@ -368,9 +413,11 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
           patch: { fontSize: newFontSize },
         });
       } else {
-        // Center drag position move calculation
-        const xPercent = Math.max(5, Math.min(95, (moveCX / 800) * 100));
-        const yPercent = Math.max(5, Math.min(95, (moveCY / 800) * 100));
+        // Smooth center drag move with touch offset compensation
+        const targetPosX = moveCX - offsetX;
+        const targetPosY = moveCY - offsetY;
+        const xPercent = Math.max(5, Math.min(95, (targetPosX / 800) * 100));
+        const yPercent = Math.max(5, Math.min(95, (targetPosY / 800) * 100));
         dispatch({
           type: 'UPDATE_LAYER',
           id: activeId,
@@ -381,6 +428,9 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
 
     const handleMouseMove = (e: MouseEvent) => onMove(e.clientX, e.clientY);
     const handleTouchMove = (e: TouchEvent) => {
+      if (e.cancelable) {
+        e.preventDefault(); // Prevents mobile browser viewport scrolling during caption drag
+      }
       if (e.touches[0]) {
         onMove(e.touches[0].clientX, e.touches[0].clientY);
       }
@@ -392,21 +442,23 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
       window.removeEventListener('mouseup', stopDrag);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', stopDrag);
+      window.removeEventListener('touchcancel', stopDrag);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', stopDrag);
     window.addEventListener('touchmove', handleTouchMove, { passive: false });
     window.addEventListener('touchend', stopDrag);
+    window.addEventListener('touchcancel', stopDrag);
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    startDrag(e.clientX, e.clientY);
+    startDrag(e.clientX, e.clientY, false);
   };
 
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     if (e.touches[0]) {
-      startDrag(e.touches[0].clientX, e.touches[0].clientY);
+      startDrag(e.touches[0].clientX, e.touches[0].clientY, true);
     }
   };
 
@@ -416,17 +468,10 @@ export const StudioCanvas = forwardRef<StudioCanvasRef, Props>(({ state, dispatc
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
       onMouseMove={handleContainerMouseMove}
-      style={{ cursor: isDragging ? 'grabbing' : hoverCursor }}
-      className="relative w-full aspect-square bg-zinc-950 border border-zinc-800/90 rounded-2xl overflow-hidden shadow-2xl select-none transition-all hover:border-zinc-700"
+      style={{ cursor: isDragging ? 'grabbing' : hoverCursor, touchAction: 'none' }}
+      className="relative w-full aspect-square bg-zinc-950 border border-zinc-800/90 rounded-2xl overflow-hidden shadow-2xl select-none transition-all hover:border-zinc-700 touch-none"
     >
       <canvas ref={canvasRef} className="w-full h-full object-contain" />
-
-      {/* Bottom Hint Tag */}
-      <div className="absolute bottom-2 left-2 px-2.5 py-1 bg-zinc-950/80 backdrop-blur border border-zinc-800 rounded-lg text-[10px] font-mono text-zinc-400 pointer-events-none z-30 flex items-center gap-1.5">
-        <span>🎯 Drag center to move</span>
-        <span>•</span>
-        <span className="text-lime-400 font-bold">📐 Drag any edge/corner to resize</span>
-      </div>
     </div>
   );
 });

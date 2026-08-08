@@ -41,15 +41,21 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   let initialLaunches: Launch[] = [];
   try {
-    const { data, error } = await insforgeAdmin.database
+    const fetchPromise = insforgeAdmin.database
       .from('launches')
       .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id)')
       .order('created_at', { ascending: false });
 
+    const timeoutPromise = new Promise<{ data: null; error: { message: string } }>((resolve) =>
+      setTimeout(() => resolve({ data: null, error: { message: 'Database fetch timeout' } }), 3500)
+    );
+
+    const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+
     if (!error && data) {
       initialLaunches = data as Launch[];
     } else if (error) {
-      console.error('Server-side error fetching launches:', error.message || error);
+      console.error('Server-side error/timeout fetching launches:', error.message || error);
     }
   } catch (err) {
     console.error('Server-side exception fetching launches:', err);
