@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { insforge } from '@/lib/insforge';
+import { insforge, ensurePublicUserRecord } from '@/lib/insforge';
 import { RewardToast } from '@/components/points/reward-toast';
 
 interface UserProfile {
@@ -61,7 +61,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         setUser(null);
       } else {
-        setUser(data?.user as AuthUser | null);
+        const currentUser = data?.user as AuthUser | null;
+        setUser(currentUser);
+        if (currentUser) {
+          ensurePublicUserRecord(currentUser).catch(() => {});
+        }
       }
     } catch (err: any) {
       const isNoToken = 

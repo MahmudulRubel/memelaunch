@@ -130,7 +130,6 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
                 src={resolveStorageUrl(weeklyPick.thumbnail_url)}
                 alt={weeklyPick.name}
                 fill
-                unoptimized
                 sizes="(max-width: 1024px) 100vw, 384px"
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
                 priority
@@ -181,7 +180,6 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
                             src={resolveStorageUrl(launch.meme_image_url)}
                             alt={launch.product_name}
                             fill
-                            unoptimized
                             sizes="48px"
                             className="object-cover"
                           />
@@ -250,7 +248,6 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
                       src={resolveStorageUrl(tpl.thumbnail_url)}
                       alt={tpl.name}
                       fill
-                      unoptimized
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
@@ -312,7 +309,6 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
                                   alt={launch.users.name || 'User'}
                                   width={24}
                                   height={24}
-                                  unoptimized
                                   className="object-cover h-full w-full"
                                 />
                               ) : (
@@ -352,7 +348,6 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
                 src={resolveStorageUrl(previewTemplate.thumbnail_url)}
                 alt={previewTemplate.name}
                 fill
-                unoptimized
                 sizes="(max-width: 1024px) 100vw, 512px"
                 className="object-cover"
               />

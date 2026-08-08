@@ -275,7 +275,7 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
                   src={resolveStorageUrl(launch.product_logo_url)}
                   alt={`${launch.product_name} logo`}
                   fill
-                  unoptimized
+                  unoptimized={launch.product_logo_url.endsWith('.svg') || launch.product_logo_url.startsWith('data:image/svg')}
                   sizes="80px"
                   className="object-cover"
                 />
@@ -338,9 +338,10 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
                   src={resolveStorageUrl(launch.meme_image_url)}
                   alt={getCaptionText(launch.caption)}
                   fill
-                  unoptimized
+                  unoptimized={launch.meme_image_url.endsWith('.svg') || launch.meme_image_url.startsWith('data:image/svg')}
                   sizes="(max-width: 1024px) 100vw, 60vw"
                   className="object-cover"
+                  priority
                 />
               )}
               {/* Dynamic Meme Captions */}

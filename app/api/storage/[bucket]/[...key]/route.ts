@@ -40,7 +40,9 @@ export async function GET(
 
     if (error || !data) {
       if (FALLBACK_URLS[objectKey]) {
-        return NextResponse.redirect(FALLBACK_URLS[objectKey]);
+        return NextResponse.redirect(FALLBACK_URLS[objectKey], {
+          headers: { 'Cache-Control': 'public, max-age=31536000, immutable' },
+        });
       }
       console.error(`Proxy download error or timeout for ${bucket}/${objectKey}:`, error);
       return new NextResponse('Not Found', { status: 404 });
@@ -57,7 +59,9 @@ export async function GET(
     });
   } catch (err: any) {
     if (FALLBACK_URLS[objectKey]) {
-      return NextResponse.redirect(FALLBACK_URLS[objectKey]);
+      return NextResponse.redirect(FALLBACK_URLS[objectKey], {
+        headers: { 'Cache-Control': 'public, max-age=31536000, immutable' },
+      });
     }
     console.error(`Proxy exception for ${bucket}/${objectKey}:`, err);
     return new NextResponse('Internal Server Error', { status: 500 });
