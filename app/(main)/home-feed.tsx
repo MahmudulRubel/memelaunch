@@ -129,10 +129,12 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
     }
   };
 
-  // Sync state if initialLaunches changes (e.g. on server revalidation)
+  // Sync state if initialLaunches changes (e.g. on server revalidation) or fetch client-side if empty
   useEffect(() => {
-    if (initialLaunches) {
+    if (initialLaunches && initialLaunches.length > 0) {
       setLaunches(initialLaunches);
+    } else {
+      fetchLaunches();
     }
   }, [initialLaunches]);
 

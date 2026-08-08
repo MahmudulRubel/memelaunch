@@ -150,19 +150,19 @@ export function EarnPointsModal({
     loadData();
   }, [isOpen, user]);
 
-  // 40-second dwell timer countdown ticker
+  // 30-second dwell timer countdown ticker
   useEffect(() => {
     if (!promptTask) return;
     const openedAt = openedTimestamps[promptTask.key] || Date.now();
 
     const interval = setInterval(() => {
       const elapsed = Math.floor((Date.now() - openedAt) / 1000);
-      const left = Math.max(0, 40 - elapsed);
+      const left = Math.max(0, 30 - elapsed);
       setRemainingTime(left);
     }, 500);
 
     const elapsedInitial = Math.floor((Date.now() - openedAt) / 1000);
-    setRemainingTime(Math.max(0, 40 - elapsedInitial));
+    setRemainingTime(Math.max(0, 30 - elapsedInitial));
 
     return () => clearInterval(interval);
   }, [promptTask, openedTimestamps]);
@@ -202,10 +202,10 @@ export function EarnPointsModal({
 
     const openedAt = openedTimestamps[promptTask.key] || Date.now();
     const elapsed = Math.floor((Date.now() - openedAt) / 1000);
-    if (elapsed < 40) {
+    if (elapsed < 30) {
       setFeedbackMsg({
         type: 'error',
-        text: `⏳ Please spend at least 40 seconds on the social page before verifying! (${40 - elapsed}s remaining)`,
+        text: `⏳ Please spend at least 30 seconds on the social page before verifying! (${30 - elapsed}s remaining)`,
       });
       return;
     }
@@ -616,11 +616,11 @@ export function EarnPointsModal({
                   </span>
                 </div>
 
-                {/* 40-Second Dwell Timer Status */}
+                {/* 30-Second Dwell Timer Status */}
                 {remainingTime > 0 ? (
                   <div className="p-3 bg-amber-400/10 border border-amber-400/30 rounded-xl text-amber-300 text-xs font-bold flex items-center gap-2">
                     <Clock className="h-4 w-4 animate-spin text-amber-400 shrink-0" />
-                    <span>⏳ Please spend at least 40s on the opened social page ({remainingTime}s left)</span>
+                    <span>⏳ Please spend at least 30s on the opened social page ({remainingTime}s left)</span>
                   </div>
                 ) : null}
 

@@ -28,7 +28,7 @@ export default async function ProductPage({ params }: PageProps) {
 
   try {
     // 1. Primary lookup: Case-insensitive search on product_name
-    const { data: nameMatch } = await insforgeAdmin.database
+    const primaryQuery = insforgeAdmin.database
       .from('launches')
       .select('id')
       .ilike('product_name', decodedName)
@@ -36,17 +36,24 @@ export default async function ProductPage({ params }: PageProps) {
       .limit(1)
       .maybeSingle();
 
+    const timeoutPromise = new Promise<{ data: null; error: { message: string } }>((resolve) =>
+      setTimeout(() => resolve({ data: null, error: { message: 'Product lookup timeout' } }), 3500)
+    );
+
+    const { data: nameMatch } = await Promise.race([primaryQuery, timeoutPromise]);
+
     if (nameMatch?.id) {
       launchId = nameMatch.id;
     } else {
       // 2. Fallback lookup: Search by UUID if parameter is an ID
       const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(decodedName);
       if (isUuid) {
-        const { data: idMatch } = await insforge.database
+        const idQuery = insforge.database
           .from('launches')
           .select('id')
           .eq('id', decodedName)
           .maybeSingle();
+        const { data: idMatch } = await Promise.race([idQuery, timeoutPromise]);
         if (idMatch?.id) {
           launchId = idMatch.id;
         }

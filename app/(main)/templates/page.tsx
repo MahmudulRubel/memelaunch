@@ -42,7 +42,7 @@ export default async function TemplatesPage() {
   let initialLaunches: Launch[] = [];
 
   try {
-    const [templatesRes, launchesRes] = await Promise.all([
+    const fetchPromise = Promise.all([
       insforge.database
         .from('templates')
         .select('*')
@@ -53,6 +53,12 @@ export default async function TemplatesPage() {
         .eq('is_approved', true)
         .not('template_id', 'is', null)
     ]);
+
+    const timeoutPromise = new Promise<[any, any]>((resolve) =>
+      setTimeout(() => resolve([{ data: null, error: { message: 'Timeout' } }, { data: null, error: { message: 'Timeout' } }]), 3500)
+    );
+
+    const [templatesRes, launchesRes] = await Promise.race([fetchPromise, timeoutPromise]);
 
     if (!templatesRes.error && templatesRes.data) {
       initialTemplates = templatesRes.data as Template[];

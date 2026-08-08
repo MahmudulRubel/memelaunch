@@ -63,7 +63,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
   let initialLaunches: Launch[] = [];
 
   try {
-    const [profileRes, launchesRes] = await Promise.all([
+    const fetchPromise = Promise.all([
       insforge.database
         .from('users')
         .select('*')
@@ -76,6 +76,12 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
         .eq('is_approved', true)
         .order('created_at', { ascending: false })
     ]);
+
+    const timeoutPromise = new Promise<[any, any]>((resolve) =>
+      setTimeout(() => resolve([{ data: null, error: { message: 'Timeout' } }, { data: null, error: { message: 'Timeout' } }]), 3500)
+    );
+
+    const [profileRes, launchesRes] = await Promise.race([fetchPromise, timeoutPromise]);
 
     if (!profileRes.error && profileRes.data) {
       initialProfile = profileRes.data as ProfileData;
