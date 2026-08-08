@@ -78,7 +78,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
     ]);
 
     const timeoutPromise = new Promise<[any, any]>((resolve) =>
-      setTimeout(() => resolve([{ data: null, error: { message: 'Timeout' } }, { data: null, error: { message: 'Timeout' } }]), 3500)
+      setTimeout(() => resolve([{ data: null, error: { message: 'Timeout' } }, { data: null, error: { message: 'Timeout' } }]), 10000)
     );
 
     const [profileRes, launchesRes] = await Promise.race([fetchPromise, timeoutPromise]);

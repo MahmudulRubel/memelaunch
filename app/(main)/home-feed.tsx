@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { insforge, insforgeAdmin, resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
@@ -396,11 +397,13 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
                   <span className="text-zinc-400 font-mono text-[10px] font-extrabold uppercase">SPOTLIGHT</span>
                 </div>
                 <div className="relative aspect-square w-full rounded-xl overflow-hidden border-2 border-black bg-zinc-900">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
+                  <Image 
                     src="https://i.imgflip.com/1g8my4.jpg" 
                     alt="Drake Meme" 
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="(max-width: 640px) 100vw, 384px"
+                    className="object-cover"
+                    priority
                   />
                   <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950/90 to-transparent p-3 text-center">
                     <p className="font-impact text-zinc-100 uppercase text-xs sm:text-sm tracking-wider">
@@ -549,10 +552,11 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
       ) : (
         /* Masonry Grid */
         <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
-          {paginatedLaunches.map((launch) => (
+          {paginatedLaunches.map((launch, index) => (
             <MemeCard
               key={launch.id}
               launch={launch}
+              priority={index < 2}
             />
           ))}
         </div>

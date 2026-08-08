@@ -37,7 +37,7 @@ export default async function ProductPage({ params }: PageProps) {
       .maybeSingle();
 
     const timeoutPromise = new Promise<{ data: null; error: { message: string } }>((resolve) =>
-      setTimeout(() => resolve({ data: null, error: { message: 'Product lookup timeout' } }), 3500)
+      setTimeout(() => resolve({ data: null, error: { message: 'Product lookup timeout' } }), 10000)
     );
 
     const { data: nameMatch } = await Promise.race([primaryQuery, timeoutPromise]);

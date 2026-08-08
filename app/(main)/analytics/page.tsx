@@ -371,7 +371,7 @@ export default function AnalyticsPage() {
                                 src={resolveStorageUrl(launch.product_logo_url)}
                                 alt={launch.product_name}
                                 fill
-                                unoptimized
+                                sizes="48px"
                                 className="object-cover"
                               />
                             ) : (
@@ -379,7 +379,7 @@ export default function AnalyticsPage() {
                                 src={resolveStorageUrl(launch.meme_image_url)}
                                 alt={launch.product_name}
                                 fill
-                                unoptimized
+                                sizes="48px"
                                 className="object-cover"
                               />
                             )}

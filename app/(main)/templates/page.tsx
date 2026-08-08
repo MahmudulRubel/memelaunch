@@ -55,7 +55,7 @@ export default async function TemplatesPage() {
     ]);
 
     const timeoutPromise = new Promise<[any, any]>((resolve) =>
-      setTimeout(() => resolve([{ data: null, error: { message: 'Timeout' } }, { data: null, error: { message: 'Timeout' } }]), 3500)
+      setTimeout(() => resolve([{ data: null, error: { message: 'Timeout' } }, { data: null, error: { message: 'Timeout' } }]), 10000)
     );
 
     const [templatesRes, launchesRes] = await Promise.race([fetchPromise, timeoutPromise]);

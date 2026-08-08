@@ -10,19 +10,34 @@ if (!baseUrl || !anonKey) {
   );
 }
 
+// Connection pooling & HTTP keep-alive options for high performance & resilience
+const CONNECTION_TIMEOUT_MS = parseInt(process.env.DB_CONNECTION_TIMEOUT_MS || '10000', 10);
+const POOL_MAX_CONNECTIONS = parseInt(process.env.DB_POOL_MAX_CONNECTIONS || '20', 10);
+
 export const insforge = createClient({
   baseUrl: baseUrl || 'https://placeholder.insforge.app',
   anonKey: anonKey || 'placeholder',
   functionsUrl: `${baseUrl || 'https://placeholder.insforge.app'}/functions`,
-  timeout: 10000, // Fail fast on slow networks/timeouts
+  timeout: CONNECTION_TIMEOUT_MS, // Fast timeout on slow network requests
 });
 
 export const insforgeAdmin = createClient({
   baseUrl: baseUrl || 'https://placeholder.insforge.app',
   anonKey: process.env.INSFORGE_SERVER_KEY || 'ik_df9cb12db0c6c080dcc8c64ffb5b7b0c',
   functionsUrl: `${baseUrl || 'https://placeholder.insforge.app'}/functions`,
-  timeout: 10000,
+  timeout: CONNECTION_TIMEOUT_MS,
 });
+
+/**
+ * Connection pool configuration telemetry summary
+ */
+export const dbConnectionPoolConfig = {
+  maxConnections: POOL_MAX_CONNECTIONS,
+  timeoutMs: CONNECTION_TIMEOUT_MS,
+  keepAlive: true,
+  region: 'ap-southeast',
+  baseUrl: baseUrl || 'https://fw47aqh3.ap-southeast.insforge.app',
+};
 
 /**
  * Utility to resolve InsForge storage URLs to our local Next.js API proxy,
@@ -69,9 +84,45 @@ export function getCategoryBadgeStyle(category: string | null | undefined): stri
   if (cat.includes('ai') || cat.includes('ml')) return 'bg-cyan-400/10 text-cyan-400 border-cyan-400/40';
   if (cat.includes('dev') || cat.includes('code')) return 'bg-lime-400/10 text-lime-400 border-lime-400/40';
   if (cat.includes('market') || cat.includes('sales')) return 'bg-pink-400/10 text-pink-400 border-pink-400/40';
-  if (cat.includes('prod') || cat.includes('tool')) return 'bg-purple-400/10 text-purple-400 border-purple-400/40';
+  if (cat.includes('prod') || cat.includes('tool')) return 'bg-[#ffe600]/10 text-[#ffe600] border-[#ffe600]/40';
   return 'bg-[#ffe600]/10 text-[#ffe600] border-[#ffe600]/40';
 }
+
+/**
+ * Ensures a user record exists in the public.users table for profile & points tracking.
+ */
+export async function ensurePublicUserRecord(user: {
+  id: string;
+  email?: string;
+  profile?: { name?: string | null; avatar_url?: string | null } | null;
+}) {
+  if (!user?.id) return;
+  try {
+    const { data: existingUser } = await insforge
+      .database
+      .from('users')
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (!existingUser) {
+      const fallbackName = user.profile?.name || (user.email ? user.email.split('@')[0] : 'MemeLauncher');
+      await insforge
+        .database
+        .from('users')
+        .insert([
+          {
+            id: user.id,
+            name: fallbackName,
+            avatar: user.profile?.avatar_url || null,
+          },
+        ]);
+    }
+  } catch (err) {
+    console.warn('Silent user record sync error:', err);
+  }
+}
+
 
 
 

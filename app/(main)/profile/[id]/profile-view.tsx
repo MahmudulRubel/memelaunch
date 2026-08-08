@@ -118,6 +118,35 @@ export default function ProfileView({ profileId, initialProfile, initialLaunches
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [mounted, setMounted] = useState(false);
 
+  // Account Deletion state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmInput !== 'DELETE MY ACCOUNT') {
+      alert('Please type "DELETE MY ACCOUNT" to confirm deletion.');
+      return;
+    }
+    setIsDeletingAccount(true);
+    try {
+      const res = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: profileId, confirmationText: deleteConfirmInput }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete account');
+
+      await signOut();
+      router.push('/');
+    } catch (err: any) {
+      alert(err.message || 'Error deleting account');
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
   useEffect(() => {
     setMounted(true);
     // Load notification preferences & social links from localStorage if available
@@ -727,6 +756,13 @@ export default function ProfileView({ profileId, initialProfile, initialLaunches
                 {isOwnProfile && (
                   <span className="px-2.5 py-0.5 rounded-lg bg-[#ffe600] text-zinc-950 border-2 border-black text-[10px] font-black tracking-wider uppercase shadow-brutal-sm">
                     YOU
+                  </span>
+                )}
+
+                {isOwnProfile && user?.emailVerified && (
+                  <span className="px-2.5 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-black tracking-wider uppercase flex items-center gap-1 shadow-sm">
+                    <ShieldCheck className="h-3 w-3 stroke-[2.5]" />
+                    Verified Email
                   </span>
                 )}
               </div>
@@ -1536,7 +1572,15 @@ export default function ProfileView({ profileId, initialProfile, initialLaunches
             </div>
 
             {isOwnProfile && (
-              <div className="pt-4 border-t-2 border-zinc-800 flex justify-end">
+              <div className="pt-4 border-t-2 border-zinc-800 flex flex-wrap items-center justify-between gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="px-4 py-2.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 border-2 border-rose-800/80 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-brutal-sm"
+                >
+                  <AlertCircle className="h-4 w-4 stroke-[2.5]" />
+                  <span>Delete Account & Data</span>
+                </button>
+
                 <button
                   onClick={async () => {
                     await signOut();
@@ -1551,6 +1595,66 @@ export default function ProfileView({ profileId, initialProfile, initialLaunches
             )}
           </div>
         </section>
+      )}
+
+      {/* Account Deletion Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-zinc-900 border-4 border-black rounded-3xl p-6 md:p-8 max-w-md w-full shadow-brutal space-y-5 relative">
+            <button
+              onClick={() => {
+                setShowDeleteModal(false);
+                setDeleteConfirmInput('');
+              }}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-100 p-1 cursor-pointer"
+            >
+              <X className="h-5 w-5 stroke-[3]" />
+            </button>
+
+            <div className="flex items-center gap-3 text-rose-500">
+              <AlertCircle className="h-8 w-8 stroke-[2.5]" />
+              <h3 className="text-xl font-impact uppercase tracking-wide text-zinc-100">Permanent Account Deletion</h3>
+            </div>
+
+            <p className="text-xs text-zinc-300 font-medium leading-relaxed bg-rose-950/40 p-3.5 border-2 border-rose-900 rounded-2xl">
+              ⚠️ Warning: This action cannot be undone. All your profile info, launched products, upvotes, comments, and earned points will be permanently deleted from MemeLaunch.
+            </p>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-black uppercase tracking-wider text-zinc-300">
+                To confirm, type <span className="text-rose-400 font-mono font-bold">DELETE MY ACCOUNT</span> below:
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmInput}
+                onChange={(e) => setDeleteConfirmInput(e.target.value)}
+                placeholder="DELETE MY ACCOUNT"
+                className="w-full px-4 py-2.5 bg-zinc-950 border-2 border-black rounded-xl text-xs focus:outline-none focus:border-rose-500 text-zinc-100 font-mono font-bold"
+              />
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirmInput !== 'DELETE MY ACCOUNT' || isDeletingAccount}
+                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 disabled:opacity-40 text-white font-black text-xs uppercase tracking-wider rounded-xl border-2 border-black shadow-brutal-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
+              >
+                {isDeletingAccount ? <Loader2 className="h-4 w-4 animate-spin" /> : <AlertCircle className="h-4 w-4 stroke-[3]" />}
+                <span>Confirm & Delete</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmInput('');
+                }}
+                className="px-4 py-2.5 bg-zinc-950 hover:bg-zinc-800 text-zinc-300 font-bold text-xs uppercase tracking-wider rounded-xl border-2 border-black cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

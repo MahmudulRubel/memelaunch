@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export function Footer() {
   return (
@@ -14,10 +15,11 @@ export function Footer() {
               className="inline-block group hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform"
               title="MemeLaunch Home"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
+              <Image 
                 src="/logo.png" 
                 alt="Launchme MemeLaunch Logo" 
+                width={160}
+                height={40}
                 className="h-10 w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
               />
             </Link>

@@ -4,7 +4,7 @@ const ContentSecurityPolicy = `
   default-src 'self';
   script-src 'self' 'unsafe-eval' 'unsafe-inline';
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-  img-src 'self' blob: data: https://*.insforge.app https://*.ap-southeast.insforge.app https://*.unsplash.com https://*.imgflip.com https://imgflip.com https://*.googleusercontent.com;
+  img-src 'self' blob: data: https://*.insforge.app https://*.ap-southeast.insforge.app https://*.unsplash.com https://*.imgflip.com https://imgflip.com https://i.imgflip.com https://*.googleusercontent.com https://avatars.githubusercontent.com;
   font-src 'self' https://fonts.gstatic.com;
   connect-src 'self' https://*.insforge.app https://*.ap-southeast.insforge.app;
   frame-ancestors 'none';
@@ -18,7 +18,6 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['lucide-react'],
   },
   images: {
-    unoptimized: true,
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 31536000,
     remotePatterns: [
@@ -36,6 +35,10 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
         hostname: '*.imgflip.com',
       },
       {
@@ -44,7 +47,19 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'i.imgflip.com',
+      },
+      {
+        protocol: 'https',
         hostname: '*.googleusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com',
       },
     ],
   },

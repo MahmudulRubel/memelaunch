@@ -47,7 +47,7 @@ export default async function HomePage() {
       .order('created_at', { ascending: false });
 
     const timeoutPromise = new Promise<{ data: null; error: { message: string } }>((resolve) =>
-      setTimeout(() => resolve({ data: null, error: { message: 'Database fetch timeout' } }), 3500)
+      setTimeout(() => resolve({ data: null, error: { message: 'Database fetch timeout' } }), 10000)
     );
 
     const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
@@ -55,7 +55,7 @@ export default async function HomePage() {
     if (!error && data) {
       initialLaunches = data as Launch[];
     } else if (error) {
-      console.error('Server-side error/timeout fetching launches:', error.message || error);
+      console.warn('Server-side notice fetching launches (client will fallback if needed):', error.message || error);
     }
   } catch (err) {
     console.error('Server-side exception fetching launches:', err);

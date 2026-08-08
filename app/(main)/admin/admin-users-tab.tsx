@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { insforge, insforgeAdmin } from '@/lib/insforge';
+import Image from 'next/image';
+import { insforge, insforgeAdmin, resolveStorageUrl } from '@/lib/insforge';
 import { Search, Shield, ShieldOff, Loader2, User as UserIcon, Award } from 'lucide-react';
 
 interface UserRecord {
@@ -122,9 +123,9 @@ export function AdminUsersTab() {
               {filteredUsers.map((u) => (
                 <tr key={u.id} className="hover:bg-zinc-850/40 transition-colors">
                   <td className="p-4 flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden">
+                    <div className="relative h-8 w-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden">
                       {u.avatar ? (
-                        <img src={u.avatar} alt={u.name || 'User'} className="h-full w-full object-cover" />
+                        <Image src={resolveStorageUrl(u.avatar)} alt={u.name || 'User'} width={32} height={32} className="h-full w-full object-cover" />
                       ) : (
                         <UserIcon className="h-4 w-4 text-zinc-400" />
                       )}

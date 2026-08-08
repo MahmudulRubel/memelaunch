@@ -47,9 +47,10 @@ export interface Launch {
 interface MemeCardProps {
   launch: Launch;
   onSelect?: (launch: Launch) => void;
+  priority?: boolean;
 }
 
-export function MemeCard({ launch, onSelect }: MemeCardProps) {
+export function MemeCard({ launch, onSelect, priority = false }: MemeCardProps) {
   const { user } = useAuth();
   const router = useRouter();
   
@@ -162,10 +163,10 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
             src={imgSrc || 'https://i.imgflip.com/30b1gx.jpg'}
             alt={getCaptionText(launch.caption)}
             fill
-            unoptimized
+            unoptimized={imgSrc.endsWith('.svg') || imgSrc.startsWith('data:image/svg')}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
-            priority={false}
+            priority={priority}
             onError={() => setImgSrc('https://i.imgflip.com/30b1gx.jpg')}
           />
         ) : (
@@ -250,7 +251,7 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
                   src={logoSrc || '/logo.png'}
                   alt={`${launch.product_name} logo`}
                   fill
-                  unoptimized
+                  unoptimized={logoSrc.endsWith('.svg') || logoSrc.startsWith('data:image/svg')}
                   sizes="36px"
                   className="object-cover"
                   onError={() => setLogoSrc('/logo.png')}
