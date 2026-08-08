@@ -36,6 +36,8 @@ export default function WorldCupPage() {
     },
   };
 
+  const activeMatch = tournament.matches.find((m) => m.status === 'live') || tournament.matches[0];
+
   return (
     <div className="min-h-screen bg-zinc-950 text-white pb-20">
       <script
