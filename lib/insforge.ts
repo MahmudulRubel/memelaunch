@@ -44,9 +44,11 @@ export const dbConnectionPoolConfig = {
  * bypassing CloudFront CDN 403 Forbidden errors.
  */
 export function resolveStorageUrl(url: string | null | undefined): string {
-  if (!url) return '';
-  if (url.includes('/api/storage/buckets/')) {
-    const match = url.match(/\/api\/storage\/buckets\/([^/]+)\/objects\/(.+)$/);
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+  if (trimmed.includes('/api/storage/buckets/')) {
+    const match = trimmed.match(/\/api\/storage\/buckets\/([^/]+)\/objects\/(.+)$/);
     if (match) {
       const bucket = match[1];
       const keyWithQuery = match[2];
@@ -54,7 +56,7 @@ export function resolveStorageUrl(url: string | null | undefined): string {
       return `/api/storage/${bucket}/${key}`;
     }
   }
-  return url;
+  return trimmed;
 }
 
 /**

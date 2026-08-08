@@ -280,13 +280,9 @@ export function MemeCard({ launch, onSelect, priority = false }: MemeCardProps) 
             </span>
 
             {/* World Cup Qualification Badge */}
-            {reactions.length >= 10 ? (
+            {reactions.length >= 10 && (
               <span className="inline-flex items-center gap-1 bg-amber-400 text-zinc-950 border-2 border-black px-2.5 py-0.5 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-brutal-sm">
                 <span>🏆</span> Top 16 Qualifier
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 bg-zinc-900 text-amber-400 border-2 border-black px-2.5 py-0.5 rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-brutal-sm">
-                <span>⚡</span> {10 - reactions.length} votes to Top 16
               </span>
             )}
 

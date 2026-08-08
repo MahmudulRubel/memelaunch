@@ -13,13 +13,16 @@ require_uppercase = false
 require_special_char = false
 
 [auth.smtp]
-enabled = false
-host = ""
+enabled = true
+host = "smtp.resend.com"
 port = 465
-username = ""
-sender_email = ""
-sender_name = ""
+username = "resend"
+sender_email = "onboarding@resend.dev"
+sender_name = "MemeLaunch"
 min_interval_seconds = 60
+# Note: Set INSFORGE_SMTP_PASSWORD in your InsForge dashboard secrets
+# to your RESEND_API_KEY value (re_xxxx...)
+# When you verify a custom domain in Resend, update sender_email to your domain.
 
 [storage]
 max_file_size_mb = 50

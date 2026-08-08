@@ -48,7 +48,12 @@ export default function SignupPage() {
       } else if (data?.requireEmailVerification) {
         setShowVerification(true);
       } else if (data?.accessToken) {
-        // Verification not required or auto logged-in
+        // Verification not required or auto logged-in — send welcome email
+        fetch('/api/email/welcome', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ toEmail: email, userName: name }),
+        }).catch(() => {}); // fire-and-forget
         await refreshUser();
         router.push('/');
         router.refresh();
@@ -74,6 +79,12 @@ export default function SignupPage() {
       if (error) {
         setErrorMsg(error.message || 'Invalid or expired verification code.');
       } else if (data?.accessToken) {
+        // Send welcome email after successful verification
+        fetch('/api/email/welcome', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ toEmail: email, userName: name }),
+        }).catch(() => {}); // fire-and-forget
         await refreshUser();
         router.push('/');
         router.refresh();

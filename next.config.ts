@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const ContentSecurityPolicy = `
   default-src 'self';
@@ -6,7 +7,7 @@ const ContentSecurityPolicy = `
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   img-src 'self' blob: data: https://*.insforge.app https://*.ap-southeast.insforge.app https://*.unsplash.com https://*.imgflip.com https://imgflip.com https://i.imgflip.com https://*.googleusercontent.com https://avatars.githubusercontent.com;
   font-src 'self' https://fonts.gstatic.com;
-  connect-src 'self' https://*.insforge.app https://*.ap-southeast.insforge.app;
+  connect-src 'self' https://*.insforge.app https://*.ap-southeast.insforge.app https://*.sentry.io;
   frame-ancestors 'none';
   object-src 'none';
   base-uri 'self';
@@ -23,43 +24,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '*.insforge.app',
+        hostname: '**',
       },
       {
-        protocol: 'https',
-        hostname: '*.ap-southeast.insforge.app',
-      },
-      {
-        protocol: 'https',
-        hostname: '*.unsplash.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-      },
-      {
-        protocol: 'https',
-        hostname: '*.imgflip.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'imgflip.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'i.imgflip.com',
-      },
-      {
-        protocol: 'https',
-        hostname: '*.googleusercontent.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'lh3.googleusercontent.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'avatars.githubusercontent.com',
+        protocol: 'http',
+        hostname: '**',
       },
     ],
   },
@@ -107,4 +76,20 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+
+  // Source map upload auth token
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  // Upload wider set of client source files for better stack trace resolution
+  widenClientFileUpload: true,
+
+  // Proxy API route to bypass ad-blockers
+  tunnelRoute: "/monitoring",
+
+  // Suppress output
+  silent: !process.env.CI,
+  disableLogger: true,
+});

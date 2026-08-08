@@ -14,9 +14,44 @@ export async function generateMetadata({ params }: PageProps) {
   const { productName } = await params;
   const decodedName = decodeURIComponent(productName);
 
+  let description = `Check out ${decodedName} on MemeLaunch - Build in Public. Launch in Humor. Win the Week.`;
+  let logoUrl = 'https://memelaunch.insforge.app/logo.png';
+
+  try {
+    const { data: launch } = await insforgeAdmin.database
+      .from('launches')
+      .select('product_description, product_logo_url, meme_image_url')
+      .ilike('product_name', decodedName)
+      .limit(1)
+      .maybeSingle();
+
+    if (launch?.product_description) {
+      description = launch.product_description;
+    }
+  } catch (e) {
+    // fallback
+  }
+
+  const encodedPath = encodeURIComponent(decodedName);
+
   return {
-    title: `${decodedName} | MemeLaunch`,
-    description: `Check out ${decodedName} on MemeLaunch - Build in Public. Launch in Humor.`,
+    title: `${decodedName} | MemeLaunch Product Page`,
+    description,
+    alternates: {
+      canonical: `https://memelaunch.insforge.app/products/${encodedPath}`,
+    },
+    openGraph: {
+      title: `${decodedName} | MemeLaunch Product Page`,
+      description,
+      url: `https://memelaunch.insforge.app/products/${encodedPath}`,
+      siteName: 'MemeLaunch',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${decodedName} | MemeLaunch Product Page`,
+      description,
+    },
   };
 }
 
@@ -97,5 +132,27 @@ export default async function ProductPage({ params }: PageProps) {
     );
   }
 
-  return <ProductView initialLaunchId={launchId} />;
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: decodedName,
+    url: `https://memelaunch.insforge.app/products/${encodeURIComponent(decodedName)}`,
+    applicationCategory: 'BusinessApplication',
+    operatingSystem: 'All',
+    publisher: {
+      '@type': 'Organization',
+      name: 'MemeLaunch',
+      url: 'https://memelaunch.insforge.app',
+    },
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <ProductView initialLaunchId={launchId} />
+    </>
+  );
 }

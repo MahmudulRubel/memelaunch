@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { SafeImage } from '@/components/safe-image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { insforge, insforgeAdmin, resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
@@ -271,11 +272,11 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
           <div className="flex items-start gap-4">
             {launch.product_logo_url && (
               <div className="relative h-16 w-16 md:h-20 md:w-20 rounded-2xl overflow-hidden shrink-0 border-2 border-black bg-zinc-900 shadow-brutal-sm">
-                <Image
-                  src={resolveStorageUrl(launch.product_logo_url)}
+                <SafeImage
+                  src={launch.product_logo_url}
                   alt={`${launch.product_name} logo`}
                   fill
-                  unoptimized={launch.product_logo_url.endsWith('.svg') || launch.product_logo_url.startsWith('data:image/svg')}
+                  fallbackType="logo"
                   sizes="80px"
                   className="object-cover"
                 />
@@ -334,11 +335,11 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
             {/* Meme View */}
             <div className="relative aspect-square w-full rounded-2xl overflow-hidden border-2 border-black bg-zinc-900 shadow-brutal">
               {launch.meme_image_url && (
-                <Image
-                  src={resolveStorageUrl(launch.meme_image_url)}
+                <SafeImage
+                  src={launch.meme_image_url}
                   alt={getCaptionText(launch.caption)}
                   fill
-                  unoptimized={launch.meme_image_url.endsWith('.svg') || launch.meme_image_url.startsWith('data:image/svg')}
+                  fallbackType="meme"
                   sizes="(max-width: 1024px) 100vw, 60vw"
                   className="object-cover"
                   priority

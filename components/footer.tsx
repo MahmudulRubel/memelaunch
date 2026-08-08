@@ -1,8 +1,16 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
 export function Footer() {
+  const handleOpenCookieSettings = () => {
+    if (typeof window !== 'undefined' && (window as any).openCookieConsentModal) {
+      (window as any).openCookieConsentModal();
+    }
+  };
+
   return (
     <footer className="w-full border-t-4 border-black bg-zinc-950 py-12 mt-auto">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -38,31 +46,40 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link id="footer-link-launch" href="/launch" className="hover:text-[#ffe600] transition-colors">
+                  Meme Studio (/launch)
+                </Link>
+              </li>
+              <li>
                 <Link id="footer-link-templates" href="/templates" className="hover:text-[#ffe600] transition-colors">
                   Meme Templates
                 </Link>
               </li>
               <li>
-                <a 
-                  id="footer-link-github"
-                  href="https://github.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="hover:text-[#ffe600] transition-colors"
-                >
-                  GitHub Repository
-                </a>
+                <Link id="footer-link-world-cup" href="/world-cup" className="hover:text-[#ffe600] transition-colors">
+                  The Meme World Cup 🏆
+                </Link>
+              </li>
+              <li>
+                <Link id="footer-link-analytics" href="/analytics" className="hover:text-[#ffe600] transition-colors">
+                  Founder Analytics
+                </Link>
               </li>
             </ul>
           </div>
 
           {/* Resources Column */}
           <div className="space-y-3">
-            <h4 className="text-xs font-black uppercase tracking-wider text-[#ffe600]">Community</h4>
+            <h4 className="text-xs font-black uppercase tracking-wider text-[#ffe600]">Resources</h4>
             <ul className="space-y-2 text-xs text-zinc-300 font-bold">
               <li>
+                <Link id="footer-link-blog" href="/blog" className="hover:text-[#ffe600] transition-colors text-cyan-400 font-extrabold">
+                  Blog & Growth Playbooks 📖
+                </Link>
+              </li>
+              <li>
                 <Link id="footer-link-rules" href="/rules" className="hover:text-[#ffe600] transition-colors">
-                  Arena Rules
+                  Arena Rules & Badges
                 </Link>
               </li>
               <li>
@@ -86,17 +103,26 @@ export function Footer() {
 
           {/* Legal Column */}
           <div className="space-y-3">
-            <h4 className="text-xs font-black uppercase tracking-wider text-[#ffe600]">Legal</h4>
+            <h4 className="text-xs font-black uppercase tracking-wider text-[#ffe600]">Legal & Data</h4>
             <ul className="space-y-2 text-xs text-zinc-300 font-bold">
               <li>
                 <Link id="footer-link-terms" href="/terms" className="hover:text-[#ffe600] transition-colors">
-                  Terms of Service
+                  Terms & Guidelines
                 </Link>
               </li>
               <li>
                 <Link id="footer-link-privacy" href="/privacy" className="hover:text-[#ffe600] transition-colors">
-                  Privacy Policy
+                  Privacy Policy & Data Rights Hub
                 </Link>
+              </li>
+              <li>
+                <button
+                  id="footer-link-cookies"
+                  onClick={handleOpenCookieSettings}
+                  className="hover:text-[#ffe600] transition-colors text-left font-bold"
+                >
+                  Cookie Preferences
+                </button>
               </li>
             </ul>
           </div>
@@ -115,4 +141,3 @@ export function Footer() {
     </footer>
   );
 }
-

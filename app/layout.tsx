@@ -3,6 +3,7 @@ import { Inter, Outfit, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth-provider";
 import { PostHogProvider } from "@/components/posthog-provider";
+import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -145,7 +146,10 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-50 font-sans">
         <PostHogProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            {children}
+            <CookieConsentBanner />
+          </AuthProvider>
         </PostHogProvider>
       </body>
     </html>
