@@ -132,5 +132,27 @@ export default async function ProductPage({ params }: PageProps) {
     );
   }
 
-  return <ProductView initialLaunchId={launchId} />;
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: decodedName,
+    url: `https://memelaunch.insforge.app/products/${encodeURIComponent(decodedName)}`,
+    applicationCategory: 'BusinessApplication',
+    operatingSystem: 'All',
+    publisher: {
+      '@type': 'Organization',
+      name: 'MemeLaunch',
+      url: 'https://memelaunch.insforge.app',
+    },
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <ProductView initialLaunchId={launchId} />
+    </>
+  );
 }

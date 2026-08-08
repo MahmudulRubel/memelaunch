@@ -14,10 +14,25 @@ export const metadata: Metadata = {
 export default function RulesPage() {
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: 'Arena Rules & Guidelines',
-    description: 'Community guidelines and rules for MemeLaunch.',
-    url: 'https://memelaunch.insforge.app/rules',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'What are the core rules of MemeLaunch?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Products must be real, memes must be relevant and humorous, and founders must respect point earning and social verification rules without anti-fraud violations.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'How do badges and trophies work?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Top weekly launches receive gold, silver, and bronze badges. Winners of the weekly Meme World Cup receive exclusive trophy badges on their product pages.',
+        },
+      },
+    ],
   };
 
   return (

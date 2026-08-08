@@ -17,10 +17,31 @@ export default function WorldCupPage() {
     setTournament(generateDemoTournament(newPhase));
   };
 
-  const activeMatch = tournament.matches.find((m) => m.status === 'live') || tournament.matches[0];
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: 'The Meme World Cup Weekly Tournament',
+    description: '16 Startups compete in 4 Groups and 1-on-1 Elimination Knockouts for the weekly World Cup Trophy.',
+    startDate: new Date().toISOString(),
+    eventStatus: 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
+    location: {
+      '@type': 'VirtualLocation',
+      url: 'https://memelaunch.insforge.app/world-cup',
+    },
+    organizer: {
+      '@type': 'Organization',
+      name: 'MemeLaunch',
+      url: 'https://memelaunch.insforge.app',
+    },
+  };
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white pb-20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Hero Header */}
       <section className="relative border-b border-zinc-800 bg-gradient-to-b from-amber-500/10 via-zinc-950 to-zinc-950 py-12 px-4">
         <div className="max-w-6xl mx-auto text-center space-y-4">
