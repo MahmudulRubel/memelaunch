@@ -16,8 +16,13 @@ import {
   Plus,
   Rocket
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { parseCaption, getCaptionText } from '@/lib/meme';
-import { HowItWorksModal } from '@/components/how-it-works-modal';
+
+const HowItWorksModal = dynamic(
+  () => import('@/components/how-it-works-modal').then((m) => m.HowItWorksModal),
+  { ssr: false }
+);
 
 interface HomeFeedProps {
   initialLaunches: Launch[];
@@ -296,6 +301,8 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
                     <img
                       src={resolveStorageUrl(topFeaturedLaunch.meme_image_url)}
                       alt={topFeaturedLaunch.product_name}
+                      loading="eager"
+                      fetchPriority="high"
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   )}

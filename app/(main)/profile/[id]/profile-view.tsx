@@ -619,7 +619,7 @@ export default function ProfileView({ profileId, initialProfile, initialLaunches
     else if (unlockedCount === 2) rankName = 'Arena Master';
     else if (unlockedCount === 1) rankName = 'Meme Pioneer';
 
-    const text = `Check out my Founder Stats on @MemeLaunch! 🚀\n\n🎯 launches: ${stats.totalLaunches}\n🔥 reactions: ${stats.totalReactions}\n🏅 Rank: ${rankName}\n\nJoin the chaos of meme-native product discovery! 👾👇\n`;
+    const text = `🔥 Check out my Founder Stats on @launchme_me! 🚀\n\n🎯 Launches: ${stats.totalLaunches}\n⚡ Reactions: ${stats.totalReactions}\n🏅 Rank: ${rankName}\n\nJoin the chaos of meme-native product discovery! 👾👇\n`;
     const shareUrl = mounted && typeof window !== 'undefined' ? window.location.href : `https://memelaunch.app/profile/${profileId}`;
     return `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
   }, [profile, stats, achievements, profileId, mounted]);

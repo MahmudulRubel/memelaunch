@@ -181,6 +181,7 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
                             src={resolveStorageUrl(launch.meme_image_url)}
                             alt={launch.product_name}
                             fill
+                            unoptimized
                             sizes="48px"
                             className="object-cover"
                           />
@@ -311,6 +312,7 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
                                   alt={launch.users.name || 'User'}
                                   width={24}
                                   height={24}
+                                  unoptimized
                                   className="object-cover h-full w-full"
                                 />
                               ) : (

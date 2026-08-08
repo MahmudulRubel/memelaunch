@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
@@ -74,11 +75,14 @@ export function Navigation() {
               className="flex items-center group hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform shrink-0"
               title="MemeLaunch Home"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
+              <Image 
                 src="/logo.png" 
                 alt="Launchme MemeLaunch Logo" 
+                width={180}
+                height={48}
+                priority
                 className="h-9 sm:h-12 w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] shrink-0"
+                style={{ width: 'auto' }}
               />
             </Link>
 
@@ -135,10 +139,11 @@ export function Navigation() {
                   >
                     <div className={`h-8 w-8 rounded-full border border-black flex items-center justify-center text-sm font-black overflow-hidden ${user.profile?.avatar_url ? 'bg-[#ffe600]' : getAvatarGradient(user.profile?.name || user.email)}`}>
                       {user.profile?.avatar_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img 
+                        <Image 
                           src={resolveStorageUrl(user.profile.avatar_url)} 
                           alt={user.profile.name || 'User'} 
+                          width={32}
+                          height={32}
                           className="h-full w-full object-cover"
                         />
                       ) : (

@@ -14,19 +14,29 @@ const ContentSecurityPolicy = `
 `.replace(/\s{2,}/g, ' ').trim();
 
 const nextConfig: NextConfig = {
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
+  },
   images: {
+    unoptimized: true,
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 31536000,
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**.insforge.app',
+        hostname: '*.insforge.app',
       },
       {
         protocol: 'https',
-        hostname: '**.unsplash.com',
+        hostname: '*.ap-southeast.insforge.app',
       },
       {
         protocol: 'https',
-        hostname: '**.imgflip.com',
+        hostname: '*.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.imgflip.com',
       },
       {
         protocol: 'https',
@@ -34,14 +44,14 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: '**.googleusercontent.com',
+        hostname: '*.googleusercontent.com',
       },
     ],
   },
   async headers() {
     return [
       {
-        source: '/:path*',
+        source: '/:path((?!_next/static|_next/image).*)',
         headers: [
           {
             key: 'Content-Security-Policy',
@@ -66,6 +76,15 @@ const nextConfig: NextConfig = {
           {
             key: 'Strict-Transport-Security',
             value: 'max-age=31536000; includeSubDomains; preload',
+          },
+        ],
+      },
+      {
+        source: '/(logo.png|favicon.ico|icon.png|apple-icon.png|globe.svg)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
           },
         ],
       },

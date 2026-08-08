@@ -245,6 +245,7 @@ export function MemeCard({ launch, onSelect }: MemeCardProps) {
                   src={resolveStorageUrl(launch.product_logo_url)}
                   alt={`${launch.product_name} logo`}
                   fill
+                  unoptimized
                   sizes="36px"
                   className="object-cover"
                 />

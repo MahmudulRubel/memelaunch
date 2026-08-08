@@ -338,6 +338,7 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                         src={resolveStorageUrl(launch.meme_image_url)}
                         alt={getCaptionText(launch.caption)}
                         fill
+                        unoptimized
                         sizes="(max-width: 768px) 100vw, 420px"
                         className="object-cover"
                       />

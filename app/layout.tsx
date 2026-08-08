@@ -7,16 +7,22 @@ import { PostHogProvider } from "@/components/posthog-provider";
 const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
+  preload: true,
 });
 
 const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
+  display: "swap",
+  preload: true,
 });
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
+  display: "swap",
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -70,7 +76,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "MemeLaunch — Build in Public. Launch in Humor. Win the Week.",
     description: "The playful, high-contrast alternative to Product Hunt. Pitch your SaaS or dev tool using viral memes.",
-    creator: "@launchmeme",
+    creator: "@launchme_me",
     images: ["https://memelaunch.insforge.app/logo.png"],
   },
   icons: {
@@ -98,7 +104,7 @@ export default function RootLayout({
     url: "https://memelaunch.insforge.app",
     logo: "https://memelaunch.insforge.app/favicon.ico",
     sameAs: [
-      "https://x.com/launchmeme",
+      "https://x.com/launchme_me",
       "https://x.com/builtwithrubel"
     ],
     description: "Meme-native product launch arena for indie hackers and startup founders.",
@@ -123,6 +129,8 @@ export default function RootLayout({
     >
       <head>
         {/* Resource hints for instant TLS handshake & asset fetching */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://fw47aqh3.ap-southeast.insforge.app" />
         <link rel="dns-prefetch" href="https://fw47aqh3.ap-southeast.insforge.app" />
         <link rel="preconnect" href="https://i.imgflip.com" />
