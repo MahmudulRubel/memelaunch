@@ -374,8 +374,9 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
               <div className="space-y-3">
                 <h3 className="font-black text-sm uppercase text-zinc-200 tracking-wider">Product Screenshots</h3>
                 <div className="relative aspect-video w-full rounded-2xl overflow-hidden border-2 border-black bg-zinc-900 shadow-brutal">
-                  <Image
-                    src={resolveStorageUrl(screenshots[activeScreenshotIdx].image_url)}
+                  <SafeImage
+                    src={screenshots[activeScreenshotIdx].image_url}
+                    fallbackType="general"
                     alt={`Screenshot ${activeScreenshotIdx + 1}`}
                     fill
                     sizes="(max-width: 1024px) 100vw, 60vw"
@@ -408,7 +409,7 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
                           idx === activeScreenshotIdx ? 'border-[#ffe600] shadow-brutal-sm scale-105' : 'border-black opacity-60 hover:opacity-100'
                         }`}
                       >
-                        <Image src={resolveStorageUrl(s.image_url)} alt="" fill className="object-cover" />
+                        <SafeImage src={s.image_url} fallbackType="general" alt="" fill className="object-cover" />
                       </button>
                     ))}
                   </div>

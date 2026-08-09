@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { SafeImage } from '@/components/safe-image';
 import { WorldCupEntry, calculateGroupTables } from '@/lib/world-cup';
 
 interface GroupStandingsProps {
@@ -85,11 +86,16 @@ export function GroupStandings({ entries, activePhase }: GroupStandingsProps) {
                   {/* Product Info */}
                   <td className="py-3">
                     <div className="flex items-center gap-3">
-                      <img
-                        src={entry.memeImageUrl}
-                        alt={entry.productName}
-                        className="w-10 h-10 rounded-lg object-cover border border-zinc-800 shrink-0"
-                      />
+                      <div className="relative w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-zinc-800">
+                        <SafeImage
+                          src={entry.memeImageUrl}
+                          fallbackType="meme"
+                          alt={entry.productName}
+                          width={40}
+                          height={40}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                       <div>
                         <div className="font-semibold text-white flex items-center gap-1.5">
                           {entry.productName}

@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { insforge, resolveStorageUrl } from '@/lib/insforge';
+import { SafeImage } from '@/components/safe-image';
 import { Coins, PlusCircle, MinusCircle, Loader2, User as UserIcon } from 'lucide-react';
 
 interface PointTx {
@@ -198,7 +198,7 @@ export function AdminPointAuditTab() {
                     <td className="p-4 flex items-center gap-3">
                       <div className="relative h-7 w-7 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden">
                         {tx.users?.avatar ? (
-                          <Image src={resolveStorageUrl(tx.users.avatar)} alt="User" width={28} height={28} className="h-full w-full object-cover" />
+                          <SafeImage src={tx.users.avatar} fallbackType="avatar" alt="User" width={28} height={28} className="h-full w-full object-cover" />
                         ) : (
                           <UserIcon className="h-3.5 w-3.5 text-zinc-400" />
                         )}

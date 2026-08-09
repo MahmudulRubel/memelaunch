@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { WorldCupMatch } from '@/lib/world-cup';
+import { SafeImage } from '@/components/safe-image';
 
 interface KnockoutBracketProps {
   matches: WorldCupMatch[];
@@ -40,9 +41,12 @@ export function KnockoutBracket({ matches }: KnockoutBracketProps) {
           }`}
         >
           <div className="flex items-center gap-2 truncate pr-2">
-            <img
+            <SafeImage
               src={match.entry1.memeImageUrl}
               alt={match.entry1.productName}
+              fallbackType="meme"
+              width={20}
+              height={20}
               className="w-5 h-5 rounded object-cover shrink-0"
             />
             <span className="truncate">{match.entry1.productName}</span>
@@ -61,9 +65,12 @@ export function KnockoutBracket({ matches }: KnockoutBracketProps) {
           }`}
         >
           <div className="flex items-center gap-2 truncate pr-2">
-            <img
+            <SafeImage
               src={match.entry2.memeImageUrl}
               alt={match.entry2.productName}
+              fallbackType="meme"
+              width={20}
+              height={20}
               className="w-5 h-5 rounded object-cover shrink-0"
             />
             <span className="truncate">{match.entry2.productName}</span>

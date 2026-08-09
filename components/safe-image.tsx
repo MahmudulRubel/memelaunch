@@ -6,25 +6,29 @@ import { resolveStorageUrl } from '@/lib/insforge';
 
 export type FallbackType = 'meme' | 'avatar' | 'logo' | 'general';
 
-const DEFAULT_FALLBACKS: Record<FallbackType, string> = {
-  meme: 'https://i.imgflip.com/30b1gx.jpg',
-  avatar:
-    'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%2327272a"/><circle cx="50" cy="40" r="20" fill="%2371717a"/><path d="M20 90 C20 70, 80 70, 80 90" fill="%2371717a"/></svg>',
-  logo:
-    'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%2327272a"/><text x="50" y="58" font-family="sans-serif" font-size="32" font-weight="bold" fill="%23ffe600" text-anchor="middle">ML</text></svg>',
-  general:
-    'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%2318181b"/><text x="50" y="55" font-family="sans-serif" font-size="14" fill="%2371717a" text-anchor="middle">No Image</text></svg>',
+const REAL_MEME_FALLBACK = '/drake.png';
+const REAL_AVATAR_FALLBACK =
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+const REAL_LOGO_FALLBACK = '/logo-icon.png';
+const REAL_GENERAL_FALLBACK = '/drake.png';
+
+export const DEFAULT_FALLBACKS: Record<FallbackType, string> = {
+  meme: REAL_MEME_FALLBACK,
+  avatar: REAL_AVATAR_FALLBACK,
+  logo: REAL_LOGO_FALLBACK,
+  general: REAL_GENERAL_FALLBACK,
 };
 
 export interface SafeImageProps extends Omit<ImageProps, 'src' | 'onError'> {
   src: string | null | undefined;
   fallbackSrc?: string;
   fallbackType?: FallbackType;
+  onImageError?: () => void;
 }
 
 /**
  * SafeImage wraps Next.js `<Image />` with automatic storage URL resolution,
- * unoptimized SVG detection, and stateful fallback protection against 404/broken URLs.
+ * unoptimized fallback for remote hosts, and multi-stage recovery using REAL photos.
  */
 export function SafeImage({
   src,
@@ -32,34 +36,65 @@ export function SafeImage({
   fallbackType = 'general',
   alt,
   unoptimized,
+  onImageError,
   ...props
 }: SafeImageProps) {
-  const defaultFallback = fallbackSrc || DEFAULT_FALLBACKS[fallbackType];
-  const initialResolved = resolveStorageUrl(src) || defaultFallback;
-  const [imgSrc, setImgSrc] = useState<string>(initialResolved);
+  const guaranteedFallback = DEFAULT_FALLBACKS[fallbackType] || REAL_GENERAL_FALLBACK;
+  const primaryResolved = resolveStorageUrl(src);
+
+  const getInitialState = () => {
+    if (primaryResolved) {
+      return { url: primaryResolved, stage: 0 };
+    }
+    if (fallbackSrc) {
+      return { url: fallbackSrc, stage: 1 };
+    }
+    return { url: guaranteedFallback, stage: 2 };
+  };
+
+  const [{ url: imgSrc, stage }, setImgState] = useState(getInitialState);
 
   useEffect(() => {
-    const resolved = resolveStorageUrl(src);
-    setImgSrc(resolved || defaultFallback);
-  }, [src, defaultFallback]);
+    setImgState(getInitialState());
+  }, [src, fallbackSrc, guaranteedFallback]);
 
   const isSvg =
     typeof imgSrc === 'string' &&
     (imgSrc.endsWith('.svg') || imgSrc.startsWith('data:image/svg'));
 
+  const isExternalRemote =
+    typeof imgSrc === 'string' &&
+    (imgSrc.startsWith('http://') || imgSrc.startsWith('https://'));
+
+  // Always enable unoptimized for external URLs or fallbacks so browser loads real photo directly
+  const isUnoptimized = unoptimized ?? (stage > 0 || isSvg || isExternalRemote);
+
+  const handleError = () => {
+    onImageError?.();
+    if (stage === 0) {
+      if (fallbackSrc && fallbackSrc !== imgSrc) {
+        setImgState({ url: fallbackSrc, stage: 1 });
+      } else {
+        setImgState({ url: guaranteedFallback, stage: 2 });
+      }
+    } else if (stage === 1) {
+      setImgState({ url: guaranteedFallback, stage: 2 });
+    } else if (stage === 2 && imgSrc !== REAL_GENERAL_FALLBACK) {
+      setImgState({ url: REAL_GENERAL_FALLBACK, stage: 3 });
+    }
+  };
+
   return (
     <Image
       {...props}
-      src={imgSrc || defaultFallback}
+      src={imgSrc || guaranteedFallback}
       alt={alt || ''}
-      unoptimized={unoptimized ?? isSvg}
-      onError={() => {
-        if (imgSrc !== defaultFallback) {
-          setImgSrc(defaultFallback);
-        }
-      }}
+      unoptimized={isUnoptimized}
+      onError={handleError}
     />
   );
 }
 
 export default SafeImage;
+
+

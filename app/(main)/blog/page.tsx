@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { SafeImage } from '@/components/safe-image';
 import { BLOG_POSTS, BlogPost } from '@/lib/blog-data';
 import {
   BookOpen,
@@ -68,8 +68,9 @@ export default function BlogIndexPage() {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
             
             <div className="md:col-span-5 relative aspect-video md:aspect-square rounded-2xl overflow-hidden border-2 border-black bg-zinc-950 shadow-brutal-sm">
-              <Image
+              <SafeImage
                 src={featuredPost.coverImage}
+                fallbackType="general"
                 alt={featuredPost.title}
                 fill
                 sizes="(max-width: 768px) 100vw, 40vw"
@@ -179,8 +180,9 @@ export default function BlogIndexPage() {
             >
               <div className="space-y-3">
                 <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-black bg-zinc-900 shadow-brutal-sm">
-                  <Image
+                  <SafeImage
                     src={post.coverImage}
+                    fallbackType="general"
                     alt={post.title}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

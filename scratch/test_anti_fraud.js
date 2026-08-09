@@ -38,8 +38,8 @@ async function testAntiFraud() {
   });
   console.log('Result 1 (Expected 400 failure):', res1.status, res1.data.message);
 
-  // Test 2: Submit social task with openedAt < 30s ago -> Should fail 400
-  console.log('\n--- Test 2: Claim with openedAt < 30 seconds ago ---');
+  // Test 2: Submit social task with openedAt < 21s ago -> Should fail 400
+  console.log('\n--- Test 2: Claim with openedAt < 21 seconds ago ---');
   const res2 = await post('/api/points/claim', {
     userId,
     taskKey,
@@ -50,15 +50,15 @@ async function testAntiFraud() {
   });
   console.log('Result 2 (Expected 400 timer failure):', res2.status, res2.data.message);
 
-  // Test 3: Submit valid claim with handle and openedAt > 30s ago -> Should succeed 200
-  console.log('\n--- Test 3: Valid claim with handle @jhonsmith and openedAt > 30s ago ---');
+  // Test 3: Submit valid claim with handle and openedAt > 21s ago -> Should succeed 200
+  console.log('\n--- Test 3: Valid claim with handle @jhonsmith and openedAt > 21s ago ---');
   const res3 = await post('/api/points/claim', {
     userId,
     taskKey,
     amount: 5,
     actionType: 'follow_launchmeme_x',
     handle: '@jhonsmith',
-    openedAt: Date.now() - 35000 // 35s ago
+    openedAt: Date.now() - 25000 // 25s ago
   });
   console.log('Result 3 (Expected 200 success):', res3.status, res3.data.message);
   console.log('New Points Total:', res3.data.points);

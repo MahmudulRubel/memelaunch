@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { MemeStudio, MemeStudioRef } from '@/components/editor/meme-studio';
-import { insforge, resolveStorageUrl } from '@/lib/insforge';
+import { insforge, resolveStorageUrl, uploadImageToStorage } from '@/lib/insforge';
 import { compressImage } from '@/lib/image';
 import { getUserPoints, deductPointsForLaunch } from '@/lib/points';
 import { EarnPointsModal } from '@/components/points/earn-points-modal';
@@ -408,26 +408,12 @@ function LaunchForm() {
       });
     }
 
-    // Validate caption above
-    if (captionPosition === 'above' || captionPosition === 'both') {
-      if (!textAbove.trim()) {
-        errors.textAbove = 'Caption above is required';
-      } else if (textAbove.length < 3) {
-        errors.textAbove = 'Caption above must be at least 3 characters';
-      } else if (textAbove.length > 100) {
-        errors.textAbove = 'Caption above must be 100 characters or less';
-      }
+    // Optional caption length check if provided
+    if (textAbove && textAbove.length > 100) {
+      errors.textAbove = 'Caption above must be 100 characters or less';
     }
-
-    // Validate caption below
-    if (captionPosition === 'below' || captionPosition === 'both') {
-      if (!textBelow.trim()) {
-        errors.textBelow = 'Caption below is required';
-      } else if (textBelow.length < 3) {
-        errors.textBelow = 'Caption below must be at least 3 characters';
-      } else if (textBelow.length > 100) {
-        errors.textBelow = 'Caption below must be 100 characters or less';
-      }
+    if (textBelow && textBelow.length > 100) {
+      errors.textBelow = 'Caption below must be 100 characters or less';
     }
 
     // 2. Custom validation for files
@@ -435,11 +421,8 @@ function LaunchForm() {
       errors.productLogo = 'Please upload a product logo';
     }
 
-    if (imageSource === 'upload' && !memeFile) {
-      errors.meme = 'Please upload a meme image';
-    }
-    if (imageSource === 'template' && !selectedTemplate) {
-      errors.meme = 'Please select a template';
+    if (!memePreviewSource && !memeFile && !selectedTemplate) {
+      errors.meme = 'Please select a template or upload a background image in the Meme Studio';
     }
 
     if (screenshotPreviews.length < 2) {
@@ -447,13 +430,18 @@ function LaunchForm() {
     }
 
     if (Object.keys(errors).length > 0) {
+      const errorList = Object.values(errors);
+      errors.submit = `Please fix the following issue(s): ${errorList.join('; ')}`;
       setFormErrors(errors);
-      // Scroll to first error
+
+      // Scroll to first error element or error banner
       const firstErrorKey = Object.keys(errors)[0];
-      const element = document.getElementById(`err-${firstErrorKey}`);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+      setTimeout(() => {
+        const element = document.getElementById(`err-${firstErrorKey}`) || document.getElementById('launch-error-banner');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 50);
       return;
     }
 
@@ -481,19 +469,11 @@ function LaunchForm() {
           type: 'image/jpeg',
         });
 
-        setStatusMessage('Uploading product logo to S3...');
+        setStatusMessage('Uploading product logo...');
         const logoExtension = productLogoFile.name.split('.').pop() || 'jpg';
         const logoPath = `${user.id}/${Date.now()}_logo.${logoExtension}`;
 
-        const { data: logoUploadData, error: logoUploadError } = await insforge.storage
-          .from('memes')
-          .upload(logoPath, compressedLogoFile);
-
-        if (logoUploadError || !logoUploadData) {
-          throw new Error(logoUploadError?.message || 'Logo upload failed.');
-        }
-
-        logoUrl = logoUploadData.url;
+        logoUrl = await uploadImageToStorage(compressedLogoFile, 'memes', logoPath);
       }
 
       // Step A: Export & Upload Canvas Meme Image from MemeStudio
@@ -504,14 +484,8 @@ function LaunchForm() {
         setStatusMessage('Exporting studio canvas meme...');
         const studioMemeFile = new File([studioCanvasBlob], `meme_${Date.now()}.png`, { type: 'image/png' });
         const memePath = `${user.id}/${Date.now()}_studio_meme.png`;
-        const { data: uploadData, error: uploadError } = await insforge.storage
-          .from('memes')
-          .upload(memePath, studioMemeFile);
 
-        if (uploadError || !uploadData) {
-          throw new Error(uploadError?.message || 'Meme canvas upload failed.');
-        }
-        memeImageUrl = uploadData.url;
+        memeImageUrl = await uploadImageToStorage(studioMemeFile, 'memes', memePath);
       } else if (imageSource === 'upload' && memeFile) {
         setStatusMessage('Compressing meme image...');
         const compressedMemeBlob = await compressImage(memeFile, 1200, 0.8);
@@ -519,19 +493,11 @@ function LaunchForm() {
           type: 'image/jpeg',
         });
 
-        setStatusMessage('Uploading meme to S3...');
+        setStatusMessage('Uploading meme...');
         const fileExtension = memeFile.name.split('.').pop() || 'jpg';
         const memePath = `${user.id}/${Date.now()}_meme.${fileExtension}`;
 
-        const { data: uploadData, error: uploadError } = await insforge.storage
-          .from('memes')
-          .upload(memePath, compressedMemeFile);
-
-        if (uploadError || !uploadData) {
-          throw new Error(uploadError?.message || 'Meme upload failed.');
-        }
-
-        memeImageUrl = uploadData.url;
+        memeImageUrl = await uploadImageToStorage(compressedMemeFile, 'memes', memePath);
       } else if (imageSource === 'template' && selectedTemplate) {
         memeImageUrl = selectedTemplate.thumbnail_url;
       }
@@ -553,19 +519,12 @@ function LaunchForm() {
             type: 'image/jpeg',
           });
 
-          setStatusMessage(`Uploading screenshot ${i + 1} to S3...`);
+          setStatusMessage(`Uploading screenshot ${i + 1}...`);
           const fileExtension = file.name.split('.').pop() || 'jpg';
           const screenshotPath = `${user.id}/${Date.now()}_screenshot_${i}.${fileExtension}`;
 
-          const { data: uploadData, error: uploadError } = await insforge.storage
-            .from('screenshots')
-            .upload(screenshotPath, compressedFile);
-
-          if (uploadError || !uploadData) {
-            throw new Error(uploadError?.message || `Screenshot ${i + 1} upload failed.`);
-          }
-
-          uploadedScreenshotUrls.push(uploadData.url);
+          const screenshotUrl = await uploadImageToStorage(compressedFile, 'screenshots', screenshotPath);
+          uploadedScreenshotUrls.push(screenshotUrl);
         }
       }
 
@@ -739,8 +698,19 @@ function LaunchForm() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Top Validation Error Banner */}
+          {formErrors.submit && (
+            <div id="launch-error-banner" className="p-4 bg-rose-950/60 border-2 border-rose-600 rounded-2xl flex gap-3 text-rose-300 text-sm shadow-2xl animate-in fade-in">
+              <AlertCircle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-bold text-rose-200">Unable to Submit Launch</p>
+                <p className="text-xs leading-relaxed">{formErrors.submit}</p>
+              </div>
+            </div>
+          )}
+
           {/* TOP FULL-WIDTH SECTION: PROFESSIONAL MEME STUDIO */}
-          <div className="w-full space-y-2">
+          <div className="w-full space-y-2" id="err-meme">
             <span className="text-xs font-mono text-zinc-500 uppercase tracking-widest block">
               Professional Meme Studio
             </span>
@@ -756,15 +726,33 @@ function LaunchForm() {
               onSelectTemplate={(tmpl) => {
                 setSelectedTemplate(tmpl);
                 setImageSource('template');
+                setFormErrors((prev) => {
+                  const copy = { ...prev };
+                  delete copy.meme;
+                  delete copy.submit;
+                  return copy;
+                });
               }}
               onUploadCustomImage={(file) => {
                 setMemeFile(file);
                 setImageSource('upload');
                 setMemePreview(URL.createObjectURL(file));
+                setFormErrors((prev) => {
+                  const copy = { ...prev };
+                  delete copy.meme;
+                  delete copy.submit;
+                  return copy;
+                });
               }}
               onTextAboveChange={setTextAbove}
               onTextBelowChange={setTextBelow}
             />
+            {formErrors.meme && (
+              <p className="text-xs text-rose-400 mt-1 flex items-center gap-1 font-mono">
+                <AlertCircle className="h-3.5 w-3.5" />
+                {formErrors.meme}
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pt-4">
@@ -1207,6 +1195,14 @@ function LaunchForm() {
                   )}
                 </div>
               </div>
+
+              {/* Action Bar Error Notice */}
+              {formErrors.submit && (
+                <div className="p-3 bg-rose-950/50 border border-rose-600/60 rounded-xl text-xs text-rose-300 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
+                  <span>{formErrors.submit}</span>
+                </div>
+              )}
 
               {/* Launch CTA Action Bar */}
               <div className="pt-6 border-t border-zinc-800/80 flex items-center justify-between gap-4">

@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { insforge, insforgeAdmin, resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
 import { MemeCard, type Launch } from '@/components/feed/meme-card';
+import { SafeImage } from '@/components/safe-image';
 import {
   Flame,
   Clock,
@@ -300,12 +301,12 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
                 {/* Meme Visual Box */}
                 <div className="relative aspect-square w-full rounded-xl overflow-hidden border-2 border-black bg-zinc-900">
                   {topFeaturedLaunch.meme_image_url && (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      src={resolveStorageUrl(topFeaturedLaunch.meme_image_url)}
+                    <SafeImage
+                      src={topFeaturedLaunch.meme_image_url}
+                      fallbackType="meme"
                       alt={topFeaturedLaunch.product_name}
-                      loading="eager"
-                      fetchPriority="high"
+                      fill
+                      priority
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   )}
@@ -397,8 +398,10 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
                   <span className="text-zinc-400 font-mono text-[10px] font-extrabold uppercase">SPOTLIGHT</span>
                 </div>
                 <div className="relative aspect-square w-full rounded-xl overflow-hidden border-2 border-black bg-zinc-900">
-                  <Image 
-                    src="https://i.imgflip.com/1g8my4.jpg" 
+                  <SafeImage 
+                    src="/drake.png"
+                    fallbackSrc="https://i.imgflip.com/1g8my4.jpg" 
+                    fallbackType="meme"
                     alt="Drake Meme" 
                     fill
                     sizes="(max-width: 640px) 100vw, 384px"

@@ -2,11 +2,11 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
-import { resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
+import { insforge, resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
+import { SafeImage } from '@/components/safe-image';
 import { getUserPoints } from '@/lib/points';
 import { Menu, X, LogOut, User, Plus, Compass, Trophy, LayoutGrid, Settings, Zap, BarChart3, Sparkles, ChevronRight } from 'lucide-react';
 
@@ -87,8 +87,9 @@ export function Navigation() {
               className="flex items-center group hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform shrink-0"
               title="MemeLaunch Home"
             >
-              <Image 
-                src="/logo.png" 
+              <SafeImage 
+                src="/logo.png"
+                fallbackType="logo" 
                 alt="Launchme MemeLaunch Logo" 
                 width={180}
                 height={48}
@@ -151,8 +152,9 @@ export function Navigation() {
                   >
                     <div className={`h-8 w-8 rounded-full border border-black flex items-center justify-center text-sm font-black overflow-hidden ${user.profile?.avatar_url ? 'bg-[#ffe600]' : getAvatarGradient(user.profile?.name || user.email)}`}>
                       {user.profile?.avatar_url ? (
-                        <Image 
-                          src={resolveStorageUrl(user.profile.avatar_url)} 
+                        <SafeImage 
+                          src={user.profile.avatar_url}
+                          fallbackType="avatar" 
                           alt={user.profile.name || 'User'} 
                           width={32}
                           height={32}
@@ -283,8 +285,9 @@ export function Navigation() {
                   <div className="flex items-center gap-3 min-w-0 flex-1 pr-2">
                     <div className={`h-10 w-10 rounded-full border-2 border-[#ffe600] flex items-center justify-center text-sm font-black overflow-hidden shrink-0 shadow-[0_0_10px_rgba(255,230,0,0.3)] ${user.profile?.avatar_url ? 'bg-[#ffe600]' : getAvatarGradient(user.profile?.name || user.email)}`}>
                       {user.profile?.avatar_url ? (
-                        <Image 
-                          src={resolveStorageUrl(user.profile.avatar_url)} 
+                        <SafeImage 
+                          src={user.profile.avatar_url}
+                          fallbackType="avatar" 
                           alt={user.profile.name || 'User'} 
                           width={40}
                           height={40}

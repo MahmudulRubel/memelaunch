@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { SafeImage } from '@/components/safe-image';
 
 export function Footer() {
   const handleOpenCookieSettings = () => {
@@ -23,8 +23,9 @@ export function Footer() {
               className="inline-block group hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform"
               title="MemeLaunch Home"
             >
-              <Image 
+              <SafeImage 
                 src="/logo.png" 
+                fallbackType="logo"
                 alt="Launchme MemeLaunch Logo" 
                 width={160}
                 height={40}

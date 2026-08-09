@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth-provider';
-import { insforge, resolveStorageUrl, getCategoryBadgeStyle } from '@/lib/insforge';
+import { insforge, resolveStorageUrl, getCategoryBadgeStyle, uploadImageToStorage } from '@/lib/insforge';
 import { MemeCard, type Launch } from '@/components/feed/meme-card';
 import {
   User,
@@ -364,15 +364,7 @@ export default function ProfileView({ profileId, initialProfile, initialLaunches
         const fileExtension = avatarFile.name.split('.').pop() || 'jpg';
         const avatarPath = `${profileId}/${Date.now()}_avatar.${fileExtension}`;
         
-        const { data: uploadData, error: uploadError } = await insforge.storage
-          .from('avatars')
-          .upload(avatarPath, avatarFile);
-
-        if (uploadError || !uploadData) {
-          throw new Error(uploadError?.message || 'Avatar upload failed.');
-        }
-
-        finalAvatarUrl = uploadData.url;
+        finalAvatarUrl = await uploadImageToStorage(avatarFile, 'avatars', avatarPath);
       }
 
       // Save social links to localStorage as backup

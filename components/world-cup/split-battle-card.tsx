@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { WorldCupMatch } from '@/lib/world-cup';
+import { SafeImage } from '@/components/safe-image';
 
 interface SplitBattleCardProps {
   match: WorldCupMatch;
@@ -64,9 +65,11 @@ export function SplitBattleCard({ match, onVote }: SplitBattleCardProps) {
           }`}
         >
           <div className="relative aspect-video rounded-lg overflow-hidden mb-3 border border-zinc-800">
-            <img
+            <SafeImage
               src={match.entry1.memeImageUrl}
+              fallbackType="meme"
               alt={match.entry1.productName}
+              fill
               className="w-full h-full object-cover"
             />
             <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-zinc-950/80 backdrop-blur text-[11px] font-bold text-amber-400 border border-amber-500/30">
@@ -105,9 +108,11 @@ export function SplitBattleCard({ match, onVote }: SplitBattleCardProps) {
           }`}
         >
           <div className="relative aspect-video rounded-lg overflow-hidden mb-3 border border-zinc-800">
-            <img
+            <SafeImage
               src={match.entry2.memeImageUrl}
+              fallbackType="meme"
               alt={match.entry2.productName}
+              fill
               className="w-full h-full object-cover"
             />
             <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-zinc-950/80 backdrop-blur text-[11px] font-bold text-amber-400 border border-amber-500/30">

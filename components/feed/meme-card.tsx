@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { insforge, resolveStorageUrl, getAvatarGradient, getCategoryBadgeStyle } from '@/lib/insforge';
+import { SafeImage } from '@/components/safe-image';
 import { rewardLike, revokeLike } from '@/lib/points';
 import { MessageSquare, ExternalLink, Globe, Tag } from 'lucide-react';
 import { parseCaption, getCaptionText } from '@/lib/meme';
@@ -159,15 +160,14 @@ export function MemeCard({ launch, onSelect, priority = false }: MemeCardProps) 
         
         {/* Meme Image */}
         {launch.meme_image_url ? (
-          <Image
-            src={imgSrc || 'https://i.imgflip.com/30b1gx.jpg'}
+          <SafeImage
+            src={launch.meme_image_url}
+            fallbackType="meme"
             alt={getCaptionText(launch.caption)}
             fill
-            unoptimized={imgSrc.endsWith('.svg') || imgSrc.startsWith('data:image/svg')}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             priority={priority}
-            onError={() => setImgSrc('https://i.imgflip.com/30b1gx.jpg')}
           />
         ) : (
           <div className="p-8 text-center bg-zinc-900 rounded-xl border-2 border-black">
@@ -247,14 +247,13 @@ export function MemeCard({ launch, onSelect, priority = false }: MemeCardProps) 
           <div className="flex items-center gap-3">
             {launch.product_logo_url && (
               <div className="relative h-9 w-9 rounded-xl overflow-hidden shrink-0 border-2 border-black bg-zinc-900 shadow-brutal-sm">
-                <Image
-                  src={logoSrc || '/logo.png'}
+                <SafeImage
+                  src={launch.product_logo_url}
+                  fallbackType="logo"
                   alt={`${launch.product_name} logo`}
                   fill
-                  unoptimized={logoSrc.endsWith('.svg') || logoSrc.startsWith('data:image/svg')}
                   sizes="36px"
                   className="object-cover"
-                  onError={() => setLogoSrc('/logo.png')}
                 />
               </div>
             )}
@@ -358,8 +357,9 @@ export function MemeCard({ launch, onSelect, priority = false }: MemeCardProps) 
             >
               <div className={`h-6 w-6 rounded-full border-2 border-black overflow-hidden flex items-center justify-center text-[10px] font-black uppercase font-mono group-hover/author:border-[#ffe600] transition-colors shrink-0 ${launch.users?.avatar ? 'bg-zinc-900' : getAvatarGradient(launch.users?.name || launch.user_id)}`}>
                 {launch.users?.avatar ? (
-                  <Image
-                    src={resolveStorageUrl(launch.users.avatar)}
+                  <SafeImage
+                    src={launch.users.avatar}
+                    fallbackType="avatar"
                     alt={launch.users.name || 'User'}
                     width={24}
                     height={24}

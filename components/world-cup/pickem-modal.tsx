@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import { X } from 'lucide-react';
 import { WorldCupEntry } from '@/lib/world-cup';
+import { SafeImage } from '@/components/safe-image';
 
 interface PickemModalProps {
   isOpen: boolean;
@@ -35,7 +37,7 @@ export function PickemModal({ isOpen, onClose, entries }: PickemModalProps) {
           onClick={onClose}
           className="absolute top-4 right-4 text-zinc-400 hover:text-white text-lg w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center"
         >
-          ✕
+          <X className="h-5 w-5" />
         </button>
 
         <div className="text-center mb-6">
@@ -74,9 +76,12 @@ export function PickemModal({ isOpen, onClose, entries }: PickemModalProps) {
                       : 'bg-zinc-950 border-zinc-800 text-zinc-300 hover:border-zinc-700'
                   }`}
                 >
-                  <img
+                  <SafeImage
                     src={entry.memeImageUrl}
+                    fallbackType="meme"
                     alt={entry.productName}
+                    width={36}
+                    height={36}
                     className="w-9 h-9 rounded-lg object-cover border border-zinc-800 shrink-0"
                   />
                   <div className="truncate">
