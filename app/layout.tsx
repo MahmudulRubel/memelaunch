@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/components/auth-provider";
 import { PostHogProvider } from "@/components/posthog-provider";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -152,6 +153,7 @@ export default function RootLayout({
           </AuthProvider>
         </PostHogProvider>
       </body>
+      <GoogleAnalytics gaId="G-5DMR4BVQ4V" />
     </html>
   );
 }
