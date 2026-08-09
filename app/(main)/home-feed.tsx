@@ -11,7 +11,6 @@ import { SafeImage } from '@/components/safe-image';
 import {
   Flame,
   Clock,
-  Sparkles,
   TrendingUp,
   Search,
   AlertCircle,
@@ -241,11 +240,7 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
           
           {/* Left Column: Headline, Copy, Trust Pills & Launch Form */}
           <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left space-y-4 w-full min-w-0">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900 border-2 border-black text-[10px] sm:text-xs font-black text-[#ffe600] shadow-brutal-sm max-w-full">
-              <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[#ffe600] shrink-0" />
-              <span className="tracking-wider uppercase truncate sm:whitespace-normal">🥊 THE WEEKLY INDIE BUILDER ARENA</span>
-            </div>
-            
+
             <h1 className="font-heading text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-zinc-50 leading-tight break-words w-full">
               BUILD IN PUBLIC.<br className="block" />
               LAUNCH IN HUMOR.
