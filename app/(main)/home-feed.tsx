@@ -251,15 +251,12 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
               LAUNCH IN HUMOR.
             </h1>
 
-            <p className="font-extrabold text-[#ffe600] relative inline-block text-lg sm:text-2xl md:text-3xl max-w-full break-words">
+            <p className="font-extrabold text-[#ffe600] text-lg sm:text-2xl md:text-3xl max-w-full break-words">
               Where solo founders become viral legends 🏆
-              <svg className="text-[#ffe600] pointer-events-none absolute -bottom-2 left-0 h-3 w-full" viewBox="0 0 320 14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" preserveAspectRatio="none" aria-hidden="true">
-                <path d="M3 9 C 60 2, 120 12, 180 6 S 280 11, 317 4"></path>
-              </svg>
             </p>
             
-            <p className="text-zinc-300 text-sm sm:text-base w-full max-w-xl leading-relaxed font-medium pt-1">
-              Building in public is tough when nobody notices your tweets. MemeLaunch is the weekly battleground where indie hackers drop their funniest product memes, compete for top gold badges, and win real customers.
+            <p className="text-zinc-300 text-sm sm:text-base w-full max-w-xl leading-relaxed font-medium">
+              Pitch your product with memes, compete for gold badges, and win real customers.
             </p>
 
             {/* Action Buttons Row */}
