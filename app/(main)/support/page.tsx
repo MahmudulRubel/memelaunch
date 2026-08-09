@@ -45,8 +45,8 @@ export default function SupportPage() {
       a: 'You need 15 points to submit a product launch. You can earn points by liking products (+1 pt), leaving genuine comments (+2 pts), or completing verified social media tasks (+5 pts).',
     },
     {
-      q: 'Why is there a 30-second timer on social tasks?',
-      a: 'To maintain platform integrity and prevent fraud, social tasks require spending at least 30 seconds on the opened page before submitting your social handle for verification.',
+      q: 'Why is there a 21-second timer on social tasks?',
+      a: 'To maintain platform integrity and prevent fraud, social tasks require spending at least 21 seconds on the opened page before submitting your social handle for verification.',
     },
     {
       q: 'Can I launch multiple products?',

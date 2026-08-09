@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useAuth } from '@/components/auth-provider';
 import { insforge, resolveStorageUrl, getCategoryBadgeStyle } from '@/lib/insforge';
+import { SafeImage } from '@/components/safe-image';
 import {
   BarChart3,
   Rocket,
@@ -367,16 +367,18 @@ export default function AnalyticsPage() {
                         <div className="flex items-center gap-3">
                           <div className="relative h-12 w-12 rounded-xl overflow-hidden shrink-0 border-2 border-black bg-zinc-900 shadow-brutal-sm">
                             {launch.product_logo_url ? (
-                              <Image
-                                src={resolveStorageUrl(launch.product_logo_url)}
+                              <SafeImage
+                                src={launch.product_logo_url}
+                                fallbackType="logo"
                                 alt={launch.product_name}
                                 fill
                                 sizes="48px"
                                 className="object-cover"
                               />
                             ) : (
-                              <Image
-                                src={resolveStorageUrl(launch.meme_image_url)}
+                              <SafeImage
+                                src={launch.meme_image_url}
+                                fallbackType="meme"
                                 alt={launch.product_name}
                                 fill
                                 sizes="48px"

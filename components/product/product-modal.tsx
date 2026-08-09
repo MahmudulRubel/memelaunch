@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { insforge, resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
+import { SafeImage } from '@/components/safe-image';
 import {
   X,
   ExternalLink,
@@ -334,11 +335,11 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                     <div className="absolute inset-0 bg-radial-gradient from-lime-400/5 to-transparent opacity-30 pointer-events-none" />
                     
                     {launch.meme_image_url ? (
-                      <Image
-                        src={resolveStorageUrl(launch.meme_image_url)}
+                      <SafeImage
+                        src={launch.meme_image_url}
+                        fallbackType="meme"
                         alt={getCaptionText(launch.caption)}
                         fill
-                        unoptimized={launch.meme_image_url.endsWith('.svg') || launch.meme_image_url.startsWith('data:image/svg')}
                         sizes="(max-width: 768px) 100vw, 420px"
                         className="object-cover"
                       />
@@ -415,8 +416,9 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                   <div className="flex items-start gap-4">
                     {launch.product_logo_url && (
                       <div className="relative h-12 w-12 rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900 shrink-0 shadow-md">
-                        <Image
-                          src={resolveStorageUrl(launch.product_logo_url)}
+                        <SafeImage
+                          src={launch.product_logo_url}
+                          fallbackType="logo"
                           alt={`${launch.product_name} logo`}
                           fill
                           sizes="48px"
@@ -452,8 +454,9 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                     >
                       <div className={`h-9 w-9 rounded-full border-2 border-black overflow-hidden flex items-center justify-center text-xs font-mono font-extrabold uppercase group-hover/founder:border-lime-400/50 transition-colors shrink-0 ${launch.users?.avatar ? 'bg-zinc-800' : getAvatarGradient(launch.users?.name || launch.user_id)}`}>
                         {launch.users?.avatar ? (
-                          <Image
-                            src={resolveStorageUrl(launch.users.avatar)}
+                          <SafeImage
+                            src={launch.users.avatar}
+                            fallbackType="avatar"
                             alt={launch.users.name || 'Founder'}
                             width={36}
                             height={36}
@@ -559,8 +562,9 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
 
                       {/* Carousel Screen */}
                       <div className="relative aspect-video w-full bg-zinc-950 border border-zinc-900 rounded-2xl overflow-hidden group">
-                        <Image
-                          src={resolveStorageUrl(screenshots[activeScreenshotIdx].image_url)}
+                        <SafeImage
+                          src={screenshots[activeScreenshotIdx].image_url}
+                          fallbackType="general"
                           alt={`${launch.product_name} screenshot`}
                           fill
                           sizes="(max-width: 1024px) 100vw, 800px"
@@ -661,8 +665,9 @@ export function ProductModal({ launchId, onClose, onRefreshFeed }: ProductModalP
                             >
                               <div className={`h-5 w-5 rounded-full border border-black overflow-hidden flex items-center justify-center text-[9px] font-mono uppercase font-bold group-hover/author:border-lime-400/50 transition-colors shrink-0 ${comment.users?.avatar ? 'bg-zinc-800' : getAvatarGradient(comment.users?.name || comment.user_id)}`}>
                                 {comment.users?.avatar ? (
-                                  <Image
-                                    src={resolveStorageUrl(comment.users.avatar)}
+                                  <SafeImage
+                                    src={comment.users.avatar}
+                                    fallbackType="avatar"
                                     alt={comment.users.name || 'User'}
                                     width={20}
                                     height={20}

@@ -2,6 +2,7 @@
 
 import React, { useRef } from 'react';
 import { Image as ImageIcon, Upload, Check } from 'lucide-react';
+import { SafeImage } from '@/components/safe-image';
 
 import { MemeTemplate } from '../meme-studio';
 
@@ -75,10 +76,11 @@ export function MediaTab({
                     : 'border-zinc-800 hover:border-zinc-600'
                 }`}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <SafeImage
                   src={tmpl.thumbnail_url}
+                  fallbackType="meme"
                   alt={tmpl.name}
+                  fill
                   className="w-full h-full object-cover group-hover/item:scale-105 transition-transform"
                 />
                 {isSelected && (

@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
+import { SafeImage } from '@/components/safe-image';
 import { notFound } from 'next/navigation';
 import { getBlogPostBySlug, BLOG_POSTS } from '@/lib/blog-data';
 import {
@@ -153,8 +153,9 @@ export default async function BlogPostPage({ params }: ArticlePageProps) {
 
       {/* Featured Cover Image */}
       <div className="relative aspect-video rounded-3xl overflow-hidden border-4 border-black bg-zinc-950 shadow-brutal">
-        <Image
+        <SafeImage
           src={post.coverImage}
+          fallbackType="general"
           alt={post.title}
           fill
           sizes="(max-width: 1200px) 100vw, 900px"

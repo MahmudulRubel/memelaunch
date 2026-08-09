@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
+import { SafeImage } from '@/components/safe-image';
 import { insforge } from '@/lib/insforge';
 import { useAuth } from '@/components/auth-provider';
 import { Loader2, CheckCircle2, ShieldCheck, Mail } from 'lucide-react';
@@ -105,8 +105,9 @@ function VerifyEmailForm() {
       <div className="w-full max-w-md bg-zinc-900/60 backdrop-blur-md border border-zinc-800/80 rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
         <div className="text-center mb-6 flex flex-col items-center">
           <Link href="/" className="inline-block group hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform">
-            <Image 
+            <SafeImage 
               src="/logo.png" 
+              fallbackType="logo"
               alt="Launchme MemeLaunch Logo" 
               width={192}
               height={48}

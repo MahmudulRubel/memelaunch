@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { getCaptionText } from '@/lib/meme';
 import { resolveStorageUrl } from '@/lib/insforge';
+import { SafeImage } from '@/components/safe-image';
 
 export interface Template {
   id: string;
@@ -126,8 +127,9 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center mt-6">
             {/* Template Preview Column */}
             <div className="lg:col-span-5 relative group overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 aspect-square max-w-sm mx-auto w-full shadow-lg">
-              <Image
-                src={resolveStorageUrl(weeklyPick.thumbnail_url)}
+              <SafeImage
+                src={weeklyPick.thumbnail_url}
+                fallbackType="meme"
                 alt={weeklyPick.name}
                 fill
                 sizes="(max-width: 1024px) 100vw, 384px"
@@ -176,8 +178,9 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
                         className="group flex items-center gap-3 p-3 bg-zinc-950/60 hover:bg-zinc-900/80 border border-zinc-850 hover:border-zinc-800 rounded-xl cursor-pointer transition-all text-left"
                       >
                         <div className="relative h-12 w-12 rounded-lg overflow-hidden border border-zinc-800 shrink-0 bg-zinc-900">
-                          <Image
-                            src={resolveStorageUrl(launch.meme_image_url)}
+                          <SafeImage
+                            src={launch.meme_image_url}
+                            fallbackType="meme"
                             alt={launch.product_name}
                             fill
                             sizes="48px"
@@ -244,8 +247,9 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
                 >
                   {/* Template Image box */}
                   <div className="relative aspect-square w-full bg-zinc-950 overflow-hidden border-b border-zinc-850">
-                    <Image
-                      src={resolveStorageUrl(tpl.thumbnail_url)}
+                    <SafeImage
+                      src={tpl.thumbnail_url}
+                      fallbackType="meme"
                       alt={tpl.name}
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -304,8 +308,9 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
                               className="inline-block h-6 w-6 rounded-full ring-2 ring-zinc-900 bg-zinc-800 overflow-hidden cursor-pointer hover:scale-110 hover:z-10 transition-transform border border-zinc-750"
                             >
                               {launch.users?.avatar ? (
-                                <Image
-                                  src={resolveStorageUrl(launch.users.avatar)}
+                                <SafeImage
+                                  src={launch.users.avatar}
+                                  fallbackType="avatar"
                                   alt={launch.users.name || 'User'}
                                   width={24}
                                   height={24}
@@ -344,8 +349,9 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
           <div className="relative w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl z-10 animate-in zoom-in-95 duration-150">
             {/* Modal Image */}
             <div className="relative aspect-square w-full bg-zinc-950 border-b border-zinc-850">
-              <Image
-                src={resolveStorageUrl(previewTemplate.thumbnail_url)}
+              <SafeImage
+                src={previewTemplate.thumbnail_url}
+                fallbackType="meme"
                 alt={previewTemplate.name}
                 fill
                 sizes="(max-width: 1024px) 100vw, 512px"

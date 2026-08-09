@@ -125,6 +125,35 @@ export async function ensurePublicUserRecord(user: {
   }
 }
 
+/**
+ * Uploads an image file to InsForge storage via the server API endpoint to bypass client RLS issues.
+ */
+export async function uploadImageToStorage(
+  file: File,
+  bucket: string = 'memes',
+  path?: string
+): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('bucket', bucket);
+  if (path) {
+    formData.append('path', path);
+  }
 
+  const response = await fetch('/api/upload', {
+    method: 'POST',
+    body: formData,
+  });
 
+  if (!response.ok) {
+    const errorJson = await response.json().catch(() => ({}));
+    throw new Error(errorJson.error || `Upload failed with status ${response.status}`);
+  }
 
+  const data = await response.json();
+  if (!data?.url) {
+    throw new Error('Upload server response did not include a valid file URL.');
+  }
+
+  return data.url;
+}

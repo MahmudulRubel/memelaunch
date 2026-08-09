@@ -50,15 +50,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Anti-Fraud Layer 2: Enforce 30-second minimum dwell time
+    // Anti-Fraud Layer 2: Enforce 21-second minimum dwell time
     if (isSocialTask && typeof openedAt === 'number') {
       const elapsedSeconds = Math.floor((Date.now() - openedAt) / 1000);
-      if (elapsedSeconds < 30) {
-        const remaining = 30 - elapsedSeconds;
+      if (elapsedSeconds < 21) {
+        const remaining = 21 - elapsedSeconds;
         return NextResponse.json(
           {
             success: false,
-            message: `⏳ Please spend at least 30 seconds on the social page before claiming. Try again in ${remaining}s.`,
+            message: `⏳ Please spend at least 21 seconds on the social page before claiming. Try again in ${remaining}s.`,
           },
           { status: 400 }
         );
