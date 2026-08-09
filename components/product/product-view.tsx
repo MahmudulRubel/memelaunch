@@ -364,9 +364,7 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
                   )}
                 </>
               )}
-              <div className="absolute top-3 right-3 text-[10px] font-mono text-zinc-400 font-extrabold tracking-widest uppercase bg-zinc-950/80 px-2 py-0.5 rounded border border-black">
-                MEMELAUNCH
-              </div>
+
             </div>
 
             {/* Screenshots Gallery */}

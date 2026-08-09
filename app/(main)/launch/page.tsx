@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { MemeStudio, MemeStudioRef } from '@/components/editor/meme-studio';
+import { MemeUploadZone } from '@/components/editor/meme-upload-zone';
 import { insforge, resolveStorageUrl, uploadImageToStorage } from '@/lib/insforge';
 import { compressImage } from '@/lib/image';
 import { getUserPoints, deductPointsForLaunch } from '@/lib/points';
@@ -101,6 +102,7 @@ function LaunchForm() {
   const [preferredCycle, setPreferredCycle] = useState<'current' | 'next'>('current');
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const memeStudioRef = useRef<MemeStudioRef>(null);
+  const [showMemeStudio, setShowMemeStudio] = useState(false);
 
   // Drag handler for caption positioning
   const handleStartDrag = (type: 'above' | 'below', e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
@@ -280,6 +282,7 @@ function LaunchForm() {
       if (matched) {
         setSelectedTemplate(matched);
         setImageSource('template');
+        setShowMemeStudio(true);
       }
     }
   }, [templateQueryId, templates]);
@@ -323,6 +326,17 @@ function LaunchForm() {
         return copy;
       });
     }
+  };
+
+  // Clear meme handler for upload zone
+  const handleClearMeme = () => {
+    if (memePreview && memePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(memePreview);
+    }
+    setMemeFile(null);
+    setMemePreview(null);
+    setImageSource('upload');
+    setSelectedTemplate(null);
   };
 
   // Handle logo file change
@@ -709,31 +723,14 @@ function LaunchForm() {
             </div>
           )}
 
-          {/* TOP FULL-WIDTH SECTION: PROFESSIONAL MEME STUDIO */}
-          <div className="w-full space-y-2" id="err-meme">
-            <span className="text-xs font-mono text-zinc-500 uppercase tracking-widest block">
-              Professional Meme Studio
-            </span>
-            
-            <MemeStudio
-              ref={memeStudioRef}
-              imageUrl={memePreviewSource ? resolveStorageUrl(memePreviewSource) : null}
-              productLogoUrl={productLogoPreview}
-              textAbove={textAbove}
-              textBelow={textBelow}
-              templates={templates}
-              selectedTemplateId={selectedTemplate?.id || null}
-              onSelectTemplate={(tmpl) => {
-                setSelectedTemplate(tmpl);
-                setImageSource('template');
-                setFormErrors((prev) => {
-                  const copy = { ...prev };
-                  delete copy.meme;
-                  delete copy.submit;
-                  return copy;
-                });
-              }}
-              onUploadCustomImage={(file) => {
+          {/* TOP FULL-WIDTH SECTION: MEME UPLOAD + OPTIONAL STUDIO */}
+          <div className="w-full space-y-4" id="err-meme">
+            {/* Phase 1: Clean Upload Zone (always visible) */}
+            <MemeUploadZone
+              onFileSelected={(file) => {
+                if (memePreview && memePreview.startsWith('blob:')) {
+                  URL.revokeObjectURL(memePreview);
+                }
                 setMemeFile(file);
                 setImageSource('upload');
                 setMemePreview(URL.createObjectURL(file));
@@ -744,14 +741,62 @@ function LaunchForm() {
                   return copy;
                 });
               }}
-              onTextAboveChange={setTextAbove}
-              onTextBelowChange={setTextBelow}
+              memePreview={memePreviewSource ? resolveStorageUrl(memePreviewSource) : null}
+              onClearMeme={handleClearMeme}
+              onOpenStudio={() => setShowMemeStudio(true)}
+              hasError={!!formErrors.meme}
+              errorMessage={formErrors.meme}
             />
-            {formErrors.meme && (
-              <p className="text-xs text-rose-400 mt-1 flex items-center gap-1 font-mono">
-                <AlertCircle className="h-3.5 w-3.5" />
-                {formErrors.meme}
-              </p>
+
+            {/* Phase 2: Full Meme Studio (shown on demand) */}
+            {showMemeStudio && (
+              <div className="space-y-2 animate-in slide-in-from-top-4 fade-in duration-300">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-xs font-mono text-zinc-500 uppercase tracking-widest">
+                    Meme Studio
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowMemeStudio(false)}
+                    className="text-xs font-mono text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    Collapse Studio ✕
+                  </button>
+                </div>
+
+                <MemeStudio
+                  ref={memeStudioRef}
+                  imageUrl={memePreviewSource ? resolveStorageUrl(memePreviewSource) : null}
+                  productLogoUrl={productLogoPreview}
+                  textAbove={textAbove}
+                  textBelow={textBelow}
+                  templates={templates}
+                  selectedTemplateId={selectedTemplate?.id || null}
+                  onSelectTemplate={(tmpl) => {
+                    setSelectedTemplate(tmpl);
+                    setImageSource('template');
+                    setFormErrors((prev) => {
+                      const copy = { ...prev };
+                      delete copy.meme;
+                      delete copy.submit;
+                      return copy;
+                    });
+                  }}
+                  onUploadCustomImage={(file) => {
+                    setMemeFile(file);
+                    setImageSource('upload');
+                    setMemePreview(URL.createObjectURL(file));
+                    setFormErrors((prev) => {
+                      const copy = { ...prev };
+                      delete copy.meme;
+                      delete copy.submit;
+                      return copy;
+                    });
+                  }}
+                  onTextAboveChange={setTextAbove}
+                  onTextBelowChange={setTextBelow}
+                />
+              </div>
             )}
           </div>
 
