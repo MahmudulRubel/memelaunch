@@ -20,7 +20,6 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { parseCaption, getCaptionText } from '@/lib/meme';
-import { ThisWeeksProducts } from '@/components/feed/this-weeks-products';
 
 const HowItWorksModal = dynamic(
   () => import('@/components/how-it-works-modal').then((m) => m.HowItWorksModal),
@@ -433,9 +432,6 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
 
         </div>
       </section>
-
-      {/* This Week's Products Showcase Section */}
-      <ThisWeeksProducts launches={launches} />
 
       {/* Feed Filter & Search Row */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-zinc-950 border-2 border-black p-4 rounded-2xl shadow-brutal">
