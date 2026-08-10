@@ -21,9 +21,10 @@ export const metadata: Metadata = {
     siteName: 'MemeLaunch',
     images: [
       {
-        url: 'https://www.launchme.me/og-image.jpg',
+        url: 'https://www.launchme.me/og-image.png',
         width: 1200,
         height: 630,
+        type: 'image/png',
         alt: 'MemeLaunch — Build in Public. Launch in Humor.',
       },
     ],
@@ -36,7 +37,7 @@ export const metadata: Metadata = {
     description: 'MemeLaunch is the weekly battleground where indie hackers drop their funniest product memes, compete for top gold badges, and win real customers.',
     site: '@launchme_me',
     creator: '@launchme_me',
-    images: ['https://www.launchme.me/og-image.jpg'],
+    images: ['https://www.launchme.me/og-image.png'],
   },
 };
 
