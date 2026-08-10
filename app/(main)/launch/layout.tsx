@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: 'Launch a Product | MemeLaunch',
   description: 'Craft a viral meme, submit your product specifications and screenshots, and launch to the public feed.',
   alternates: {
-    canonical: 'https://memelaunch.insforge.app/launch',
+    canonical: 'https://www.launchme.me/launch',
   },
   robots: {
     index: false,

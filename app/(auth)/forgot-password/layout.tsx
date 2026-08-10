@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: 'Recover Password | MemeLaunch',
   description: 'Enter your email to reset your password and get back into the arena.',
   alternates: {
-    canonical: 'https://memelaunch.insforge.app/forgot-password',
+    canonical: 'https://www.launchme.me/forgot-password',
   },
   robots: {
     index: false,

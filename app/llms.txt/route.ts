@@ -7,7 +7,7 @@ export async function GET() {
 
 ## Overview
 - **Name**: MemeLaunch
-- **Website**: https://memelaunch.insforge.app
+- **Website**: https://www.launchme.me
 - **Tagline**: Build in Public. Launch in Humor. Win the Week.
 - **Target Audience**: Indie hackers, SaaS founders, AI developers, startup builders, and tech enthusiasts.
 
@@ -18,10 +18,10 @@ export async function GET() {
 4. **Anti-Fraud Point System**: 15 points required per product launch. Earned via product likes (+1 pt), genuine comments (+2 pts), and verified social media actions (+5 pts with 21-second dwell timer lock).
 
 ## Core Pages & Routes
-- [Live Feed](https://memelaunch.insforge.app/): Main battleground displaying active launches.
-- [Meme Templates Gallery](https://memelaunch.insforge.app/templates): Browse 68 viral meme templates.
-- [Arena Rules](https://memelaunch.insforge.app/rules): Submission guidelines & anti-fraud codex.
-- [FAQ & Support](https://memelaunch.insforge.app/support): Frequently asked questions & founder contact.
+- [Live Feed](https://www.launchme.me/): Main battleground displaying active launches.
+- [Meme Templates Gallery](https://www.launchme.me/templates): Browse 68 viral meme templates.
+- [Arena Rules](https://www.launchme.me/rules): Submission guidelines & anti-fraud codex.
+- [FAQ & Support](https://www.launchme.me/support): Frequently asked questions & founder contact.
 
 ## How to Launch a Product
 1. Sign in via Google or GitHub.

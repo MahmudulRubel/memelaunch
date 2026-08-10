@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: 'Reset Password | MemeLaunch',
   description: 'Set a new password for your MemeLaunch account.',
   alternates: {
-    canonical: 'https://memelaunch.insforge.app/reset-password',
+    canonical: 'https://www.launchme.me/reset-password',
   },
   robots: {
     index: false,

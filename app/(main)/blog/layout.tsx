@@ -9,12 +9,12 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'MemeLaunch Blog — Growth, Playbooks & Software Memes',
     description: 'Actionable marketing guides, viral launch playbooks, and meme strategies for indie hackers and software creators.',
-    url: 'https://memelaunch.insforge.app/blog',
+    url: 'https://www.launchme.me/blog',
     siteName: 'MemeLaunch',
     type: 'website',
   },
   alternates: {
-    canonical: 'https://memelaunch.insforge.app/blog',
+    canonical: 'https://www.launchme.me/blog',
   },
 };
 

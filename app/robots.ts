@@ -15,6 +15,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/admin', '/launch'],
       },
     ],
-    sitemap: 'https://memelaunch.insforge.app/sitemap.xml',
+    sitemap: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.launchme.me'}/sitemap.xml`,
   };
 }

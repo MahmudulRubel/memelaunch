@@ -27,12 +27,12 @@ export default function WorldCupPage() {
     eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
     location: {
       '@type': 'VirtualLocation',
-      url: 'https://memelaunch.insforge.app/world-cup',
+      url: 'https://www.launchme.me/world-cup',
     },
     organizer: {
       '@type': 'Organization',
       name: 'MemeLaunch',
-      url: 'https://memelaunch.insforge.app',
+      url: 'https://www.launchme.me',
     },
   };
 

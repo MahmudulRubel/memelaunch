@@ -41,7 +41,7 @@ export default function PrivacyPage() {
     '@type': 'WebPage',
     name: 'Privacy Policy & Data Rights Hub',
     description: 'Comprehensive Privacy Policy, Cookie Disclosures, GDPR Rights Portal, and Data Processing Agreement for MemeLaunch.',
-    url: 'https://memelaunch.insforge.app/privacy',
+    url: 'https://www.launchme.me/privacy',
   };
 
   return (

@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Arena Rules & Community Guidelines | MemeLaunch',
   description: 'Learn the official MemeLaunch rules for product submissions, meme crafting, point earning, and fair competition in the weekly arena.',
   alternates: {
-    canonical: 'https://memelaunch.insforge.app/rules',
+    canonical: 'https://www.launchme.me/rules',
   },
 };
 

@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: 'Sign In | MemeLaunch',
   description: 'Log in to your MemeLaunch account to start launching products and voting.',
   alternates: {
-    canonical: 'https://memelaunch.insforge.app/login',
+    canonical: 'https://www.launchme.me/login',
   },
   robots: {
     index: false,

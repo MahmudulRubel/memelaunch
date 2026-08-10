@@ -95,7 +95,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
           }}
         >
           <span>Written by {authorName}</span>
-          <span style={{ color: '#ffe600' }}>memelaunch.insforge.app/blog</span>
+          <span style={{ color: '#ffe600' }}>launchme.me/blog</span>
         </div>
       </div>
     ),
