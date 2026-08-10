@@ -28,7 +28,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://memelaunch.insforge.app"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://www.launchme.me"),
   title: {
     default: "MemeLaunch — Build in Public. Launch in Humor. Win the Week.",
     template: "%s | MemeLaunch",
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     "meme marketing",
     "software launch arena"
   ],
-  authors: [{ name: "MemeLaunch Team", url: "https://memelaunch.insforge.app" }],
+  authors: [{ name: "MemeLaunch Team", url: "https://www.launchme.me" }],
   creator: "MemeLaunch",
   publisher: "MemeLaunch",
   robots: {
@@ -61,13 +61,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://memelaunch.insforge.app",
+    url: "https://www.launchme.me",
     siteName: "MemeLaunch",
     title: "MemeLaunch — Build in Public. Launch in Humor. Win the Week.",
     description: "The playful, high-contrast alternative to Product Hunt. Pitch your SaaS or dev tool using viral memes.",
     images: [
       {
-        url: "https://memelaunch.insforge.app/opengraph-image",
+        url: "https://www.launchme.me/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "MemeLaunch — Build in Public. Launch in Humor.",
@@ -78,8 +78,9 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "MemeLaunch — Build in Public. Launch in Humor. Win the Week.",
     description: "The playful, high-contrast alternative to Product Hunt. Pitch your SaaS or dev tool using viral memes.",
+    site: "@launchme_me",
     creator: "@launchme_me",
-    images: ["https://memelaunch.insforge.app/opengraph-image"],
+    images: ["https://www.launchme.me/og-image.jpg"],
   },
   icons: {
     icon: [

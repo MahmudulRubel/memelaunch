@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: PageProps) {
   const decodedName = decodeURIComponent(productName);
 
   let description = `Check out ${decodedName} on MemeLaunch - Build in Public. Launch in Humor. Win the Week.`;
-  let logoUrl = 'https://memelaunch.insforge.app/logo.png';
+  let logoUrl = 'https://www.launchme.me/logo.png';
 
   try {
     const { data: launch } = await insforgeAdmin.database
@@ -38,17 +38,17 @@ export async function generateMetadata({ params }: PageProps) {
     title: `${decodedName} | MemeLaunch Product Page`,
     description,
     alternates: {
-      canonical: `https://memelaunch.insforge.app/products/${encodedPath}`,
+      canonical: `https://www.launchme.me/products/${encodedPath}`,
     },
     openGraph: {
       title: `${decodedName} | MemeLaunch Product Page`,
       description,
-      url: `https://memelaunch.insforge.app/products/${encodedPath}`,
+      url: `https://www.launchme.me/products/${encodedPath}`,
       siteName: 'MemeLaunch',
       type: 'website',
       images: [
         {
-          url: `https://memelaunch.insforge.app/products/${encodedPath}/opengraph-image`,
+          url: `https://www.launchme.me/products/${encodedPath}/opengraph-image`,
           width: 1200,
           height: 630,
           alt: `${decodedName} on MemeLaunch`,
@@ -59,8 +59,9 @@ export async function generateMetadata({ params }: PageProps) {
       card: 'summary_large_image',
       title: `${decodedName} | MemeLaunch Product Page`,
       description,
+      site: '@launchme_me',
       creator: '@launchme_me',
-      images: [`https://memelaunch.insforge.app/products/${encodedPath}/opengraph-image`],
+      images: [`https://www.launchme.me/products/${encodedPath}/opengraph-image`],
     },
   };
 }

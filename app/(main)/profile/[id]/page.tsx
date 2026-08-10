@@ -31,12 +31,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       title: `${name} | MemeLaunch Founder Profile`,
       description: bio,
       alternates: {
-        canonical: `https://memelaunch.insforge.app/profile/${id}`,
+        canonical: `https://www.launchme.me/profile/${id}`,
       },
       openGraph: {
         title: `${name} | MemeLaunch Founder Profile`,
         description: bio,
-        url: `https://memelaunch.insforge.app/profile/${id}`,
+        url: `https://www.launchme.me/profile/${id}`,
         siteName: 'MemeLaunch',
         locale: 'en_US',
         type: 'profile',

@@ -37,19 +37,19 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
     description: post.excerpt,
     keywords: post.keywords,
     alternates: {
-      canonical: `https://memelaunch.insforge.app/blog/${post.slug}`,
+      canonical: `https://www.launchme.me/blog/${post.slug}`,
     },
     openGraph: {
       title: post.title,
       description: post.excerpt,
-      url: `https://memelaunch.insforge.app/blog/${post.slug}`,
+      url: `https://www.launchme.me/blog/${post.slug}`,
       siteName: 'MemeLaunch',
       type: 'article',
       publishedTime: post.publishedAt,
       authors: [post.author.name],
       images: [
         {
-          url: `https://memelaunch.insforge.app${post.coverImage}`,
+          url: `https://www.launchme.me${post.coverImage}`,
           width: 1200,
           height: 630,
           alt: post.title,
@@ -60,7 +60,9 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
       card: 'summary_large_image',
       title: post.title,
       description: post.excerpt,
-      images: [`https://memelaunch.insforge.app${post.coverImage}`],
+      site: '@launchme_me',
+      creator: '@launchme_me',
+      images: [`https://www.launchme.me${post.coverImage}`],
     },
   };
 }

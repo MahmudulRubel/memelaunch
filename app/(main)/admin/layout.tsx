@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: 'Moderation Station | MemeLaunch',
   description: 'MemeLaunch administration and moderation dashboard.',
   alternates: {
-    canonical: 'https://memelaunch.insforge.app/admin',
+    canonical: 'https://www.launchme.me/admin',
   },
   robots: {
     index: false,

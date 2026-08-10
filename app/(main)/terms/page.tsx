@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: 'Terms of Service & Guidelines | MemeLaunch',
   description: 'Read the MemeLaunch Terms of Service, Acceptable Use Policy, Points System rules, and DMCA Copyright policy.',
   alternates: {
-    canonical: 'https://memelaunch.insforge.app/terms',
+    canonical: 'https://www.launchme.me/terms',
   },
 };
 

@@ -12,19 +12,19 @@ export const metadata: Metadata = {
   title: 'MemeLaunch - Build in Public. Launch in Humor. Win the Week.',
   description: 'MemeLaunch is the weekly battleground where indie hackers drop their funniest product memes, compete for top gold badges, and win real customers.',
   alternates: {
-    canonical: 'https://memelaunch.insforge.app',
+    canonical: 'https://www.launchme.me',
   },
   openGraph: {
     title: 'MemeLaunch - Build in Public. Launch in Humor. Win the Week.',
     description: 'MemeLaunch is the weekly battleground where indie hackers drop their funniest product memes, compete for top gold badges, and win real customers.',
-    url: 'https://memelaunch.insforge.app',
+    url: 'https://www.launchme.me',
     siteName: 'MemeLaunch',
     images: [
       {
-        url: 'https://memelaunch.insforge.app/globe.svg',
-        width: 800,
-        height: 600,
-        alt: 'MemeLaunch Arena Logo',
+        url: 'https://www.launchme.me/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'MemeLaunch — Build in Public. Launch in Humor.',
       },
     ],
     locale: 'en_US',
@@ -34,7 +34,9 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'MemeLaunch - Build in Public. Launch in Humor. Win the Week.',
     description: 'MemeLaunch is the weekly battleground where indie hackers drop their funniest product memes, compete for top gold badges, and win real customers.',
-    images: ['https://memelaunch.insforge.app/globe.svg'],
+    site: '@launchme_me',
+    creator: '@launchme_me',
+    images: ['https://www.launchme.me/og-image.jpg'],
   },
 };
 
@@ -76,8 +78,8 @@ export default async function HomePage() {
     publisher: {
       '@type': 'Organization',
       name: 'MemeLaunch',
-      url: 'https://memelaunch.insforge.app',
-      logo: 'https://memelaunch.insforge.app/favicon.ico',
+      url: 'https://www.launchme.me',
+      logo: 'https://www.launchme.me/favicon.ico',
     },
   };
 

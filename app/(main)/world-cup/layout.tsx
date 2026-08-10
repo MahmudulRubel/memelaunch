@@ -4,12 +4,12 @@ export const metadata: Metadata = {
   title: 'The Meme World Cup — Weekly Startup Tournament | MemeLaunch',
   description: '16 Startups. 4 Groups. 1-on-1 Elimination Knockouts. Vote daily to decide which product takes home the weekly World Cup Trophy!',
   alternates: {
-    canonical: 'https://memelaunch.insforge.app/world-cup',
+    canonical: 'https://www.launchme.me/world-cup',
   },
   openGraph: {
     title: 'The Meme World Cup — Weekly Startup Tournament | MemeLaunch',
     description: '16 Startups. 4 Groups. 1-on-1 Elimination Knockouts. Vote daily to decide which product takes home the weekly World Cup Trophy!',
-    url: 'https://memelaunch.insforge.app/world-cup',
+    url: 'https://www.launchme.me/world-cup',
     siteName: 'MemeLaunch',
     type: 'website',
   },

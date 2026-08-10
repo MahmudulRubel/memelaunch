@@ -3,7 +3,7 @@ import { insforge } from '@/lib/insforge';
 import { BLOG_POSTS } from '@/lib/blog-data';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://memelaunch.insforge.app';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.launchme.me';
 
   // Core static pages
   const routes: MetadataRoute.Sitemap = [

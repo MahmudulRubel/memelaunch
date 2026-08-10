@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: 'Create Account | MemeLaunch',
   description: 'Join the MemeLaunch community, create your founder profile, and start shitposting your products to success.',
   alternates: {
-    canonical: 'https://memelaunch.insforge.app/signup',
+    canonical: 'https://www.launchme.me/signup',
   },
   robots: {
     index: false,

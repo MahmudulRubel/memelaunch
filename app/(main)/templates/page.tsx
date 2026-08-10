@@ -11,29 +11,29 @@ export const metadata: Metadata = {
   title: 'Meme Templates | MemeLaunch',
   description: 'Choose from our library of viral meme templates to kickstart your product launch. Stop building in silence.',
   alternates: {
-    canonical: 'https://memelaunch.insforge.app/templates',
+    canonical: 'https://www.launchme.me/templates',
   },
   openGraph: {
     title: 'Meme Templates | MemeLaunch',
     description: 'Choose from our library of viral meme templates to kickstart your product launch. Stop building in silence.',
-    url: 'https://memelaunch.insforge.app/templates',
+    url: 'https://www.launchme.me/templates',
     siteName: 'MemeLaunch',
     images: [
       {
-        url: 'https://memelaunch.insforge.app/globe.svg',
-        width: 800,
-        height: 600,
-        alt: 'Meme Templates Gallery',
+        url: 'https://www.launchme.me/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'MemeLaunch Templates',
       },
     ],
-    locale: 'en_US',
-    type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Meme Templates | MemeLaunch',
     description: 'Choose from our library of viral meme templates to kickstart your product launch. Stop building in silence.',
-    images: ['https://memelaunch.insforge.app/globe.svg'],
+    site: '@launchme_me',
+    creator: '@launchme_me',
+    images: ['https://www.launchme.me/og-image.jpg'],
   },
 };
 

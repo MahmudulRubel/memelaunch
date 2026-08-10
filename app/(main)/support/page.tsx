@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'FAQ & Support | MemeLaunch',
   description: 'Frequently asked questions about MemeLaunch. Learn how points work, how to submit products, and how to get help.',
   alternates: {
-    canonical: 'https://memelaunch.insforge.app/support',
+    canonical: 'https://www.launchme.me/support',
   },
 };
 
