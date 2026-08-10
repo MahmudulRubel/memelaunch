@@ -46,11 +46,21 @@ export async function generateMetadata({ params }: PageProps) {
       url: `https://memelaunch.insforge.app/products/${encodedPath}`,
       siteName: 'MemeLaunch',
       type: 'website',
+      images: [
+        {
+          url: `https://memelaunch.insforge.app/products/${encodedPath}/opengraph-image`,
+          width: 1200,
+          height: 630,
+          alt: `${decodedName} on MemeLaunch`,
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',
       title: `${decodedName} | MemeLaunch Product Page`,
       description,
+      creator: '@launchme_me',
+      images: [`https://memelaunch.insforge.app/products/${encodedPath}/opengraph-image`],
     },
   };
 }

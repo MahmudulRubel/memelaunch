@@ -67,10 +67,10 @@ export const metadata: Metadata = {
     description: "The playful, high-contrast alternative to Product Hunt. Pitch your SaaS or dev tool using viral memes.",
     images: [
       {
-        url: "https://memelaunch.insforge.app/logo.png",
-        width: 1024,
-        height: 512,
-        alt: "Launchme MemeLaunch Logo",
+        url: "https://memelaunch.insforge.app/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "MemeLaunch — Build in Public. Launch in Humor.",
       },
     ],
   },
@@ -79,7 +79,7 @@ export const metadata: Metadata = {
     title: "MemeLaunch — Build in Public. Launch in Humor. Win the Week.",
     description: "The playful, high-contrast alternative to Product Hunt. Pitch your SaaS or dev tool using viral memes.",
     creator: "@launchme_me",
-    images: ["https://memelaunch.insforge.app/logo.png"],
+    images: ["https://memelaunch.insforge.app/opengraph-image"],
   },
   icons: {
     icon: [
