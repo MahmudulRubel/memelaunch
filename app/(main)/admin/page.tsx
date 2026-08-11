@@ -64,7 +64,10 @@ export default function AdminPage() {
       try {
         const adminEmails = ['mahomudulhasanrubel@gmail.com'];
         const isSuperAdminEmail = user?.email && adminEmails.includes(user.email.toLowerCase());
-        const isSuperAdminId = currentUserId === '2ab40b92-175e-4815-8e5f-0d6b58c5c94d' || currentUserId === '5f844f38-e651-4b83-a6b7-924afd4d95b7';
+        const isSuperAdminId =
+          currentUserId === '2ab40b92-175e-4815-8e5f-0d6b58c5c94d' ||
+          currentUserId === '5f844f38-e651-4b83-a6b7-924afd4d95b7' ||
+          currentUserId === 'f7eea2d5-5153-4604-bc36-7bed011078e1';
 
         const { data, error } = await insforge.database
           .from('users')
