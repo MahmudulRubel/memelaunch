@@ -79,7 +79,8 @@ export default function AdminAnalyticsPage() {
         const isSuperAdminEmail = user?.email && adminEmails.includes(user.email.toLowerCase());
         const isSuperAdminId =
           currentUserId === '2ab40b92-175e-4815-8e5f-0d6b58c5c94d' ||
-          currentUserId === '5f844f38-e651-4b83-a6b7-924afd4d95b7';
+          currentUserId === '5f844f38-e651-4b83-a6b7-924afd4d95b7' ||
+          currentUserId === 'f7eea2d5-5153-4604-bc36-7bed011078e1';
 
         const { data: dbUser } = await insforge.database
           .from('users')
@@ -89,6 +90,14 @@ export default function AdminAnalyticsPage() {
 
         if (isSuperAdminEmail || isSuperAdminId || dbUser?.is_admin === true) {
           setIsAdmin(true);
+
+          if (!dbUser?.is_admin) {
+            fetch('/api/admin/toggle-admin-user', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ targetUserId: currentUserId, is_admin: true }),
+            }).catch(() => {});
+          }
         } else {
           setIsAdmin(false);
         }

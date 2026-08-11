@@ -14,25 +14,32 @@ export async function GET(request: Request) {
 
     // Admin Auth verification
     if (userId) {
-      const superAdminEmails = ['mahomudulhasanrubel@gmail.com'];
       const superAdminIds = [
         '2ab40b92-175e-4815-8e5f-0d6b58c5c94d',
         '5f844f38-e651-4b83-a6b7-924afd4d95b7',
+        'f7eea2d5-5153-4604-bc36-7bed011078e1',
       ];
 
       const isSuperId = superAdminIds.includes(userId);
 
-      if (!isSuperId) {
+      if (isSuperId) {
+        // Ensure super admin ID is synced in database asynchronously
+        try {
+          await insforgeAdmin.database
+            .from('users')
+            .update({ is_admin: true })
+            .eq('id', userId);
+        } catch (_) {}
+      } else {
         const { data: user } = await insforgeAdmin.database
           .from('users')
-          .select('is_admin, email')
+          .select('is_admin')
           .eq('id', userId)
           .maybeSingle();
 
-        const isSuperEmail = user?.email && superAdminEmails.includes(user.email.toLowerCase());
         const isAdminFlag = user?.is_admin === true;
 
-        if (!isSuperEmail && !isAdminFlag) {
+        if (!isAdminFlag) {
           return NextResponse.json(
             { error: 'Unauthorized: Admin privileges required.' },
             { status: 403 }
