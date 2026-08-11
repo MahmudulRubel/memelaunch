@@ -16,7 +16,13 @@ const ContentSecurityPolicy = `
 
 const nextConfig: NextConfig = {
   experimental: {
-    optimizePackageImports: ['lucide-react'],
+    optimizePackageImports: [
+      'lucide-react',
+      'recharts',
+      'posthog-js',
+      '@insforge/sdk',
+      'zod',
+    ],
   },
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -61,6 +67,11 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
+    // Disable strict CSP during local development for fast hot-reload & WebSocket connections
+    if (process.env.NODE_ENV === 'development') {
+      return [];
+    }
+
     return [
       {
         source: '/:path((?!_next/static|_next/image).*)',
@@ -104,20 +115,17 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
+// Bypass heavy Sentry instrumentation overhead in local development
+const isDev = process.env.NODE_ENV === 'development';
 
-  // Source map upload auth token
-  authToken: process.env.SENTRY_AUTH_TOKEN,
-
-  // Upload wider set of client source files for better stack trace resolution
-  widenClientFileUpload: true,
-
-  // Proxy API route to bypass ad-blockers
-  tunnelRoute: "/monitoring",
-
-  // Suppress output
-  silent: !process.env.CI,
-  disableLogger: true,
-});
+export default isDev
+  ? nextConfig
+  : withSentryConfig(nextConfig, {
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      widenClientFileUpload: true,
+      tunnelRoute: '/monitoring',
+      silent: !process.env.CI,
+      disableLogger: true,
+    });

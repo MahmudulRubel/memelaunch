@@ -47,6 +47,7 @@ export default async function HomePage() {
     const fetchPromise = insforgeAdmin.database
       .from('launches')
       .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id)')
+      .eq('is_approved', true)
       .order('created_at', { ascending: false });
 
     const timeoutPromise = new Promise<{ data: null; error: { message: string } }>((resolve) =>

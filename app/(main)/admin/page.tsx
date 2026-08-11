@@ -24,7 +24,8 @@ import {
   Users,
   Megaphone,
   Coins,
-  Sparkles
+  Sparkles,
+  BarChart3
 } from 'lucide-react';
 
 export default function AdminPage() {
@@ -364,6 +365,14 @@ export default function AdminPage() {
         >
           <Coins className="h-4 w-4" />
           <span>Point Audit Ledger</span>
+        </button>
+
+        <button
+          onClick={() => router.push('/admin/analytics')}
+          className="flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap bg-zinc-900/60 border border-zinc-800/80 text-lime-400 hover:text-lime-300 hover:bg-zinc-850"
+        >
+          <BarChart3 className="h-4 w-4" />
+          <span>PostHog Analytics</span>
         </button>
       </div>
 
