@@ -15,7 +15,8 @@ import {
   Search,
   AlertCircle,
   Plus,
-  Rocket
+  Rocket,
+  Sparkles
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { parseCaption, getCaptionText } from '@/lib/meme';
@@ -42,6 +43,14 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
   const [launches, setLaunches] = useState<Launch[]>(initialLaunches || []);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Early Founder perk spot count calculation
+  const maxFreeUsers = 100;
+  const totalSubmittingUsers = useMemo(() => {
+    if (!launches || launches.length === 0) return 0;
+    const set = new Set(launches.map((l) => l.user_id).filter(Boolean));
+    return set.size;
+  }, [launches]);
 
   // Top featured launch for hero showcase
   const topFeaturedLaunch = useMemo(() => {
@@ -210,11 +219,11 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
 
   // Loading Skeleton
   const renderSkeletons = () => (
-    <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
+    <div className="columns-1 sm:columns-2 lg:columns-3 gap-8 sm:gap-8 lg:gap-10 space-y-0 mt-8 sm:mt-10">
       {Array.from({ length: 6 }).map((_, idx) => (
         <div
           key={idx}
-          className="bg-zinc-900/30 border border-zinc-800/80 rounded-2xl p-4 space-y-4 animate-pulse break-inside-avoid mb-6"
+          className="bg-zinc-900/30 border-2 border-black rounded-2xl sm:rounded-3xl p-5 sm:p-6 space-y-5 animate-pulse break-inside-avoid mb-8 sm:mb-10 shadow-brutal"
         >
           <div className="aspect-square w-full bg-zinc-800/40 rounded-xl" />
           <div className="h-6 bg-zinc-800/40 rounded-md w-2/3" />
@@ -229,7 +238,7 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300 relative">
+    <div className="space-y-10 sm:space-y-12 animate-in fade-in duration-300 relative">
       {/* Background ambient blurs behind Hero */}
       <div className="absolute -top-20 left-1/4 w-[500px] h-[500px] bg-lime-400/5 rounded-full blur-[120px] pointer-events-none -z-10" />
       <div className="absolute -top-10 right-1/4 w-[400px] h-[400px] bg-rose-500/5 rounded-full blur-[100px] pointer-events-none -z-10" />
@@ -240,6 +249,28 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
           
           {/* Left Column: Headline, Copy, Trust Pills & Launch Form */}
           <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left space-y-4 w-full min-w-0">
+
+            {/* EARLY FOUNDER PERK: FREE LAUNCH BANNER */}
+            <div className="w-full max-w-xl bg-lime-400/10 border-2 border-lime-400 rounded-2xl p-3.5 sm:p-4 shadow-brutal-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-left animate-in fade-in slide-in-from-top-1 duration-200 mb-1">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-lime-400 text-zinc-950 flex items-center justify-center font-black shrink-0 border border-black shadow">
+                  <Sparkles className="h-5 w-5 fill-zinc-950" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h4 className="font-extrabold text-xs sm:text-sm text-zinc-100 uppercase tracking-wide">
+                      EARLY FOUNDER PERK: FREE LAUNCH!
+                    </h4>
+                    <span className="px-2 py-0.5 bg-lime-400 text-zinc-950 text-[10px] font-black uppercase rounded-md border border-black">
+                      0 POINTS REQUIRED
+                    </span>
+                  </div>
+                  <p className="text-zinc-300 text-xs mt-0.5 font-medium">
+                    The first 100 founders launch for FREE! (<strong className="text-lime-400 font-extrabold">{totalSubmittingUsers} / {maxFreeUsers}</strong> spots claimed)
+                  </p>
+                </div>
+              </div>
+            </div>
 
             <h1 className="font-heading text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-zinc-50 leading-tight break-words w-full">
               BUILD IN PUBLIC.<br className="block" />
@@ -261,7 +292,7 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
                 className="w-full sm:w-auto px-6 py-3.5 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 font-black text-xs uppercase tracking-wider rounded-2xl border-2 border-black shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Rocket className="h-4 w-4 stroke-[2.5]" />
-                <span>Pitch a Meme Now</span>
+                <span>Launch Free Now 🚀</span>
               </Link>
 
               <button
@@ -428,13 +459,13 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
         </div>
       </section>
 
-      {/* Feed Filter & Search Row */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-zinc-950 border-2 border-black p-4 rounded-2xl shadow-brutal">
+      {/* Feed Filter & Search Row (Feed Controls) */}
+      <div className="my-8 sm:my-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6 bg-zinc-950 border-3 border-black p-4 sm:p-6 rounded-3xl shadow-brutal-lg">
         {/* Tabs */}
-        <div className="flex items-center gap-2 bg-zinc-900 border-2 border-black p-1.5 rounded-xl overflow-x-auto no-scrollbar max-w-full min-w-0">
+        <div className="flex items-center gap-2.5 sm:gap-3 bg-zinc-900 border-2 border-black p-2 rounded-2xl overflow-x-auto no-scrollbar max-w-full min-w-0">
           <button
             onClick={() => setActiveTab('trending')}
-            className={`flex items-center gap-2 px-3.5 py-2.5 min-h-[44px] rounded-lg text-xs font-black uppercase tracking-wider transition-all border-2 border-black cursor-pointer shrink-0 whitespace-nowrap ${
+            className={`flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 min-h-[46px] rounded-xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all border-2 border-black cursor-pointer shrink-0 whitespace-nowrap ${
               activeTab === 'trending'
                 ? 'bg-[#ffe600] text-zinc-950 shadow-brutal-sm'
                 : 'bg-transparent text-zinc-300 hover:text-white border-transparent'
@@ -446,7 +477,7 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
 
           <button
             onClick={() => setActiveTab('new')}
-            className={`flex items-center gap-2 px-3.5 py-2.5 min-h-[44px] rounded-lg text-xs font-black uppercase tracking-wider transition-all border-2 border-black cursor-pointer shrink-0 whitespace-nowrap ${
+            className={`flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 min-h-[46px] rounded-xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all border-2 border-black cursor-pointer shrink-0 whitespace-nowrap ${
               activeTab === 'new'
                 ? 'bg-[#ffe600] text-zinc-950 shadow-brutal-sm'
                 : 'bg-transparent text-zinc-300 hover:text-white border-transparent'
@@ -459,13 +490,13 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
         </div>
 
         {/* Search & Category Filter Controls */}
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+        <div className="flex flex-col sm:flex-row items-center gap-3.5 sm:gap-4 w-full lg:w-auto">
           {/* Category Dropdown */}
-          <div className="relative w-full sm:w-48">
+          <div className="relative w-full sm:w-52">
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-900 border-2 border-black rounded-xl text-xs font-bold uppercase tracking-wider text-zinc-100 focus:outline-none focus:border-[#ffe600] cursor-pointer appearance-none shadow-brutal-sm"
+              className="w-full h-[46px] px-4 py-2.5 bg-zinc-900 border-2 border-black rounded-2xl text-xs sm:text-sm font-bold uppercase tracking-wider text-zinc-100 focus:outline-none focus:border-[#ffe600] cursor-pointer appearance-none shadow-brutal-sm"
             >
               {[
                 'All Categories',
@@ -487,7 +518,7 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
                 </option>
               ))}
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-400">
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-zinc-400">
               <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                 <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
               </svg>
@@ -495,14 +526,14 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
           </div>
 
           {/* Search bar */}
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search products, memes..."
-              className="w-full pl-10 pr-4 py-2 bg-zinc-900 border-2 border-black rounded-xl text-xs font-bold text-zinc-100 placeholder-zinc-500 shadow-brutal-sm focus:outline-none focus:border-[#ffe600] transition-all"
+              className="w-full h-[46px] pl-11 pr-4 py-2.5 bg-zinc-900 border-2 border-black rounded-2xl text-xs sm:text-sm font-bold text-zinc-100 placeholder-zinc-500 shadow-brutal-sm focus:outline-none focus:border-[#ffe600] transition-all"
             />
           </div>
         </div>
@@ -546,7 +577,7 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
         </div>
       ) : (
         /* Masonry Grid */
-        <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
+        <div className="columns-1 sm:columns-2 lg:columns-3 gap-8 sm:gap-8 lg:gap-10 space-y-0 mt-8 sm:mt-10">
           {paginatedLaunches.map((launch, index) => (
             <MemeCard
               key={launch.id}

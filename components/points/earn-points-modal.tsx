@@ -399,7 +399,7 @@ export function EarnPointsModal({
                 EARN <span className="text-[#ffe600]">POINTS</span>
               </h2>
               <p className="text-zinc-400 text-xs font-medium">
-                Accumulate 15 points to submit your product launch.
+                The first 100 founders launch for FREE! After 100 founders, 15 points are required to submit.
               </p>
             </div>
           </div>

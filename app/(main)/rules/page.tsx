@@ -91,10 +91,10 @@ export default function RulesPage() {
         <div className="bg-zinc-950 border-2 border-black rounded-3xl p-6 shadow-brutal space-y-3">
           <div className="flex items-center gap-2 text-[#ffe600] font-black text-sm uppercase">
             <Zap className="h-5 w-5 shrink-0" />
-            <span>Rule #2: 15 Points Required</span>
+            <span>Rule #2: First 100 Founders Launch FREE</span>
           </div>
           <p className="text-zinc-300 text-xs leading-relaxed">
-            Founders must earn 15 points through active community engagement (liking products, posting genuine feedback, or completing social tasks) before submitting a launch.
+            First 100 founders launch for FREE (0 points). Afterward, 15 points are required via active community engagement (liking products, posting genuine feedback, or completing social tasks).
           </p>
         </div>
 

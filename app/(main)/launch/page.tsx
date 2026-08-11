@@ -7,7 +7,7 @@ import { MemeStudio, MemeStudioRef } from '@/components/editor/meme-studio';
 import { MemeUploadZone } from '@/components/editor/meme-upload-zone';
 import { insforge, resolveStorageUrl, uploadImageToStorage } from '@/lib/insforge';
 import { compressImage } from '@/lib/image';
-import { getUserPoints, deductPointsForLaunch } from '@/lib/points';
+import { getUserPoints, deductPointsForLaunch, getLaunchPointCost, LaunchFeeInfo } from '@/lib/points';
 import { EarnPointsModal } from '@/components/points/earn-points-modal';
 import { z } from 'zod';
 import {
@@ -228,19 +228,29 @@ function LaunchForm() {
 
   // Points State
   const [userPoints, setUserPoints] = useState<number>(0);
+  const [launchFeeInfo, setLaunchFeeInfo] = useState<LaunchFeeInfo>({
+    requiredPoints: 0,
+    isFreeEarlyAdopter: true,
+    totalSubmittingUsers: 0,
+    maxFreeUsers: 100,
+  });
   const [isEarnPointsModalOpen, setIsEarnPointsModalOpen] = useState(false);
 
-  // Check user points on mount
+  // Check user points & launch fee on mount
   useEffect(() => {
     if (!user) return;
-    async function checkPoints() {
-      const pts = await getUserPoints(user!.id);
+    async function checkPointsAndFee() {
+      const [pts, feeInfo] = await Promise.all([
+        getUserPoints(user!.id),
+        getLaunchPointCost(user!.id),
+      ]);
       setUserPoints(pts);
-      if (pts < 15) {
+      setLaunchFeeInfo(feeInfo);
+      if (feeInfo.requiredPoints > 0 && pts < feeInfo.requiredPoints) {
         setIsEarnPointsModalOpen(true);
       }
     }
-    checkPoints();
+    checkPointsAndFee();
   }, [user]);
 
   // Remix mechanics
@@ -464,9 +474,10 @@ function LaunchForm() {
       return;
     }
 
+    const feeInfo = await getLaunchPointCost(user.id);
     const currentPoints = await getUserPoints(user.id);
-    if (currentPoints < 15) {
-      setFormErrors({ submit: `Product launch requires 15 points. You currently have ${currentPoints} points.` });
+    if (feeInfo.requiredPoints > 0 && currentPoints < feeInfo.requiredPoints) {
+      setFormErrors({ submit: `Product launch requires ${feeInfo.requiredPoints} points. You currently have ${currentPoints} points.` });
       setIsEarnPointsModalOpen(true);
       return;
     }
@@ -609,8 +620,12 @@ function LaunchForm() {
           .eq('id', selectedTemplate.id);
       }
 
-      // Step F: Deduct 15 Points
-      setStatusMessage('Deducting 15 points for product launch...');
+      // Step F: Deduct Points (Free for first 100 users)
+      if (launchFeeInfo.requiredPoints > 0) {
+        setStatusMessage(`Deducting ${launchFeeInfo.requiredPoints} points for product launch...`);
+      } else {
+        setStatusMessage('Applying free early adopter launch...');
+      }
       await deductPointsForLaunch(user.id);
       const updatedPts = await getUserPoints(user.id);
       setUserPoints(updatedPts);
@@ -663,17 +678,41 @@ function LaunchForm() {
         </div>
       </div>
 
-      {/* Points Alert Banner */}
-      {userPoints < 15 ? (
+      {/* Points Alert / Early Adopter Banner */}
+      {launchFeeInfo.isFreeEarlyAdopter || launchFeeInfo.requiredPoints === 0 ? (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-lime-400/10 border-2 border-lime-400 rounded-2xl p-4 shadow-brutal-sm">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-lime-400 text-zinc-950 flex items-center justify-center font-black shrink-0 border border-black shadow">
+              <Sparkles className="h-5 w-5 fill-zinc-950" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="font-extrabold text-sm text-zinc-100 uppercase">EARLY FOUNDER PERK: FREE LAUNCH!</h4>
+                <span className="px-2 py-0.5 bg-lime-400 text-zinc-950 text-[10px] font-black uppercase rounded-md border border-black">
+                  0 POINTS REQUIRED
+                </span>
+              </div>
+              <p className="text-zinc-300 text-xs mt-0.5">
+                The first 100 founders launch for FREE! (<strong className="text-lime-400">{launchFeeInfo.totalSubmittingUsers} / {launchFeeInfo.maxFreeUsers}</strong> spots claimed)
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs text-lime-400 font-extrabold uppercase px-3.5 py-1.5 bg-zinc-950 border-2 border-lime-400/50 rounded-xl shadow-sm">
+              Launch Fee: FREE 🎉
+            </span>
+          </div>
+        </div>
+      ) : userPoints < launchFeeInfo.requiredPoints ? (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#ffe600]/10 border-2 border-[#ffe600] rounded-2xl p-4 shadow-brutal-sm">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-[#ffe600] text-zinc-950 flex items-center justify-center font-black shrink-0 border border-black shadow">
               <Zap className="h-5 w-5 fill-zinc-950" />
             </div>
             <div>
-              <h4 className="font-extrabold text-sm text-zinc-100 uppercase">15 Points Required to Publish</h4>
+              <h4 className="font-extrabold text-sm text-zinc-100 uppercase">{launchFeeInfo.requiredPoints} Points Required to Publish</h4>
               <p className="text-zinc-400 text-xs">
-                You currently have <span className="text-[#ffe600] font-bold">{userPoints} points</span>. Earn {15 - userPoints} more points to launch.
+                You currently have <span className="text-[#ffe600] font-bold">{userPoints} points</span>. Earn {launchFeeInfo.requiredPoints - userPoints} more points to launch.
               </p>
             </div>
           </div>
@@ -690,7 +729,7 @@ function LaunchForm() {
         <div className="flex items-center justify-between bg-zinc-900 border-2 border-black rounded-2xl p-3 px-4 shadow-brutal-sm">
           <div className="flex items-center gap-2 text-xs font-bold text-zinc-300 uppercase">
             <Zap className="h-4 w-4 text-[#ffe600] fill-[#ffe600]" />
-            <span>Launch Fee: <strong className="text-[#ffe600]">15 Points</strong> (Your Balance: <strong>{userPoints} Pts</strong>)</span>
+            <span>Launch Fee: <strong className="text-[#ffe600]">{launchFeeInfo.requiredPoints} Points</strong> (Your Balance: <strong>{userPoints} Pts</strong>)</span>
           </div>
           <button
             type="button"
@@ -1253,7 +1292,11 @@ function LaunchForm() {
               <div className="pt-6 border-t border-zinc-800/80 flex items-center justify-between gap-4">
                 <div className="text-xs font-mono text-zinc-500">
                   <span>Entry Fee: </span>
-                  <span className="text-lime-400 font-bold">-15 Points</span>
+                  {launchFeeInfo.isFreeEarlyAdopter || launchFeeInfo.requiredPoints === 0 ? (
+                    <span className="text-lime-400 font-bold">FREE (0 Points) 🎉</span>
+                  ) : (
+                    <span className="text-lime-400 font-bold">15 Points</span>
+                  )}
                 </div>
 
                 <button
