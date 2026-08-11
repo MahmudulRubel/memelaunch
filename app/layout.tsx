@@ -5,6 +5,7 @@ import { AuthProvider } from "@/components/auth-provider";
 import { PostHogProvider } from "@/components/posthog-provider";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -154,6 +155,7 @@ export default function RootLayout({
             <CookieConsentBanner />
           </AuthProvider>
         </PostHogProvider>
+        <Analytics />
       </body>
       <GoogleAnalytics gaId="G-5DMR4BVQ4V" />
     </html>
