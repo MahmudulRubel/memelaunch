@@ -237,7 +237,7 @@ export default function TemplatesFeed({ initialTemplates, initialLaunches }: Tem
             No other templates loaded in library.
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-8 lg:gap-10">
             {regularTemplates.map((tpl) => {
               const tplLaunches = getTemplateLaunches(tpl.id);
               return (

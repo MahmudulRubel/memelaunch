@@ -998,7 +998,7 @@ export default function ProfileView({ profileId, initialProfile, initialLaunches
                   className="flex items-center gap-1.5 px-4 py-2 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 font-black uppercase text-xs tracking-wider rounded-xl border-2 border-black shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
                 >
                   <Plus className="h-4 w-4 stroke-[3]" />
-                  <span>Pitch a Meme</span>
+                  <span>Launch Free Now 🚀</span>
                 </button>
               )}
             </div>
@@ -1023,7 +1023,7 @@ export default function ProfileView({ profileId, initialProfile, initialLaunches
               )}
             </div>
           ) : (
-            <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
+            <div className="columns-1 sm:columns-2 lg:columns-3 gap-8 sm:gap-8 lg:gap-10 space-y-0 mt-8 sm:mt-10">
               {filteredLaunches.map((launch) => (
                 <MemeCard
                   key={launch.id}

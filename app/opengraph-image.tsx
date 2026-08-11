@@ -229,7 +229,7 @@ export default async function Image() {
                   boxShadow: '0 4px 14px rgba(255, 230, 0, 0.4)',
                 }}
               >
-                <span>🚀</span> PITCH A MEME NOW
+                <span>🚀</span> LAUNCH FREE NOW
               </div>
               <div
                 style={{

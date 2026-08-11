@@ -14,7 +14,7 @@ export function HowItWorksModal({ isOpen, onClose }: HowItWorksModalProps) {
   const steps = [
     {
       step: '01',
-      title: 'Pitch a Meme',
+      title: 'Launch Free Now',
       description: 'Founders submit their product using a funny meme (upload or AI generator). Your tech specs, links & screenshots are tucked neatly underneath.',
       icon: Rocket,
       badgeColor: 'bg-[#ffe600] text-zinc-950',

@@ -67,9 +67,10 @@ export const metadata: Metadata = {
     description: "The playful, high-contrast alternative to Product Hunt. Pitch your SaaS or dev tool using viral memes.",
     images: [
       {
-        url: "https://www.launchme.me/og-image.jpg",
+        url: "https://www.launchme.me/og-image.png",
         width: 1200,
         height: 630,
+        type: "image/png",
         alt: "MemeLaunch — Build in Public. Launch in Humor.",
       },
     ],
@@ -80,7 +81,7 @@ export const metadata: Metadata = {
     description: "The playful, high-contrast alternative to Product Hunt. Pitch your SaaS or dev tool using viral memes.",
     site: "@launchme_me",
     creator: "@launchme_me",
-    images: ["https://www.launchme.me/og-image.jpg"],
+    images: ["https://www.launchme.me/og-image.png"],
   },
   icons: {
     icon: [

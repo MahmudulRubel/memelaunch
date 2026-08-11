@@ -141,7 +141,7 @@ export function Navigation() {
                   className="flex items-center gap-2 px-4 py-2 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 border-2 border-black font-black uppercase text-xs tracking-wider rounded-xl shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all"
                 >
                   <Plus className="h-4 w-4 stroke-[3]" />
-                  <span>Pitch a Meme</span>
+                  <span>Launch Free Now 🚀</span>
                 </Link>
 
                 {/* Profile Dropdown */}
@@ -227,7 +227,7 @@ export function Navigation() {
                   className="flex items-center gap-2 px-4 py-2 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 border-2 border-black font-black uppercase text-xs tracking-wider rounded-xl shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all"
                 >
                   <Plus className="h-4 w-4 stroke-[3]" />
-                  <span>Pitch a Meme</span>
+                  <span>Launch Free Now 🚀</span>
                 </Link>
               </div>
             )}
@@ -381,8 +381,8 @@ export function Navigation() {
                     <Plus className="h-4 w-4 stroke-[3]" />
                   </div>
                   <div className="flex flex-col">
-                    <span>Pitch a Meme</span>
-                    <span className="text-[10px] font-bold text-zinc-900/80 normal-case">Launch your meme idea now</span>
+                    <span>Launch Free Now 🚀</span>
+                    <span className="text-[10px] font-bold text-zinc-900/80 normal-case">0 Points Required • First 100 Free</span>
                   </div>
                 </div>
                 <Sparkles className="h-5 w-5 fill-zinc-950" />
