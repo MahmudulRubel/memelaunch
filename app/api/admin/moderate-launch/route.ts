@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { insforgeAdmin } from '@/lib/insforge';
 
 export async function POST(request: Request) {
@@ -30,6 +31,9 @@ export async function POST(request: Request) {
         .select('*');
 
       if (error) throw error;
+      try {
+        revalidatePath('/');
+      } catch (rErr) {}
       return NextResponse.json({ success: true, data });
     } else if (action === 'revoke') {
       const { data, error } = await insforgeAdmin.database
@@ -39,6 +43,9 @@ export async function POST(request: Request) {
         .select('*');
 
       if (error) throw error;
+      try {
+        revalidatePath('/');
+      } catch (rErr) {}
       return NextResponse.json({ success: true, data });
     } else if (action === 'delete') {
       const { error } = await insforgeAdmin.database
@@ -47,6 +54,9 @@ export async function POST(request: Request) {
         .eq('id', launchId);
 
       if (error) throw error;
+      try {
+        revalidatePath('/');
+      } catch (rErr) {}
       return NextResponse.json({ success: true });
     }
 

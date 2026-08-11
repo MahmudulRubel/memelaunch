@@ -72,12 +72,14 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
       let { data, error } = await insforge.database
         .from('launches')
         .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id)')
+        .eq('is_approved', true)
         .order('created_at', { ascending: false });
 
       if (!data || data.length === 0 || error) {
         const adminRes = await insforgeAdmin.database
           .from('launches')
           .select('*, users(name, avatar), reactions(emoji_type, user_id), comments(id)')
+          .eq('is_approved', true)
           .order('created_at', { ascending: false });
         if (adminRes.data && adminRes.data.length > 0) {
           data = adminRes.data;
@@ -150,7 +152,8 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
 
   // Filter & Sort launches
   const filteredAndSortedLaunches = useMemo(() => {
-    let result = [...launches];
+    // Exclude any unapproved/pending products from the homepage feed
+    let result = launches.filter((l) => l.is_approved !== false);
 
     // 1. Apply Category Filter
     if (selectedCategory && selectedCategory !== 'All Categories') {
