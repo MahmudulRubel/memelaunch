@@ -104,6 +104,98 @@ function LaunchForm() {
   const memeStudioRef = useRef<MemeStudioRef>(null);
   const [showMemeStudio, setShowMemeStudio] = useState(false);
 
+  // AI Autofill state
+  const [autofillInputUrl, setAutofillInputUrl] = useState('');
+  const [isAutofilling, setIsAutofilling] = useState(false);
+  const [autofillStep, setAutofillStep] = useState<number>(1);
+  const [autofillError, setAutofillError] = useState<string | null>(null);
+
+  const handleAiAutofill = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!autofillInputUrl.trim() || isAutofilling) return;
+
+    setIsAutofilling(true);
+    setAutofillError(null);
+    setAutofillStep(1);
+
+    try {
+      const stepInterval = setInterval(() => {
+        setAutofillStep((prev) => (prev < 3 ? prev + 1 : prev));
+      }, 3500);
+
+      const res = await fetch('/api/ai/autofill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: autofillInputUrl.trim() }),
+      });
+
+      clearInterval(stepInterval);
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Failed to autofill using AI.');
+      }
+
+      const { data } = json;
+
+      if (data.productName) setProductName(data.productName);
+      if (data.category) setCategory(data.category);
+      if (data.pricing) setPricing(data.pricing);
+      if (data.productUrl) setProductUrl(data.productUrl);
+      if (data.productDescription) setProductDescription(data.productDescription);
+
+      if (data.productLogoUrl) {
+        try {
+          const logoRes = await fetch(data.productLogoUrl);
+          if (logoRes.ok) {
+            const blob = await logoRes.blob();
+            const file = new File([blob], 'logo.png', { type: blob.type || 'image/png' });
+            setProductLogoFile(file);
+            setProductLogoPreview(URL.createObjectURL(blob));
+          }
+        } catch (e) {
+          console.warn('Could not download product logo blob:', e);
+        }
+      }
+
+      if (data.meme?.imageUrl) {
+        try {
+          const memeRes = await fetch(data.meme.imageUrl);
+          if (memeRes.ok) {
+            const blob = await memeRes.blob();
+            const file = new File([blob], 'ai_meme.png', { type: blob.type || 'image/png' });
+            setMemeFile(file);
+            setMemePreview(URL.createObjectURL(blob));
+            setImageSource('upload');
+            setSelectedTemplate(null);
+          } else {
+            setMemePreview(data.meme.imageUrl);
+          }
+        } catch (e) {
+          setMemePreview(data.meme.imageUrl);
+        }
+      }
+
+      if (data.meme?.textAbove) setTextAbove(data.meme.textAbove);
+      if (data.meme?.textBelow) setTextBelow(data.meme.textBelow);
+      if (data.meme?.textAbove && data.meme?.textBelow) {
+        setCaptionPosition('both');
+      } else if (data.meme?.textAbove) {
+        setCaptionPosition('above');
+      } else if (data.meme?.textBelow) {
+        setCaptionPosition('below');
+      }
+
+      setFormErrors({});
+    } catch (err: any) {
+      console.error('Autofill Error:', err);
+      setAutofillError(err.message || 'An error occurred during AI Autofill.');
+    } finally {
+      setIsAutofilling(false);
+      setAutofillStep(1);
+    }
+  };
+
   // Drag handler for caption positioning
   const handleStartDrag = (type: 'above' | 'below', e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -676,6 +768,67 @@ function LaunchForm() {
             </p>
           </>
         </div>
+      </div>
+
+      {/* AI AUTOFILL BAR */}
+      <div className="bg-gradient-to-r from-purple-950/80 via-zinc-900 to-lime-950/80 border-2 border-lime-400/50 rounded-2xl p-4 md:p-6 shadow-brutal-md space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-lg bg-lime-400 text-zinc-950 flex items-center justify-center font-black shrink-0 border border-black shadow">
+              <Sparkles className="h-4 w-4 fill-zinc-950 animate-pulse" />
+            </div>
+            <div>
+              <h3 className="font-extrabold text-base text-zinc-100 uppercase tracking-tight flex items-center gap-2">
+                AUTOFILL WITH AI <span className="text-xs px-2 py-0.5 bg-lime-400/20 text-lime-400 border border-lime-400/40 rounded-full font-mono">DeepSeek + Grok Imagine</span>
+              </h3>
+              <p className="text-zinc-400 text-xs mt-0.5">
+                Paste your product website URL and AI will fetch specs, write description, and render a hilarious custom meme image.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleAiAutofill} className="flex flex-col sm:flex-row gap-2.5">
+          <div className="relative flex-1">
+            <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+            <input
+              type="url"
+              placeholder="https://yourproduct.com"
+              value={autofillInputUrl}
+              onChange={(e) => setAutofillInputUrl(e.target.value)}
+              disabled={isAutofilling}
+              className="w-full bg-zinc-950 border-2 border-zinc-700 focus:border-lime-400 rounded-xl pl-10 pr-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-500 font-mono transition-colors outline-none"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isAutofilling || !autofillInputUrl.trim()}
+            className="px-6 py-3 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-black text-sm uppercase rounded-xl border-2 border-black shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+          >
+            {isAutofilling ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin text-zinc-950" />
+                <span>
+                  {autofillStep === 1 && 'Reading Website...'}
+                  {autofillStep === 2 && 'DeepSeek Analyzing...'}
+                  {autofillStep === 3 && 'Grok Rendering Meme...'}
+                </span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 fill-zinc-950" />
+                <span>Autofill with AI</span>
+              </>
+            )}
+          </button>
+        </form>
+
+        {autofillError && (
+          <div className="p-3 bg-rose-950/80 border border-rose-600/50 rounded-xl flex items-center gap-2 text-rose-300 text-xs">
+            <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
+            <span>{autofillError}</span>
+          </div>
+        )}
       </div>
 
       {/* Points Alert / Early Adopter Banner */}
