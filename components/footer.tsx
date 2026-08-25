@@ -4,6 +4,28 @@ import React from 'react';
 import Link from 'next/link';
 import { SafeImage } from '@/components/safe-image';
 
+interface PartnerItem {
+  id: string;
+  name: string;
+  href: string;
+  imgSrc: string;
+  alt: string;
+  width: number;
+  height: number;
+}
+
+const PARTNERS: PartnerItem[] = [
+  {
+    id: 'nick-launches',
+    name: 'Nick Launches',
+    href: 'https://nicklaunches.com/products/memelaunch/?utm_source=launchme.me&utm_medium=badge&utm_campaign=featured',
+    imgSrc: 'https://nicklaunches.com/badges/featured.png',
+    alt: 'MemeLaunch on Nick Launches',
+    width: 244,
+    height: 56,
+  },
+];
+
 export function Footer() {
   const handleOpenCookieSettings = () => {
     if (typeof window !== 'undefined' && (window as any).openCookieConsentModal) {
@@ -126,6 +148,87 @@ export function Footer() {
                 </button>
               </li>
             </ul>
+          </div>
+        </div>
+
+        {/* Our Partners Marquee Section */}
+        <div className="pt-6 pb-2 border-b border-zinc-800/80 overflow-hidden w-full">
+          <div className="flex items-center justify-between gap-4 mb-3">
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#ffe600] inline-block animate-pulse"></span>
+              Our Partners
+            </h4>
+            <span className="text-[10px] text-zinc-500 font-mono">Featured Launch Partners</span>
+          </div>
+
+          <div className="relative w-full overflow-hidden no-scrollbar py-1">
+            <div className="animate-marquee flex items-center gap-8">
+              {/* First track copy */}
+              <div className="flex items-center gap-8 shrink-0">
+                {PARTNERS.map((partner) => (
+                  <a
+                    key={`p1-${partner.id}`}
+                    href={partner.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center group opacity-85 hover:opacity-100 transition-opacity"
+                    title={`${partner.name} - Partner Badge`}
+                  >
+                    <img
+                      src={partner.imgSrc}
+                      alt={partner.alt}
+                      width={partner.width}
+                      height={partner.height}
+                      className="h-6 sm:h-7 w-auto object-contain transition-transform group-hover:scale-105"
+                    />
+                  </a>
+                ))}
+              </div>
+              
+              {/* Duplicated track copy for seamless loop */}
+              <div className="flex items-center gap-8 shrink-0">
+                {PARTNERS.map((partner) => (
+                  <a
+                    key={`p2-${partner.id}`}
+                    href={partner.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center group opacity-85 hover:opacity-100 transition-opacity"
+                    title={`${partner.name} - Partner Badge`}
+                  >
+                    <img
+                      src={partner.imgSrc}
+                      alt={partner.alt}
+                      width={partner.width}
+                      height={partner.height}
+                      className="h-6 sm:h-7 w-auto object-contain transition-transform group-hover:scale-105"
+                    />
+                  </a>
+                ))}
+              </div>
+
+              {/* Triplicated track copy to fill wider screens seamlessly */}
+              <div className="flex items-center gap-8 shrink-0">
+                {PARTNERS.map((partner) => (
+                  <a
+                    key={`p3-${partner.id}`}
+                    href={partner.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center group opacity-85 hover:opacity-100 transition-opacity"
+                    title={`${partner.name} - Partner Badge`}
+                  >
+                    <img
+                      src={partner.imgSrc}
+                      alt={partner.alt}
+                      width={partner.width}
+                      height={partner.height}
+                      className="h-6 sm:h-7 w-auto object-contain transition-transform group-hover:scale-105"
+                    />
+                  </a>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 

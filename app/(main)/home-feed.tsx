@@ -16,15 +16,10 @@ import {
   AlertCircle,
   Plus,
   Rocket,
-  Sparkles
+  Sparkles,
+  Globe
 } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import { parseCaption, getCaptionText } from '@/lib/meme';
-
-const HowItWorksModal = dynamic(
-  () => import('@/components/how-it-works-modal').then((m) => m.HowItWorksModal),
-  { ssr: false }
-);
 
 interface HomeFeedProps {
   initialLaunches: Launch[];
@@ -37,7 +32,6 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('All Categories');
   const [searchQuery, setSearchQuery] = useState('');
   const [quickUrl, setQuickUrl] = useState('');
-  const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
   
   // Database state initialized with server-side data
   const [launches, setLaunches] = useState<Launch[]>(initialLaunches || []);
@@ -57,6 +51,19 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
     if (!launches || launches.length === 0) return null;
     return [...launches].sort((a, b) => (b.reactions?.length || 0) - (a.reactions?.length || 0))[0];
   }, [launches]);
+
+  const handleQuickLaunchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    let targetUrl = quickUrl.trim();
+    if (!targetUrl) {
+      router.push('/launch');
+      return;
+    }
+    if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+      targetUrl = `https://${targetUrl}`;
+    }
+    router.push(`/launch?url=${encodeURIComponent(targetUrl)}`);
+  };
 
   // Pagination / Infinite scroll state
   const [visibleCount, setVisibleCount] = useState(9);
@@ -288,24 +295,29 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
               Pitch your product with memes, compete for gold badges, and win real customers.
             </p>
 
-            {/* Action Buttons Row */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 w-full max-w-md mt-2">
-              <Link
-                href="/launch"
-                className="w-full sm:w-auto px-6 py-3.5 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 font-black text-xs uppercase tracking-wider rounded-2xl border-2 border-black shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <Rocket className="h-4 w-4 stroke-[2.5]" />
-                <span>Launch Free Now 🚀</span>
-              </Link>
+            {/* Hero URL Box & Quick Launch */}
+            <div className="flex flex-col gap-3 w-full max-w-xl mt-2">
+              <form onSubmit={handleQuickLaunchSubmit} className="flex flex-col sm:flex-row items-stretch gap-2.5 w-full">
+                <div className="relative flex-1">
+                  <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                  <input
+                    type="text"
+                    value={quickUrl}
+                    onChange={(e) => setQuickUrl(e.target.value)}
+                    placeholder="Enter Your URL..."
+                    className="w-full pl-10 pr-4 py-3.5 bg-zinc-900 border-2 border-black rounded-2xl text-xs sm:text-sm font-medium text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-[#ffe600] shadow-brutal-sm transition-all"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="px-6 py-3.5 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 font-black text-xs uppercase tracking-wider rounded-2xl border-2 border-black shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                >
+                  <Rocket className="h-4 w-4 stroke-[2.5]" />
+                  <span>Launch Free 🚀</span>
+                </button>
+              </form>
 
-              <button
-                type="button"
-                onClick={() => setIsHowItWorksOpen(true)}
-                className="w-full sm:w-auto px-5 py-3.5 bg-zinc-900 border-2 border-black hover:bg-zinc-800 text-zinc-200 font-black text-xs uppercase tracking-wider rounded-2xl shadow-brutal-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>How It Works</span>
-                <span className="text-base">ℹ️</span>
-              </button>
+
             </div>
           </div>
 
@@ -598,11 +610,7 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
         </div>
       )}
 
-      {/* How It Works Modal */}
-      <HowItWorksModal
-        isOpen={isHowItWorksOpen}
-        onClose={() => setIsHowItWorksOpen(false)}
-      />
+
     </div>
   );
 }

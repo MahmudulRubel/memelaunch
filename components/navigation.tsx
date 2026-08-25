@@ -141,7 +141,7 @@ export function Navigation() {
                   className="flex items-center gap-2 px-4 py-2 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 border-2 border-black font-black uppercase text-xs tracking-wider rounded-xl shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all"
                 >
                   <Plus className="h-4 w-4 stroke-[3]" />
-                  <span>Launch Free Now 🚀</span>
+                  <span>Launch Free 🚀</span>
                 </Link>
 
                 {/* Profile Dropdown */}
@@ -227,7 +227,7 @@ export function Navigation() {
                   className="flex items-center gap-2 px-4 py-2 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 border-2 border-black font-black uppercase text-xs tracking-wider rounded-xl shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all"
                 >
                   <Plus className="h-4 w-4 stroke-[3]" />
-                  <span>Launch Free Now 🚀</span>
+                  <span>Launch Free 🚀</span>
                 </Link>
               </div>
             )}
@@ -381,7 +381,7 @@ export function Navigation() {
                     <Plus className="h-4 w-4 stroke-[3]" />
                   </div>
                   <div className="flex flex-col">
-                    <span>Launch Free Now 🚀</span>
+                    <span>Launch Free 🚀</span>
                     <span className="text-[10px] font-bold text-zinc-900/80 normal-case">0 Points Required • First 100 Free</span>
                   </div>
                 </div>
