@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateMemeAndAutofill } from '@/lib/runware';
+import { extractAndAutofillProduct } from '@/lib/deepseek';
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,13 +13,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate URL format
     let validUrl = url.trim();
     if (!validUrl.startsWith('http://') && !validUrl.startsWith('https://')) {
       validUrl = `https://${validUrl}`;
     }
 
-    const data = await generateMemeAndAutofill(validUrl);
+    const data = await extractAndAutofillProduct(validUrl);
 
     return NextResponse.json({
       success: true,
@@ -30,7 +29,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to process product URL with AI.',
+        error: error.message || 'Failed to process product URL with DeepSeek AI.',
       },
       { status: 500 }
     );

@@ -30,9 +30,6 @@ const CATEGORIES = [
 
 export async function generateMemeAndAutofill(url: string): Promise<AutofillResult> {
   const apiKey = process.env.RUNWARE_API_KEY;
-  if (!apiKey) {
-    throw new Error('RUNWARE_API_KEY is not configured in environment variables.');
-  }
 
   // 1. Fetch Webpage Content
   let html = '';
@@ -85,15 +82,46 @@ export async function generateMemeAndAutofill(url: string): Promise<AutofillResu
     console.warn('HTML fetch warning:', e);
   }
 
-  const cleanBodyText = html
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .slice(0, 4000);
+  // Derive domain name for fallback title
+  let domainName = 'My Product';
+  try {
+    const hostname = new URL(url).hostname.replace(/^www\./, '');
+    domainName = hostname.split('.')[0];
+    domainName = domainName.charAt(0).toUpperCase() + domainName.slice(1);
+  } catch {}
 
-  // 2. Call Runware API for Text Inference (DeepSeek-v4-flash)
-  const systemPrompt = `You are an expert tech product analyzer and viral meme creator. 
+  const finalLogoUrl =
+    faviconUrl ||
+    ogImage ||
+    `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=128`;
+
+  const fallbackResult: AutofillResult = {
+    productName: metaTitle ? metaTitle.split(/[-|_|:]/)[0].trim() : domainName,
+    category: 'SaaS',
+    pricing: 'free',
+    productDescription: metaDescription || `${domainName} - Pitch your product with memes, compete for gold badges, and win real customers.`,
+    productLogoUrl: finalLogoUrl,
+    meme: {
+      imageUrl: '',
+      textAbove: '',
+      textBelow: '',
+    },
+  };
+
+  if (!apiKey) {
+    return fallbackResult;
+  }
+
+  try {
+    const cleanBodyText = html
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .slice(0, 4000);
+
+    // 2. Call Runware API for Text Inference (DeepSeek-v4-flash)
+    const systemPrompt = `You are an expert tech product analyzer and viral meme creator. 
 Given website content, extract the product info and invent a hilarious, relatable tech/developer meme concept.
 Allowed Categories: ${JSON.stringify(CATEGORIES)}.
 Allowed Pricing: "free", "paid", "freemium".
@@ -109,108 +137,105 @@ Return ONLY a valid raw JSON object (no markdown quotes, no codeblocks) with thi
   "textBelow": "meme bottom text in ALL CAPS (short, punchy)"
 }`;
 
-  const textPayload = [
-    {
-      taskType: 'textInference',
-      taskUUID: `task-text-${Date.now()}`,
-      model: 'deepseek-v4-flash',
-      messages: [
-        { role: 'system', content: systemPrompt },
+    const textPayload = [
+      {
+        taskType: 'textInference',
+        taskUUID: `task-text-${Date.now()}`,
+        model: 'deepseek-v4-flash',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          {
+            role: 'user',
+            content: `URL: ${url}\nMeta Title: ${metaTitle}\nMeta Description: ${metaDescription}\nBody Content Snippet: ${cleanBodyText}`,
+          },
+        ],
+      },
+    ];
+
+    const textRes = await fetch('https://api.runware.ai/v1', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(textPayload),
+    });
+
+    if (!textRes.ok) {
+      return fallbackResult;
+    }
+
+    const textData = await textRes.json();
+    const rawContent =
+      textData?.data?.[0]?.text ||
+      textData?.[0]?.text ||
+      textData?.data?.[0]?.message?.content ||
+      textData?.[0]?.message?.content;
+
+    if (!rawContent) {
+      return fallbackResult;
+    }
+
+    const cleanedJsonString = rawContent.replace(/```json\s*|```/g, '').trim();
+    const parsed = JSON.parse(cleanedJsonString);
+
+    // Validate category & pricing fallback
+    const validCategory = CATEGORIES.includes(parsed.category) ? parsed.category : 'Other';
+    const validPricing = ['free', 'paid', 'freemium'].includes(parsed.pricing) ? parsed.pricing : 'free';
+
+    // 3. Call Runware API for Image Generation (xai:grok-imagine@image-2.0)
+    let generatedImageUrl = '';
+    try {
+      const imagePayload = [
         {
-          role: 'user',
-          content: `URL: ${url}\nMeta Title: ${metaTitle}\nMeta Description: ${metaDescription}\nBody Content Snippet: ${cleanBodyText}`,
+          taskType: 'imageInference',
+          taskUUID: `task-img-${Date.now()}`,
+          model: 'xai:grok-imagine@image-2.0',
+          positivePrompt:
+            parsed.memePrompt ||
+            `A funny tech meme image showing high emotion, cinematic lighting, 8k viral meme style`,
+          width: 1024,
+          height: 1024,
+          numberResults: 1,
         },
-      ],
-    },
-  ];
+      ];
 
-  const textRes = await fetch('https://api.runware.ai/v1', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(textPayload),
-  });
+      const imgRes = await fetch('https://api.runware.ai/v1', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(imagePayload),
+      });
 
-  if (!textRes.ok) {
-    const errText = await textRes.text();
-    throw new Error(`Runware text inference failed: ${errText}`);
+      if (imgRes.ok) {
+        const imgData = await imgRes.json();
+        generatedImageUrl =
+          imgData?.data?.[0]?.imageURL ||
+          imgData?.[0]?.imageURL ||
+          imgData?.data?.[0]?.url ||
+          imgData?.[0]?.url ||
+          '';
+      }
+    } catch (e) {
+      console.warn('Image inference failed:', e);
+    }
+
+    return {
+      productName: parsed.productName || fallbackResult.productName,
+      category: validCategory,
+      pricing: validPricing,
+      productDescription: parsed.productDescription || fallbackResult.productDescription,
+      productLogoUrl: finalLogoUrl,
+      meme: {
+        imageUrl: generatedImageUrl,
+        textAbove: parsed.textAbove || '',
+        textBelow: parsed.textBelow || '',
+      },
+    };
+  } catch (err) {
+    console.warn('AI Autofill fallback used due to error:', err);
+    return fallbackResult;
   }
-
-  const textData = await textRes.json();
-  const rawContent =
-    textData?.data?.[0]?.text ||
-    textData?.[0]?.text ||
-    textData?.data?.[0]?.message?.content ||
-    textData?.[0]?.message?.content;
-
-  if (!rawContent) {
-    throw new Error('No text generated from Runware DeepSeek.');
-  }
-
-  const cleanedJsonString = rawContent.replace(/```json\s*|```/g, '').trim();
-  const parsed = JSON.parse(cleanedJsonString);
-
-  // Validate category & pricing fallback
-  const validCategory = CATEGORIES.includes(parsed.category) ? parsed.category : 'Other';
-  const validPricing = ['free', 'paid', 'freemium'].includes(parsed.pricing) ? parsed.pricing : 'free';
-
-  // 3. Call Runware API for Image Generation (xai:grok-imagine@image-2.0)
-  const imagePayload = [
-    {
-      taskType: 'imageInference',
-      taskUUID: `task-img-${Date.now()}`,
-      model: 'xai:grok-imagine@image-2.0',
-      positivePrompt:
-        parsed.memePrompt ||
-        `A funny tech meme image showing high emotion, cinematic lighting, 8k viral meme style`,
-      width: 1024,
-      height: 1024,
-      numberResults: 1,
-    },
-  ];
-
-  const imgRes = await fetch('https://api.runware.ai/v1', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(imagePayload),
-  });
-
-  if (!imgRes.ok) {
-    const errText = await imgRes.text();
-    throw new Error(`Runware image inference failed: ${errText}`);
-  }
-
-  const imgData = await imgRes.json();
-  const generatedImageUrl =
-    imgData?.data?.[0]?.imageURL ||
-    imgData?.[0]?.imageURL ||
-    imgData?.data?.[0]?.url ||
-    imgData?.[0]?.url;
-
-  if (!generatedImageUrl) {
-    throw new Error('No image returned from Runware Grok Imagine 2.0.');
-  }
-
-  const finalLogoUrl =
-    faviconUrl ||
-    ogImage ||
-    `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=128`;
-
-  return {
-    productName: parsed.productName || metaTitle || 'My Product',
-    category: validCategory,
-    pricing: validPricing,
-    productDescription: parsed.productDescription || metaDescription || 'Product description...',
-    productLogoUrl: finalLogoUrl,
-    meme: {
-      imageUrl: generatedImageUrl,
-      textAbove: parsed.textAbove || '',
-      textBelow: parsed.textBelow || '',
-    },
-  };
 }
