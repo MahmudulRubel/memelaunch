@@ -312,7 +312,7 @@ function LaunchForm() {
       });
     }
 
-    if (!productLogoFile) {
+    if (!productLogoFile && !productLogoPreview) {
       errors.productLogo = 'Please upload a product logo';
     }
 
@@ -386,6 +386,8 @@ function LaunchForm() {
         const logoPath = `${authUser.id}/${Date.now()}_logo.${logoExtension}`;
 
         logoUrl = await uploadImageToStorage(compressedLogoFile, 'memes', logoPath);
+      } else if (productLogoPreview) {
+        logoUrl = productLogoPreview;
       }
 
       // Step 3: Upload Screenshots
@@ -871,7 +873,11 @@ function LaunchForm() {
                     />
                     <Upload className="h-5 w-5 text-zinc-500 group-hover:text-lime-400 mx-auto mb-1 stroke-[1.5] transition-colors" />
                     <p className="text-xs font-semibold text-zinc-300">
-                      {productLogoFile ? productLogoFile.name : 'Upload logo image (1:1 square recommended)'}
+                      {productLogoFile
+                        ? productLogoFile.name
+                        : productLogoPreview
+                        ? 'Logo extracted from website (Click to replace)'
+                        : 'Upload logo image (1:1 square recommended)'}
                     </p>
                   </div>
                   {productLogoPreview && (
