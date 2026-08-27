@@ -8,7 +8,7 @@ import { useAuth } from '@/components/auth-provider';
 import { insforge, resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
 import { SafeImage } from '@/components/safe-image';
 import { getUserPoints } from '@/lib/points';
-import { Menu, X, LogOut, User, Plus, Compass, Trophy, LayoutGrid, Settings, Zap, BarChart3, Sparkles, ChevronRight } from 'lucide-react';
+import { Menu, X, LogOut, User, Plus, Compass, Zap, BarChart3, Sparkles, ChevronRight } from 'lucide-react';
 
 const EarnPointsModal = dynamic(
   () => import('@/components/points/earn-points-modal').then((m) => m.EarnPointsModal),
@@ -58,8 +58,6 @@ export function Navigation() {
 
   const navLinks = [
     { name: 'Feed', href: '/', icon: Compass, description: 'Explore & upvote trending pitches' },
-    { name: 'Templates', href: '/templates', icon: LayoutGrid, description: 'Browse popular meme canvases' },
-    { name: 'Rules', href: '/rules', icon: Settings, description: 'Platform guidelines & pitch rules' },
   ];
 
   const getActiveLinkClass = (href: string) => {
@@ -382,7 +380,7 @@ export function Navigation() {
                   </div>
                   <div className="flex flex-col">
                     <span>Launch Free 🚀</span>
-                    <span className="text-[10px] font-bold text-zinc-900/80 normal-case">0 Points Required • First 100 Free</span>
+                    <span className="text-[10px] font-bold text-zinc-900/80 normal-case">Pitch your product with memes</span>
                   </div>
                 </div>
                 <Sparkles className="h-5 w-5 fill-zinc-950" />
