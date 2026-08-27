@@ -9,14 +9,11 @@ import { insforge, insforgeAdmin, resolveStorageUrl, getAvatarGradient } from '@
 import { MemeCard, type Launch } from '@/components/feed/meme-card';
 import { SafeImage } from '@/components/safe-image';
 import {
-  Flame,
   Clock,
   TrendingUp,
   Search,
   AlertCircle,
-  Plus,
   Rocket,
-  Sparkles,
   Globe
 } from 'lucide-react';
 import { parseCaption, getCaptionText } from '@/lib/meme';
@@ -37,14 +34,6 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
   const [launches, setLaunches] = useState<Launch[]>(initialLaunches || []);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  // Early Founder perk spot count calculation
-  const maxFreeUsers = 100;
-  const totalSubmittingUsers = useMemo(() => {
-    if (!launches || launches.length === 0) return 0;
-    const set = new Set(launches.map((l) => l.user_id).filter(Boolean));
-    return set.size;
-  }, [launches]);
 
   // Top featured launch for hero showcase
   const topFeaturedLaunch = useMemo(() => {
@@ -259,28 +248,6 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
           
           {/* Left Column: Headline, Copy, Trust Pills & Launch Form */}
           <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left space-y-4 w-full min-w-0">
-
-            {/* EARLY FOUNDER PERK: FREE LAUNCH BANNER */}
-            <div className="w-full max-w-xl bg-lime-400/10 border-2 border-lime-400 rounded-2xl p-3.5 sm:p-4 shadow-brutal-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-left animate-in fade-in slide-in-from-top-1 duration-200 mb-1">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-lime-400 text-zinc-950 flex items-center justify-center font-black shrink-0 border border-black shadow">
-                  <Sparkles className="h-5 w-5 fill-zinc-950" />
-                </div>
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h4 className="font-extrabold text-xs sm:text-sm text-zinc-100 uppercase tracking-wide">
-                      EARLY FOUNDER PERK: FREE LAUNCH!
-                    </h4>
-                    <span className="px-2 py-0.5 bg-lime-400 text-zinc-950 text-[10px] font-black uppercase rounded-md border border-black">
-                      0 POINTS REQUIRED
-                    </span>
-                  </div>
-                  <p className="text-zinc-300 text-xs mt-0.5 font-medium">
-                    The first 100 founders launch for FREE! (<strong className="text-lime-400 font-extrabold">{totalSubmittingUsers} / {maxFreeUsers}</strong> spots claimed)
-                  </p>
-                </div>
-              </div>
-            </div>
 
             <h1 className="font-heading text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-zinc-50 leading-tight break-words w-full">
               BUILD IN PUBLIC.<br className="block" />

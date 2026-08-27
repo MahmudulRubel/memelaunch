@@ -13,6 +13,10 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "functions/**",
+    "scratch/**",
+    "scripts/**",
+    "backups/**",
+    "temp_memes/**",
   ]),
 ]);
 
