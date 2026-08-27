@@ -1,30 +1,23 @@
 import { createClient } from '@insforge/sdk';
 
-const baseUrl = process.env.NEXT_PUBLIC_INSFORGE_BASE_URL;
-const anonKey = process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY;
-
-if (!baseUrl || !anonKey) {
-  // Warn instead of throwing to prevent crashing Next.js static prerendering / builds
-  console.warn(
-    '⚠️ Missing InsForge environment variables (NEXT_PUBLIC_INSFORGE_BASE_URL / NEXT_PUBLIC_INSFORGE_ANON_KEY).'
-  );
-}
+const baseUrl = process.env.NEXT_PUBLIC_INSFORGE_BASE_URL || 'https://fw47aqh3.ap-southeast.insforge.app';
+const anonKey = process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY || 'ik_df9cb12db0c6c080dcc8c64ffb5b7b0c';
 
 // Connection pooling & HTTP keep-alive options for high performance & resilience
 const CONNECTION_TIMEOUT_MS = parseInt(process.env.DB_CONNECTION_TIMEOUT_MS || '10000', 10);
 const POOL_MAX_CONNECTIONS = parseInt(process.env.DB_POOL_MAX_CONNECTIONS || '20', 10);
 
 export const insforge = createClient({
-  baseUrl: baseUrl || 'https://placeholder.insforge.app',
-  anonKey: anonKey || 'placeholder',
-  functionsUrl: `${baseUrl || 'https://placeholder.insforge.app'}/functions`,
+  baseUrl,
+  anonKey,
+  functionsUrl: `${baseUrl}/functions`,
   timeout: CONNECTION_TIMEOUT_MS, // Fast timeout on slow network requests
 });
 
 export const insforgeAdmin = createClient({
-  baseUrl: baseUrl || 'https://placeholder.insforge.app',
+  baseUrl,
   anonKey: process.env.INSFORGE_SERVER_KEY || 'ik_df9cb12db0c6c080dcc8c64ffb5b7b0c',
-  functionsUrl: `${baseUrl || 'https://placeholder.insforge.app'}/functions`,
+  functionsUrl: `${baseUrl}/functions`,
   timeout: CONNECTION_TIMEOUT_MS,
 });
 

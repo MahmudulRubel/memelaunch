@@ -1,7 +1,5 @@
 import { ImageResponse } from 'next/og';
 
-export const runtime = 'edge';
-
 export const alt = 'MemeLaunch — Build in Public. Launch in Humor.';
 export const size = {
   width: 1200,
@@ -57,42 +55,6 @@ export default async function Image() {
           }}
         />
 
-        {/* Decorative Grid Dots Top Right */}
-        <svg
-          width="200"
-          height="200"
-          viewBox="0 0 200 200"
-          style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            opacity: 0.15,
-          }}
-        >
-          <pattern id="dots-tr" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-            <circle cx="2" cy="2" r="2" fill="#ffe600" />
-          </pattern>
-          <rect width="200" height="200" fill="url(#dots-tr)" />
-        </svg>
-
-        {/* Decorative Grid Dots Bottom Left */}
-        <svg
-          width="160"
-          height="160"
-          viewBox="0 0 160 160"
-          style={{
-            position: 'absolute',
-            bottom: '10px',
-            left: '10px',
-            opacity: 0.15,
-          }}
-        >
-          <pattern id="dots-bl" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-            <circle cx="2" cy="2" r="2" fill="#ffe600" />
-          </pattern>
-          <rect width="160" height="160" fill="url(#dots-bl)" />
-        </svg>
-
         {/* LEFT COLUMN: Brand, Headline, CTAs, Features */}
         <div
           style={{
@@ -101,7 +63,6 @@ export default async function Image() {
             justifyContent: 'space-between',
             width: '630px',
             height: '100%',
-            zIndex: 10,
           }}
         >
           {/* Brand Header */}
@@ -306,7 +267,6 @@ export default async function Image() {
             display: 'flex',
             alignItems: 'center',
             gap: '14px',
-            zIndex: 10,
           }}
         >
           {/* Main Featured Hero Card */}
@@ -430,7 +390,6 @@ export default async function Image() {
                   <path d="M20 92H100L95 96H25L20 92Z" fill="#27272a" />
                   {/* "Ship it!" sticker on laptop */}
                   <rect x="45" y="74" width="30" height="10" rx="3" fill="#ef4444" />
-                  <text x="60" y="81" fill="#ffffff" fontSize="6" fontWeight="900" textAnchor="middle">Ship it!</text>
                 </svg>
               </div>
 

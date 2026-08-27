@@ -1,8 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { getBlogPostBySlug } from '@/lib/blog-data';
 
-export const runtime = 'edge';
-
 export const alt = 'MemeLaunch Blog Post';
 export const size = {
   width: 1200,

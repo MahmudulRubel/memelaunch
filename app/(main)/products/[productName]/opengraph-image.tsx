@@ -1,7 +1,5 @@
 import { ImageResponse } from 'next/og';
 
-export const runtime = 'edge';
-
 export const alt = 'MemeLaunch Product Showcase';
 export const size = {
   width: 1200,
@@ -60,24 +58,6 @@ export default async function Image({ params }: { params: Promise<{ productName:
           }}
         />
 
-        {/* Decorative Grid Dots Top Right */}
-        <svg
-          width="200"
-          height="200"
-          viewBox="0 0 200 200"
-          style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            opacity: 0.15,
-          }}
-        >
-          <pattern id="dots-tr-prod" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-            <circle cx="2" cy="2" r="2" fill="#ffe600" />
-          </pattern>
-          <rect width="200" height="200" fill="url(#dots-tr-prod)" />
-        </svg>
-
         {/* LEFT COLUMN: Brand & Product Pitch */}
         <div
           style={{
@@ -86,7 +66,6 @@ export default async function Image({ params }: { params: Promise<{ productName:
             justifyContent: 'space-between',
             width: '630px',
             height: '100%',
-            zIndex: 10,
           }}
         >
           {/* Brand Header */}
@@ -269,7 +248,6 @@ export default async function Image({ params }: { params: Promise<{ productName:
             display: 'flex',
             alignItems: 'center',
             gap: '14px',
-            zIndex: 10,
           }}
         >
           {/* Product Card */}
@@ -384,7 +362,6 @@ export default async function Image({ params }: { params: Promise<{ productName:
                   <rect x="25" y="70" width="70" height="22" rx="3" fill="#3f3f46" stroke="#71717a" />
                   <path d="M20 92H100L95 96H25L20 92Z" fill="#27272a" />
                   <rect x="45" y="74" width="30" height="10" rx="3" fill="#ef4444" />
-                  <text x="60" y="81" fill="#ffffff" fontSize="6" fontWeight="900" textAnchor="middle">Ship it!</text>
                 </svg>
               </div>
 
