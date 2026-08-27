@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "npx next dev --turbo -H 0.0.0.0",
-    "build": "node -e \"require('fs').rmSync('.next', { recursive: true, force: true })\" && npx next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },

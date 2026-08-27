@@ -115,10 +115,10 @@ const nextConfig: NextConfig = {
   },
 };
 
-// Bypass heavy Sentry instrumentation overhead in local development
 const isDev = process.env.NODE_ENV === 'development';
+const hasSentry = Boolean(process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_PROJECT);
 
-export default isDev
+export default (isDev || !hasSentry)
   ? nextConfig
   : withSentryConfig(nextConfig, {
       org: process.env.SENTRY_ORG,
@@ -127,5 +127,7 @@ export default isDev
       widenClientFileUpload: true,
       tunnelRoute: '/monitoring',
       silent: !process.env.CI,
-      disableLogger: true,
+      sourcemaps: {
+        disable: !process.env.SENTRY_AUTH_TOKEN,
+      },
     });
