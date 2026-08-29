@@ -345,14 +345,6 @@ function LaunchForm() {
       validUrl = `https://${validUrl}`;
     }
 
-    const feeInfo = await getLaunchPointCost(authUser.id);
-    const currentPoints = await getUserPoints(authUser.id);
-    if (feeInfo.requiredPoints > 0 && currentPoints < feeInfo.requiredPoints) {
-      setFormErrors({ submit: `Product launch requires ${feeInfo.requiredPoints} points. You currently have ${currentPoints} points.` });
-      setIsEarnPointsModalOpen(true);
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -370,6 +362,8 @@ function LaunchForm() {
         const memePath = `${authUser.id}/${Date.now()}_meme.${memeExtension}`;
 
         memeImageUrl = await uploadImageToStorage(compressedMemeFile, 'memes', memePath);
+      } else if (memePreview) {
+        memeImageUrl = memePreview;
       }
 
       // Step 2: Upload Product Logo
@@ -441,7 +435,7 @@ function LaunchForm() {
       setUserPoints(updatedPts);
 
       setStatusMessage('');
-      setSuccessMessage('🎉 Product launched successfully! Redirecting...');
+      setSuccessMessage('🎉 Product launched successfully! Redirecting to feed...');
 
       setTimeout(() => {
         router.push('/');

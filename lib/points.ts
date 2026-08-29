@@ -256,95 +256,24 @@ export interface LaunchFeeInfo {
 
 /**
  * Determines launch point requirement for a given user.
- * The first 100 distinct users who submit products require NO points (0 pts).
- * After 100 distinct submitting users, product launches cost 15 points.
+ * Product launches on MemeLaunch are free (0 pts).
  */
 export async function getLaunchPointCost(userId?: string): Promise<LaunchFeeInfo> {
-  const maxFreeUsers = 100;
-  try {
-    const { data, error } = await insforge.database
-      .from('launches')
-      .select('user_id');
-
-    if (error || !data) {
-      return { requiredPoints: 15, isFreeEarlyAdopter: false, totalSubmittingUsers: 0, maxFreeUsers };
-    }
-
-    // Extract unique user_ids preserving order of submitters
-    const uniqueUserIds: string[] = [];
-    for (const row of data) {
-      if (row.user_id && !uniqueUserIds.includes(row.user_id)) {
-        uniqueUserIds.push(row.user_id);
-      }
-    }
-
-    const totalSubmittingUsers = uniqueUserIds.length;
-    const early100UserSet = new Set(uniqueUserIds.slice(0, maxFreeUsers));
-
-    // Free if total submitters < 100 OR if this user is in the set of first 100 submitters
-    const isFreeEarlyAdopter = totalSubmittingUsers < maxFreeUsers || (!!userId && early100UserSet.has(userId));
-    const requiredPoints = isFreeEarlyAdopter ? 0 : 15;
-
-    return {
-      requiredPoints,
-      isFreeEarlyAdopter,
-      totalSubmittingUsers,
-      maxFreeUsers,
-    };
-  } catch (err) {
-    console.error('Error fetching launch point cost:', err);
-    return { requiredPoints: 15, isFreeEarlyAdopter: false, totalSubmittingUsers: 0, maxFreeUsers };
-  }
+  const maxFreeUsers = 10000;
+  return {
+    requiredPoints: 0,
+    isFreeEarlyAdopter: true,
+    totalSubmittingUsers: 0,
+    maxFreeUsers,
+  };
 }
 
 /**
  * Deduct points upon successful product launch submission.
- * First 100 submitting users need no points (0 pts).
+ * Product launches are free (0 pts).
  */
 export async function deductPointsForLaunch(userId: string): Promise<{ success: boolean; error?: string }> {
   if (!userId) return { success: false, error: 'User not authenticated' };
-
-  try {
-    const { requiredPoints } = await getLaunchPointCost(userId);
-
-    // If early adopter (first 100 users), launch is free
-    if (requiredPoints <= 0) {
-      await insforge.database.from('point_transactions').insert([
-        {
-          user_id: userId,
-          amount: 0,
-          action_type: 'launch_product_free_early_adopter',
-          reference_id: null,
-        },
-      ]);
-      return { success: true };
-    }
-
-    const currentPoints = await getUserPoints(userId);
-    if (currentPoints < requiredPoints) {
-      return { success: false, error: `You need ${requiredPoints} points to launch a product. Current balance: ${currentPoints} points.` };
-    }
-
-    // Insert deduction audit transaction
-    await insforge.database.from('point_transactions').insert([
-      {
-        user_id: userId,
-        amount: -requiredPoints,
-        action_type: 'launch_product',
-        reference_id: null,
-      },
-    ]);
-
-    // Update user balance
-    const newPoints = currentPoints - requiredPoints;
-    await insforge.database
-      .from('users')
-      .update({ points: newPoints })
-      .eq('id', userId);
-
-    return { success: true };
-  } catch (err: any) {
-    console.error('Error deducting launch points:', err);
-    return { success: false, error: err.message || 'Failed to deduct points' };
-  }
+  return { success: true };
 }
+

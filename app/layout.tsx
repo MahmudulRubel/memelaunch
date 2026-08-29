@@ -106,10 +106,9 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "MemeLaunch",
-    url: "https://memelaunch.insforge.app",
-    logo: "https://memelaunch.insforge.app/favicon.ico",
+    url: "https://www.launchme.me",
+    logo: "https://www.launchme.me/favicon.ico",
     sameAs: [
-      "https://x.com/launchme_me",
       "https://x.com/builtwithrubel"
     ],
     description: "Meme-native product launch arena for indie hackers and startup founders.",
@@ -119,14 +118,12 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "MemeLaunch",
-    url: "https://memelaunch.insforge.app",
+    url: "https://www.launchme.me",
     potentialAction: {
       "@type": "SearchAction",
-      target: "https://memelaunch.insforge.app/products/{search_term_string}",
       "query-input": "required name=search_term_string"
     }
   };
-
   return (
     <html
       lang="en"
