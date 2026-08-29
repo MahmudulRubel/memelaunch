@@ -1,5 +1,12 @@
 [auth]
-allowed_redirect_urls = []
+allowed_redirect_urls = [
+  "https://www.launchme.me",
+  "https://www.launchme.me/*",
+  "https://launchme.me",
+  "https://launchme.me/*",
+  "http://localhost:3000",
+  "http://localhost:3000/*"
+]
 require_email_verification = false
 verify_email_method = "code"
 reset_password_method = "code"
