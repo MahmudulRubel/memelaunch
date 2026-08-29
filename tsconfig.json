@@ -39,6 +39,9 @@
   "exclude": [
     "node_modules",
     "functions",
+    "scripts",
+    "scratch",
+    "backups",
     ".next"
   ]
 }
