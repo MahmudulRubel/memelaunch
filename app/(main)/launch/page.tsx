@@ -181,6 +181,58 @@ function LaunchForm() {
     checkPoints();
   }, [user]);
 
+  // Load draft from sessionStorage on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const savedDraft = sessionStorage.getItem('memelaunch_form_draft');
+      if (savedDraft) {
+        const parsed = JSON.parse(savedDraft);
+        if (parsed.productName && !productName) setProductName(parsed.productName);
+        if (parsed.category && !category) setCategory(parsed.category);
+        if (parsed.pricing && !pricing) setPricing(parsed.pricing);
+        if (parsed.productUrl && !productUrl) setProductUrl(parsed.productUrl);
+        if (parsed.productDescription && !productDescription) setProductDescription(parsed.productDescription);
+        if (parsed.autofillUrl && !autofillUrl) setAutofillUrl(parsed.autofillUrl);
+        if (parsed.productLogoPreview && !productLogoPreview && parsed.productLogoPreview.startsWith('http')) {
+          setProductLogoPreview(parsed.productLogoPreview);
+        }
+      }
+    } catch (e) {
+      console.warn('Draft restoration warning:', e);
+    }
+  }, []);
+
+  // Save draft changes to sessionStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const draft = {
+        productName,
+        category,
+        pricing,
+        productUrl,
+        productDescription,
+        autofillUrl,
+        productLogoPreview: productLogoPreview && productLogoPreview.startsWith('http') ? productLogoPreview : null,
+      };
+      sessionStorage.setItem('memelaunch_form_draft', JSON.stringify(draft));
+    } catch (e) {}
+  }, [productName, category, pricing, productUrl, productDescription, autofillUrl, productLogoPreview]);
+
+  // Handle post-auth pending launch submission
+  useEffect(() => {
+    if (typeof window === 'undefined' || !user) return;
+    const isPending = sessionStorage.getItem('pendingLaunchAfterAuth');
+    if (isPending === 'true') {
+      sessionStorage.removeItem('pendingLaunchAfterAuth');
+      // If form fields are ready, execute submission automatically
+      if (productName && productUrl && category) {
+        executeSubmission(user);
+      }
+    }
+  }, [user, productName, productUrl, category]);
+
   // Auto-fill from homepage query param on mount (runs only once)
   useEffect(() => {
     if (urlParam && !hasAutofilledRef.current) {
@@ -368,7 +420,16 @@ function LaunchForm() {
 
         memeImageUrl = await uploadImageToStorage(compressedMemeFile, 'memes', memePath);
       } else if (memePreview) {
-        memeImageUrl = memePreview;
+        if (memePreview.startsWith('blob:')) {
+          setStatusMessage('Processing product meme...');
+          const blob = await fetch(memePreview).then((r) => r.blob());
+          const compressedBlob = await compressImage(blob as any, 1200, 0.8);
+          const file = new File([compressedBlob], 'product_meme.jpg', { type: 'image/jpeg' });
+          const memePath = `${authUser.id}/${Date.now()}_meme.jpg`;
+          memeImageUrl = await uploadImageToStorage(file, 'memes', memePath);
+        } else {
+          memeImageUrl = memePreview;
+        }
       }
 
       // Step 2: Upload Product Logo
@@ -386,7 +447,16 @@ function LaunchForm() {
 
         logoUrl = await uploadImageToStorage(compressedLogoFile, 'memes', logoPath);
       } else if (productLogoPreview) {
-        logoUrl = productLogoPreview;
+        if (productLogoPreview.startsWith('blob:')) {
+          setStatusMessage('Processing product logo...');
+          const blob = await fetch(productLogoPreview).then((r) => r.blob());
+          const compressedBlob = await compressImage(blob as any, 400, 0.8);
+          const file = new File([compressedBlob], 'product_logo.jpg', { type: 'image/jpeg' });
+          const logoPath = `${authUser.id}/${Date.now()}_logo.jpg`;
+          logoUrl = await uploadImageToStorage(file, 'memes', logoPath);
+        } else {
+          logoUrl = productLogoPreview;
+        }
       }
 
       // Step 3: Upload Screenshots
@@ -395,9 +465,7 @@ function LaunchForm() {
         const file = screenshotFiles[i];
         const preview = screenshotPreviews[i];
 
-        if (file === null) {
-          uploadedScreenshotUrls.push(preview);
-        } else if (file) {
+        if (file) {
           setStatusMessage(`Compressing screenshot ${i + 1} of ${screenshotPreviews.length}...`);
           const compressedBlob = await compressImage(file, 1200, 0.8);
           const compressedFile = new File([compressedBlob], file.name, {
@@ -410,6 +478,18 @@ function LaunchForm() {
 
           const screenshotUrl = await uploadImageToStorage(compressedFile, 'screenshots', screenshotPath);
           uploadedScreenshotUrls.push(screenshotUrl);
+        } else if (preview) {
+          if (preview.startsWith('blob:')) {
+            setStatusMessage(`Uploading screenshot ${i + 1}...`);
+            const blob = await fetch(preview).then((r) => r.blob());
+            const compressedBlob = await compressImage(blob as any, 1200, 0.8);
+            const blobFile = new File([compressedBlob], `screenshot_${i}.jpg`, { type: 'image/jpeg' });
+            const screenshotPath = `${authUser.id}/${Date.now()}_screenshot_${i}.jpg`;
+            const screenshotUrl = await uploadImageToStorage(blobFile, 'screenshots', screenshotPath);
+            uploadedScreenshotUrls.push(screenshotUrl);
+          } else {
+            uploadedScreenshotUrls.push(preview);
+          }
         }
       }
 
@@ -434,6 +514,12 @@ function LaunchForm() {
       const createJson = await createRes.json();
       if (!createRes.ok || !createJson.success) {
         throw new Error(createJson.error || 'Failed to create product launch.');
+      }
+
+      // Clean up saved drafts
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('memelaunch_form_draft');
+        sessionStorage.removeItem('pendingLaunchAfterAuth');
       }
 
       const updatedPts = await getUserPoints(authUser.id);

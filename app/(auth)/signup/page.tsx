@@ -1,14 +1,24 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { SafeImage } from '@/components/safe-image';
 import { insforge } from '@/lib/insforge';
 import { useAuth } from '@/components/auth-provider';
 
 export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-500 font-mono text-sm">Loading sign up...</div>}>
+      <SignupForm />
+    </Suspense>
+  );
+}
+
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams ? searchParams.get('redirect') || searchParams.get('returnTo') : null;
   const { user, isLoading: authLoading, refreshUser } = useAuth();
 
   // Registration form state
@@ -23,10 +33,19 @@ export default function SignupPage() {
   const [otp, setOtp] = useState('');
   const [resendStatus, setResendStatus] = useState<string | null>(null);
 
-  // Redirect to homepage if user is already authenticated
+  const getDestinationUrl = () => {
+    if (redirectParam) return redirectParam;
+    if (typeof window !== 'undefined' && sessionStorage.getItem('memelaunch_form_draft')) {
+      return '/launch';
+    }
+    return '/';
+  };
+
+  // Redirect to destination if user is already authenticated
   useEffect(() => {
     if (!authLoading && user) {
-      router.push('/');
+      const dest = getDestinationUrl();
+      router.push(dest);
       router.refresh();
     }
   }, [user, authLoading, router]);
@@ -38,12 +57,41 @@ export default function SignupPage() {
 
     try {
       const { data, error } = await insforge.auth.signUp({
-        email,
+        email: email.trim(),
         password,
-        name,
+        name: name.trim(),
       });
 
       if (error) {
+        const errorLower = (error.message || '').toLowerCase();
+        const isExistingUser =
+          errorLower.includes('already') ||
+          errorLower.includes('exists') ||
+          errorLower.includes('registered') ||
+          errorLower.includes('duplicate') ||
+          errorLower.includes('taken') ||
+          errorLower.includes('constraint') ||
+          errorLower.includes('conflict');
+
+        if (isExistingUser) {
+          // Attempt automatic sign-in for existing user
+          const { data: loginData, error: loginError } = await insforge.auth.signInWithPassword({
+            email: email.trim(),
+            password,
+          });
+
+          if (!loginError && loginData?.user) {
+            await refreshUser();
+            const dest = getDestinationUrl();
+            router.push(dest);
+            router.refresh();
+            return;
+          }
+
+          setErrorMsg('An account with this email already exists. Please sign in with your password.');
+          return;
+        }
+
         setErrorMsg(error.message || 'Failed to register.');
       } else if (data?.requireEmailVerification) {
         setShowVerification(true);
@@ -52,10 +100,11 @@ export default function SignupPage() {
         fetch('/api/email/welcome', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ toEmail: email, userName: name }),
+          body: JSON.stringify({ toEmail: email.trim(), userName: name.trim() }),
         }).catch(() => {}); // fire-and-forget
         await refreshUser();
-        router.push('/');
+        const dest = getDestinationUrl();
+        router.push(dest);
         router.refresh();
       }
     } catch (err: any) {
@@ -72,8 +121,8 @@ export default function SignupPage() {
 
     try {
       const { data, error } = await insforge.auth.verifyEmail({
-        email,
-        otp,
+        email: email.trim(),
+        otp: otp.trim(),
       });
 
       if (error) {
@@ -83,10 +132,11 @@ export default function SignupPage() {
         fetch('/api/email/welcome', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ toEmail: email, userName: name }),
+          body: JSON.stringify({ toEmail: email.trim(), userName: name.trim() }),
         }).catch(() => {}); // fire-and-forget
         await refreshUser();
-        router.push('/');
+        const dest = getDestinationUrl();
+        router.push(dest);
         router.refresh();
       }
     } catch (err: any) {

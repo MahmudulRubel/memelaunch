@@ -1,14 +1,24 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { SafeImage } from '@/components/safe-image';
 import { insforge } from '@/lib/insforge';
 import { useAuth } from '@/components/auth-provider';
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-500 font-mono text-sm">Loading sign in...</div>}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams ? searchParams.get('redirect') || searchParams.get('returnTo') : null;
   const { user, isLoading: authLoading, refreshUser } = useAuth();
   
   const [email, setEmail] = useState('');
@@ -16,10 +26,19 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Redirect to homepage if user is already authenticated
+  const getDestinationUrl = () => {
+    if (redirectParam) return redirectParam;
+    if (typeof window !== 'undefined' && sessionStorage.getItem('memelaunch_form_draft')) {
+      return '/launch';
+    }
+    return '/';
+  };
+
+  // Redirect to destination if user is already authenticated
   useEffect(() => {
     if (!authLoading && user) {
-      router.push('/');
+      const dest = getDestinationUrl();
+      router.push(dest);
       router.refresh();
     }
   }, [user, authLoading, router]);
@@ -31,7 +50,7 @@ export default function LoginPage() {
 
     try {
       const { data, error } = await insforge.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
@@ -40,8 +59,8 @@ export default function LoginPage() {
       } else if (data?.accessToken) {
         // Refresh the session in context
         await refreshUser();
-        // Redirect to homepage
-        router.push('/');
+        const dest = getDestinationUrl();
+        router.push(dest);
         router.refresh();
       }
     } catch (err: any) {

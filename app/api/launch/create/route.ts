@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
           template_id: null,
           product_description: (productDescription || '').trim(),
           product_logo_url: productLogoUrl || '',
+          is_approved: true,
         },
       ])
       .select();
@@ -99,6 +100,8 @@ export async function POST(request: NextRequest) {
     try {
       revalidatePath('/');
       revalidatePath('/launch');
+      revalidatePath('/products');
+      revalidatePath(`/products/${encodeURIComponent(productName.trim())}`);
     } catch (rErr) {}
 
     return NextResponse.json({
