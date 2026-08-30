@@ -230,11 +230,11 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
 
   // Loading Skeleton
   const renderSkeletons = () => (
-    <div className="columns-1 sm:columns-2 lg:columns-3 gap-8 sm:gap-8 lg:gap-10 space-y-0 mt-8 sm:mt-10">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-8 items-stretch mt-8 sm:mt-10">
       {Array.from({ length: 6 }).map((_, idx) => (
         <div
           key={idx}
-          className="bg-zinc-900/30 border-2 border-black rounded-2xl sm:rounded-3xl p-5 sm:p-6 space-y-5 animate-pulse break-inside-avoid mb-8 sm:mb-10 shadow-brutal"
+          className="bg-zinc-900/30 border-2 border-black rounded-2xl sm:rounded-3xl p-5 sm:p-6 space-y-5 animate-pulse shadow-brutal"
         >
           <div className="aspect-square w-full bg-zinc-800/40 rounded-xl" />
           <div className="h-6 bg-zinc-800/40 rounded-md w-2/3" />
@@ -570,8 +570,8 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
           )}
         </div>
       ) : (
-        /* Masonry Grid */
-        <div className="columns-1 sm:columns-2 lg:columns-3 gap-8 sm:gap-8 lg:gap-10 space-y-0 mt-8 sm:mt-10">
+        /* Product Grid (Row-by-Row Ranking) */
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-8 items-stretch mt-8 sm:mt-10">
           {paginatedLaunches.map((launch, index) => (
             <MemeCard
               key={launch.id}

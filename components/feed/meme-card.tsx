@@ -152,7 +152,7 @@ export function MemeCard({ launch, rank, onSelect, onBoost, priority = false }: 
   return (
     <div
       onClick={handleCardClick}
-      className="group relative flex flex-col bg-zinc-950 border-2 border-black rounded-2xl sm:rounded-3xl overflow-hidden shadow-brutal hover-brutal transition-all cursor-pointer break-inside-avoid mb-8 sm:mb-10"
+      className="group relative flex flex-col h-full bg-zinc-950 border-2 border-black rounded-2xl sm:rounded-3xl overflow-hidden shadow-brutal hover-brutal transition-all cursor-pointer"
     >
       {/* Aspect Ratio Box for Meme */}
       <div className="relative aspect-square w-full bg-zinc-900 border-b-2 border-black overflow-hidden flex items-center justify-center">
