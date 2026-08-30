@@ -104,6 +104,7 @@ function LaunchForm() {
   const [autofillStep, setAutofillStep] = useState<number>(0);
   const [autofillSuccess, setAutofillSuccess] = useState(false);
   const [autofillError, setAutofillError] = useState<string | null>(null);
+  const hasAutofilledRef = useRef(false);
 
   const handleAutofill = async (targetUrl?: string) => {
     const urlToUse = targetUrl || autofillUrl || productUrl;
@@ -177,9 +178,10 @@ function LaunchForm() {
     checkPoints();
   }, [user]);
 
-  // Auto-fill from homepage query param on mount
+  // Auto-fill from homepage query param on mount (runs only once)
   useEffect(() => {
-    if (urlParam) {
+    if (urlParam && !hasAutofilledRef.current) {
+      hasAutofilledRef.current = true;
       let formattedUrl = urlParam.trim();
       if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
         formattedUrl = `https://${formattedUrl}`;
@@ -1073,15 +1075,19 @@ function LaunchForm() {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
-        onSuccess={(authenticatedUser) => {
+        onSuccess={async (authenticatedUser) => {
           setIsAuthModalOpen(false);
-          const targetUser = authenticatedUser || user;
-          if (targetUser) {
-            executeSubmission(targetUser);
+          const targetUser = authenticatedUser?.id
+            ? authenticatedUser
+            : authenticatedUser?.user?.id
+            ? authenticatedUser.user
+            : user;
+          if (targetUser?.id) {
+            await executeSubmission(targetUser);
           }
         }}
         title="Sign Up to Complete Your Launch"
-        subtitle="Create a free account or log in to submit your product, earn points, and appear on the home feed."
+        subtitle="Create a free account or log in to submit your product and appear on the home feed immediately."
       />
     </div>
   );

@@ -1,7 +1,7 @@
 import { createClient } from '@insforge/sdk';
 
 const baseUrl = process.env.NEXT_PUBLIC_INSFORGE_BASE_URL || 'https://fw47aqh3.ap-southeast.insforge.app';
-const anonKey = process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY || 'ik_df9cb12db0c6c080dcc8c64ffb5b7b0c';
+const anonKey = process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY || 'anon_5a5ec51717d846950da308c3afa26361da06231743c2627f6ce1a187732b4c51';
 
 // Connection pooling & HTTP keep-alive options for high performance & resilience
 const CONNECTION_TIMEOUT_MS = parseInt(process.env.DB_CONNECTION_TIMEOUT_MS || '10000', 10);
