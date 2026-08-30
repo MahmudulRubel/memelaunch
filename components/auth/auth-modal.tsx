@@ -62,17 +62,26 @@ export function AuthModal({
 
     try {
       const { data, error } = await insforge.auth.signUp({
-        email,
+        email: email.trim(),
         password,
-        name,
+        name: name.trim(),
       });
 
       if (error) {
         // If user is already registered, automatically attempt log in
         const errorLower = (error.message || '').toLowerCase();
-        if (errorLower.includes('already') || errorLower.includes('exists') || errorLower.includes('registered')) {
+        const isExistingUser = 
+          errorLower.includes('already') || 
+          errorLower.includes('exists') || 
+          errorLower.includes('registered') ||
+          errorLower.includes('duplicate') ||
+          errorLower.includes('taken') ||
+          errorLower.includes('constraint') ||
+          errorLower.includes('conflict');
+
+        if (isExistingUser) {
           const { data: loginData, error: loginError } = await insforge.auth.signInWithPassword({
-            email,
+            email: email.trim(),
             password,
           });
 
@@ -80,11 +89,19 @@ export function AuthModal({
             await refreshUser();
             const userRes = await insforge.auth.getCurrentUser();
             const currentUser = userRes.data?.user || loginData.user;
-            if (onSuccess) await onSuccess(currentUser);
+            if (currentUser && onSuccess) {
+              await onSuccess(currentUser);
+            }
             handleClose();
             return;
           }
+
+          // If auto-login fails (e.g. wrong password for existing account), switch to login tab
+          setMode('login');
+          setErrorMsg('An account with this email already exists. Please enter your password to sign in and launch your product.');
+          return;
         }
+
         setErrorMsg(error.message || 'Failed to register.');
       } else if (data?.requireEmailVerification) {
         setShowVerification(true);
@@ -92,19 +109,21 @@ export function AuthModal({
       } else {
         // Ensure session is set if not auto-returned
         if (!data?.accessToken) {
-          await insforge.auth.signInWithPassword({ email, password }).catch(() => {});
+          await insforge.auth.signInWithPassword({ email: email.trim(), password }).catch(() => {});
         }
 
         fetch('/api/email/welcome', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ toEmail: email, userName: name }),
+          body: JSON.stringify({ toEmail: email.trim(), userName: name.trim() }),
         }).catch(() => {});
 
         await refreshUser();
         const userRes = await insforge.auth.getCurrentUser();
         const currentUser = userRes.data?.user || data?.user;
-        if (onSuccess) await onSuccess(currentUser);
+        if (currentUser && onSuccess) {
+          await onSuccess(currentUser);
+        }
         handleClose();
       }
     } catch (err: any) {
@@ -121,7 +140,7 @@ export function AuthModal({
 
     try {
       const { data, error } = await insforge.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
@@ -131,7 +150,9 @@ export function AuthModal({
         await refreshUser();
         const userRes = await insforge.auth.getCurrentUser();
         const currentUser = userRes.data?.user || data?.user;
-        if (onSuccess) await onSuccess(currentUser);
+        if (currentUser && onSuccess) {
+          await onSuccess(currentUser);
+        }
         handleClose();
       }
     } catch (err: any) {
@@ -148,8 +169,8 @@ export function AuthModal({
 
     try {
       const { data, error } = await insforge.auth.verifyEmail({
-        email,
-        otp,
+        email: email.trim(),
+        otp: otp.trim(),
       });
 
       if (error) {
@@ -158,12 +179,14 @@ export function AuthModal({
         fetch('/api/email/welcome', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ toEmail: email, userName: name }),
+          body: JSON.stringify({ toEmail: email.trim(), userName: name.trim() }),
         }).catch(() => {});
         await refreshUser();
         const userRes = await insforge.auth.getCurrentUser();
         const currentUser = userRes.data?.user || data?.user;
-        if (onSuccess) await onSuccess(currentUser);
+        if (currentUser && onSuccess) {
+          await onSuccess(currentUser);
+        }
         handleClose();
       }
     } catch (err: any) {
@@ -177,6 +200,9 @@ export function AuthModal({
     setIsLoading(true);
     setErrorMsg(null);
     try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('pendingLaunchAfterAuth', 'true');
+      }
       const { error } = await insforge.auth.signInWithOAuth(provider, {
         redirectTo: window.location.origin + '/launch',
       });

@@ -54,3 +54,4 @@ assert.strictEqual(detectBadgeEmbed(mockWebsiteWithBadge), true, 'Must detect ba
 assert.strictEqual(detectBadgeEmbed(mockWebsiteWithoutBadge), false, 'Must reject website when badge is missing');
 
 console.log('✅ Badge SVG Generation, 3 Themes (Dark, White, Gold), Canonical Domain (https://www.launchme.me), and Crawler Verification passed successfully!');
+
