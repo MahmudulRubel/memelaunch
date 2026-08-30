@@ -104,6 +104,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       launchId,
+      launch: launchData[0],
     });
   } catch (err: any) {
     console.error('Launch create API exception:', err);

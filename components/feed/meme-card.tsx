@@ -7,8 +7,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { insforge, resolveStorageUrl, getAvatarGradient, getCategoryBadgeStyle } from '@/lib/insforge';
 import { SafeImage } from '@/components/safe-image';
-import { rewardLike, revokeLike } from '@/lib/points';
-import { MessageSquare, ExternalLink, Globe, Tag } from 'lucide-react';
+import { rewardLike, revokeLike, calculateLaunchPoints } from '@/lib/points';
+import { MessageSquare, ExternalLink, Globe, Tag, Zap, Trophy, Sparkles } from 'lucide-react';
 import { parseCaption, getCaptionText } from '@/lib/meme';
 import { trackLaunchClick } from '@/lib/analytics';
 
@@ -47,11 +47,13 @@ export interface Launch {
 
 interface MemeCardProps {
   launch: Launch;
+  rank?: number;
   onSelect?: (launch: Launch) => void;
+  onBoost?: (launch: Launch) => void;
   priority?: boolean;
 }
 
-export function MemeCard({ launch, onSelect, priority = false }: MemeCardProps) {
+export function MemeCard({ launch, rank, onSelect, onBoost, priority = false }: MemeCardProps) {
   const { user } = useAuth();
   const router = useRouter();
   
@@ -60,6 +62,8 @@ export function MemeCard({ launch, onSelect, priority = false }: MemeCardProps) 
   const [isReacting, setIsReacting] = useState<Record<string, boolean>>({});
   const [imgSrc, setImgSrc] = useState<string>(resolveStorageUrl(launch.meme_image_url));
   const [logoSrc, setLogoSrc] = useState<string>(resolveStorageUrl(launch.product_logo_url));
+
+  const totalPoints = calculateLaunchPoints({ reactions, comments: launch.comments });
 
   useEffect(() => {
     setReactions(launch.reactions || []);
@@ -152,8 +156,31 @@ export function MemeCard({ launch, onSelect, priority = false }: MemeCardProps) 
     >
       {/* Aspect Ratio Box for Meme */}
       <div className="relative aspect-square w-full bg-zinc-900 border-b-2 border-black overflow-hidden flex items-center justify-center">
+        {/* Dynamic Rank Badge */}
+        {typeof rank === 'number' && (
+          <div className="absolute top-2.5 left-2.5 z-20">
+            {rank === 1 ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-zinc-950 font-black font-impact text-xs sm:text-sm tracking-wider uppercase rounded-xl border-2 border-black shadow-brutal animate-pulse">
+                <span>🥇</span> #1 TOP PRODUCT
+              </span>
+            ) : rank === 2 ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-slate-200 to-slate-100 text-zinc-950 font-black font-impact text-xs tracking-wider uppercase rounded-xl border-2 border-black shadow-brutal-sm">
+                <span>🥈</span> #2
+              </span>
+            ) : rank === 3 ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-amber-600 to-amber-500 text-white font-black font-impact text-xs tracking-wider uppercase rounded-xl border-2 border-black shadow-brutal-sm">
+                <span>🥉</span> #3
+              </span>
+            ) : (
+              <span className="inline-flex items-center px-2 py-0.5 bg-zinc-950/90 text-zinc-200 font-black font-impact text-xs tracking-wider uppercase rounded-lg border-2 border-black shadow-brutal-sm">
+                #{rank}
+              </span>
+            )}
+          </div>
+        )}
+
         {launch.is_approved === false && (
-          <div className="absolute top-2 left-2 z-10 px-2.5 py-1 rounded-lg bg-[#ffe600] text-zinc-950 border-2 border-black font-black text-[10px] uppercase tracking-wider shadow-brutal-sm select-none">
+          <div className="absolute top-2.5 right-2.5 z-20 px-2.5 py-1 rounded-lg bg-[#ffe600] text-zinc-950 border-2 border-black font-black text-[10px] uppercase tracking-wider shadow-brutal-sm select-none">
             Pending Approval
           </div>
         )}
@@ -277,6 +304,28 @@ export function MemeCard({ launch, onSelect, priority = false }: MemeCardProps) 
               <span className="text-[#ffe600]">◇</span>
               <span>{launch.category}</span>
             </span>
+
+            {/* Points Indicator Pill */}
+            <span className="inline-flex items-center gap-1 text-lime-400 bg-lime-950/60 border-2 border-lime-400/40 px-2.5 py-1 rounded-xl text-xs font-black uppercase font-mono shadow-brutal-sm">
+              <Zap className="h-3.5 w-3.5 fill-lime-400" />
+              <span>{totalPoints} pts</span>
+            </span>
+
+            {/* Boost Button */}
+            {onBoost && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onBoost(launch);
+                }}
+                className="inline-flex items-center gap-1 text-zinc-950 bg-lime-400 hover:bg-lime-300 border-2 border-black px-2.5 py-1 rounded-xl text-xs font-black uppercase font-impact tracking-wider transition-all shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5"
+                title="Boost this launch with points"
+              >
+                <Sparkles className="h-3 w-3 fill-zinc-950" />
+                <span>Boost</span>
+              </button>
+            )}
 
             {/* World Cup Qualification Badge */}
             {reactions.length >= 10 && (

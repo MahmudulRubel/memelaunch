@@ -68,20 +68,43 @@ export function AuthModal({
       });
 
       if (error) {
+        // If user is already registered, automatically attempt log in
+        const errorLower = (error.message || '').toLowerCase();
+        if (errorLower.includes('already') || errorLower.includes('exists') || errorLower.includes('registered')) {
+          const { data: loginData, error: loginError } = await insforge.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (!loginError && loginData?.user) {
+            await refreshUser();
+            const userRes = await insforge.auth.getCurrentUser();
+            const currentUser = userRes.data?.user || loginData.user;
+            if (onSuccess) await onSuccess(currentUser);
+            handleClose();
+            return;
+          }
+        }
         setErrorMsg(error.message || 'Failed to register.');
       } else if (data?.requireEmailVerification) {
         setShowVerification(true);
         setSuccessMsg('Verification code sent to your email.');
       } else {
+        // Ensure session is set if not auto-returned
+        if (!data?.accessToken) {
+          await insforge.auth.signInWithPassword({ email, password }).catch(() => {});
+        }
+
         fetch('/api/email/welcome', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ toEmail: email, userName: name }),
         }).catch(() => {});
+
         await refreshUser();
         const userRes = await insforge.auth.getCurrentUser();
         const currentUser = userRes.data?.user || data?.user;
-        if (onSuccess) onSuccess(currentUser);
+        if (onSuccess) await onSuccess(currentUser);
         handleClose();
       }
     } catch (err: any) {
@@ -108,7 +131,7 @@ export function AuthModal({
         await refreshUser();
         const userRes = await insforge.auth.getCurrentUser();
         const currentUser = userRes.data?.user || data?.user;
-        if (onSuccess) onSuccess(currentUser);
+        if (onSuccess) await onSuccess(currentUser);
         handleClose();
       }
     } catch (err: any) {
@@ -140,7 +163,7 @@ export function AuthModal({
         await refreshUser();
         const userRes = await insforge.auth.getCurrentUser();
         const currentUser = userRes.data?.user || data?.user;
-        if (onSuccess) onSuccess(currentUser);
+        if (onSuccess) await onSuccess(currentUser);
         handleClose();
       }
     } catch (err: any) {

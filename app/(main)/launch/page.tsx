@@ -7,6 +7,7 @@ import { uploadImageToStorage } from '@/lib/insforge';
 import { compressImage } from '@/lib/image';
 import { getUserPoints, getLaunchPointCost } from '@/lib/points';
 import { EarnPointsModal } from '@/components/points/earn-points-modal';
+import { LaunchBoostModal } from '@/components/points/launch-boost-modal';
 import { AuthModal } from '@/components/auth/auth-modal';
 import { z } from 'zod';
 import {
@@ -96,6 +97,8 @@ function LaunchForm() {
   // Points & Auth Modal State
   const [userPoints, setUserPoints] = useState<number>(0);
   const [isEarnPointsModalOpen, setIsEarnPointsModalOpen] = useState(false);
+  const [isBoostModalOpen, setIsBoostModalOpen] = useState(false);
+  const [createdLaunchData, setCreatedLaunchData] = useState<{ id?: string; product_name?: string; product_url?: string; meme_image_url?: string } | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // AI Autofill state
@@ -104,6 +107,7 @@ function LaunchForm() {
   const [autofillStep, setAutofillStep] = useState<number>(0);
   const [autofillSuccess, setAutofillSuccess] = useState(false);
   const [autofillError, setAutofillError] = useState<string | null>(null);
+  const hasAutofilledRef = useRef(false);
 
   const handleAutofill = async (targetUrl?: string) => {
     const urlToUse = targetUrl || autofillUrl || productUrl;
@@ -177,9 +181,10 @@ function LaunchForm() {
     checkPoints();
   }, [user]);
 
-  // Auto-fill from homepage query param on mount
+  // Auto-fill from homepage query param on mount (runs only once)
   useEffect(() => {
-    if (urlParam) {
+    if (urlParam && !hasAutofilledRef.current) {
+      hasAutofilledRef.current = true;
       let formattedUrl = urlParam.trim();
       if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
         formattedUrl = `https://${formattedUrl}`;
@@ -434,13 +439,17 @@ function LaunchForm() {
       const updatedPts = await getUserPoints(authUser.id);
       setUserPoints(updatedPts);
 
-      setStatusMessage('');
-      setSuccessMessage('🎉 Product launched successfully! Redirecting to feed...');
+      const createdLaunch = createJson.launch || {
+        id: createJson.launchId,
+        product_name: productName.trim(),
+        product_url: validUrl,
+        meme_image_url: memeImageUrl,
+      };
 
-      setTimeout(() => {
-        router.push('/');
-        router.refresh();
-      }, 2000);
+      setCreatedLaunchData(createdLaunch);
+      setStatusMessage('');
+      setIsBoostModalOpen(true);
+      setSuccessMessage('🎉 Product launched successfully! Complete boosts to take the #1 spot.');
 
     } catch (err: any) {
       console.error('Launch error:', err);
@@ -1069,19 +1078,37 @@ function LaunchForm() {
         onPointsUpdated={(newPts) => setUserPoints(newPts)}
       />
 
+      {/* Post-Launch Boost to #1 Modal Popup */}
+      <LaunchBoostModal
+        isOpen={isBoostModalOpen}
+        onClose={() => {
+          setIsBoostModalOpen(false);
+          router.push('/');
+          router.refresh();
+        }}
+        launch={createdLaunchData}
+        currentRank={1}
+        currentPoints={userPoints}
+        onPointsUpdated={(newPts) => setUserPoints(newPts)}
+      />
+
       {/* Sign Up / Auth Modal Popup on Launch Submit */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
-        onSuccess={(authenticatedUser) => {
+        onSuccess={async (authenticatedUser) => {
           setIsAuthModalOpen(false);
-          const targetUser = authenticatedUser || user;
-          if (targetUser) {
-            executeSubmission(targetUser);
+          const targetUser = authenticatedUser?.id
+            ? authenticatedUser
+            : authenticatedUser?.user?.id
+            ? authenticatedUser.user
+            : user;
+          if (targetUser?.id) {
+            await executeSubmission(targetUser);
           }
         }}
         title="Sign Up to Complete Your Launch"
-        subtitle="Create a free account or log in to submit your product, earn points, and appear on the home feed."
+        subtitle="Create a free account or log in to submit your product and appear on the home feed immediately."
       />
     </div>
   );

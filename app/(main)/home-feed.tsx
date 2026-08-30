@@ -8,6 +8,8 @@ import { useAuth } from '@/components/auth-provider';
 import { insforge, insforgeAdmin, resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
 import { MemeCard, type Launch } from '@/components/feed/meme-card';
 import { SafeImage } from '@/components/safe-image';
+import { calculateLaunchPoints } from '@/lib/points';
+import { LaunchBoostModal } from '@/components/points/launch-boost-modal';
 import {
   Clock,
   TrendingUp,
@@ -35,10 +37,19 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Top featured launch for hero showcase
+  // Boost Modal State
+  const [boostLaunch, setBoostLaunch] = useState<Launch | null>(null);
+  const [isBoostModalOpen, setIsBoostModalOpen] = useState(false);
+
+  // Top featured launch for hero showcase (Rank #1 by Points)
   const topFeaturedLaunch = useMemo(() => {
     if (!launches || launches.length === 0) return null;
-    return [...launches].sort((a, b) => (b.reactions?.length || 0) - (a.reactions?.length || 0))[0];
+    return [...launches].sort((a, b) => {
+      const bScore = calculateLaunchPoints(b);
+      const aScore = calculateLaunchPoints(a);
+      if (bScore !== aScore) return bScore - aScore;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    })[0];
   }, [launches]);
 
   const handleQuickLaunchSubmit = (e: React.FormEvent) => {
@@ -169,14 +180,15 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
 
     // 3. Apply Sorting based on Active Tab
     if (activeTab === 'new') {
-      return result;
+      return [...result].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     } else if (activeTab === 'qualifiers') {
-      // Top 16 Qualifiers
-      return result.sort((a, b) => (b.reactions?.length || 0) - (a.reactions?.length || 0)).slice(0, 16);
+      // Top 16 Qualifiers by points
+      return [...result].sort((a, b) => calculateLaunchPoints(b) - calculateLaunchPoints(a)).slice(0, 16);
     } else if (activeTab === 'trending') {
-      return result.sort((a, b) => {
-        const aScore = a.reactions?.length || 0;
-        const bScore = b.reactions?.length || 0;
+      // Default: Top points gets Rank #1, #2, #3...
+      return [...result].sort((a, b) => {
+        const aScore = calculateLaunchPoints(a);
+        const bScore = calculateLaunchPoints(b);
         
         if (bScore !== aScore) return bScore - aScore;
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
@@ -564,6 +576,11 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
             <MemeCard
               key={launch.id}
               launch={launch}
+              rank={index + 1}
+              onBoost={(l) => {
+                setBoostLaunch(l);
+                setIsBoostModalOpen(true);
+              }}
               priority={index < 2}
             />
           ))}
@@ -577,7 +594,20 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
         </div>
       )}
 
-
+      {/* Boost Launch Points Modal */}
+      <LaunchBoostModal
+        isOpen={isBoostModalOpen}
+        onClose={() => {
+          setIsBoostModalOpen(false);
+          setBoostLaunch(null);
+        }}
+        launch={boostLaunch}
+        currentRank={boostLaunch ? (paginatedLaunches.findIndex((l) => l.id === boostLaunch.id) + 1 || 1) : 1}
+        currentPoints={boostLaunch ? calculateLaunchPoints(boostLaunch) : 0}
+        onPointsUpdated={() => {
+          fetchLaunches(true);
+        }}
+      />
     </div>
   );
 }
