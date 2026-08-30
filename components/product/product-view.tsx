@@ -7,7 +7,8 @@ import { SafeImage } from '@/components/safe-image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { insforge, insforgeAdmin, resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
-import { rewardLike, revokeLike, rewardComment, revokeComment } from '@/lib/points';
+import { rewardLike, revokeLike, rewardComment, revokeComment, calculateLaunchPoints } from '@/lib/points';
+import { LaunchBoostModal } from '@/components/points/launch-boost-modal';
 import {
   ExternalLink,
   Globe,
@@ -19,7 +20,10 @@ import {
   Calendar,
   AlertCircle,
   Plus,
-  ArrowLeft
+  ArrowLeft,
+  Zap,
+  Trophy,
+  Sparkles,
 } from 'lucide-react';
 import type { Launch } from '@/components/feed/meme-card';
 import { parseCaption, getCaptionText } from '@/lib/meme';
@@ -66,6 +70,7 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isReacting, setIsReacting] = useState<Record<string, boolean>>({});
+  const [isBoostModalOpen, setIsBoostModalOpen] = useState(false);
 
   const [commentText, setCommentText] = useState('');
   const [activeScreenshotIdx, setActiveScreenshotIdx] = useState(0);
@@ -312,19 +317,37 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
             </div>
           </div>
 
-          {launch.product_url && (
-            <a
-              href={launch.product_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => trackLaunchClick(launch.id)}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#ffe600] text-zinc-950 border-2 border-black rounded-xl font-black text-sm uppercase shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all shrink-0"
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            {/* Live Score Pill */}
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-lime-950/60 border-2 border-lime-400/40 text-lime-400 rounded-xl font-mono font-bold text-xs shadow-brutal-sm">
+              <Zap className="h-4 w-4 fill-lime-400" />
+              <span>{calculateLaunchPoints({ reactions, comments })} Points</span>
+            </div>
+
+            {/* Boost Button */}
+            <button
+              type="button"
+              onClick={() => setIsBoostModalOpen(true)}
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-lime-400 hover:bg-lime-300 text-zinc-950 border-2 border-black rounded-xl font-black text-xs uppercase font-impact tracking-wider shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
             >
-              <Globe className="h-4 w-4" />
-              <span>Visit Product</span>
-              <ExternalLink className="h-4 w-4" />
-            </a>
-          )}
+              <Sparkles className="h-4 w-4 fill-zinc-950" />
+              <span>Boost to #1</span>
+            </button>
+
+            {launch.product_url && (
+              <a
+                href={launch.product_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackLaunchClick(launch.id)}
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 border-2 border-black rounded-xl font-black text-xs uppercase shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all shrink-0"
+              >
+                <Globe className="h-4 w-4" />
+                <span>Visit Product</span>
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            )}
+          </div>
         </div>
 
         {/* Grid: Left column (Meme Showcase + Screenshots), Right column (Reactions & Comments) */}
@@ -503,6 +526,18 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
 
         </div>
       </div>
+
+      {/* Launch Boost Modal Popup */}
+      <LaunchBoostModal
+        isOpen={isBoostModalOpen}
+        onClose={() => setIsBoostModalOpen(false)}
+        launch={launch}
+        currentRank={1}
+        currentPoints={calculateLaunchPoints({ reactions, comments })}
+        onPointsUpdated={() => {
+          // Trigger refresh if needed
+        }}
+      />
     </div>
   );
 }

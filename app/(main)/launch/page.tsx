@@ -7,6 +7,7 @@ import { uploadImageToStorage } from '@/lib/insforge';
 import { compressImage } from '@/lib/image';
 import { getUserPoints, getLaunchPointCost } from '@/lib/points';
 import { EarnPointsModal } from '@/components/points/earn-points-modal';
+import { LaunchBoostModal } from '@/components/points/launch-boost-modal';
 import { AuthModal } from '@/components/auth/auth-modal';
 import { z } from 'zod';
 import {
@@ -96,6 +97,8 @@ function LaunchForm() {
   // Points & Auth Modal State
   const [userPoints, setUserPoints] = useState<number>(0);
   const [isEarnPointsModalOpen, setIsEarnPointsModalOpen] = useState(false);
+  const [isBoostModalOpen, setIsBoostModalOpen] = useState(false);
+  const [createdLaunchData, setCreatedLaunchData] = useState<{ id?: string; product_name?: string; product_url?: string; meme_image_url?: string } | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // AI Autofill state
@@ -436,13 +439,17 @@ function LaunchForm() {
       const updatedPts = await getUserPoints(authUser.id);
       setUserPoints(updatedPts);
 
-      setStatusMessage('');
-      setSuccessMessage('🎉 Product launched successfully! Redirecting to feed...');
+      const createdLaunch = createJson.launch || {
+        id: createJson.launchId,
+        product_name: productName.trim(),
+        product_url: validUrl,
+        meme_image_url: memeImageUrl,
+      };
 
-      setTimeout(() => {
-        router.push('/');
-        router.refresh();
-      }, 2000);
+      setCreatedLaunchData(createdLaunch);
+      setStatusMessage('');
+      setIsBoostModalOpen(true);
+      setSuccessMessage('🎉 Product launched successfully! Complete boosts to take the #1 spot.');
 
     } catch (err: any) {
       console.error('Launch error:', err);
@@ -1068,6 +1075,20 @@ function LaunchForm() {
       <EarnPointsModal
         isOpen={isEarnPointsModalOpen}
         onClose={() => setIsEarnPointsModalOpen(false)}
+        onPointsUpdated={(newPts) => setUserPoints(newPts)}
+      />
+
+      {/* Post-Launch Boost to #1 Modal Popup */}
+      <LaunchBoostModal
+        isOpen={isBoostModalOpen}
+        onClose={() => {
+          setIsBoostModalOpen(false);
+          router.push('/');
+          router.refresh();
+        }}
+        launch={createdLaunchData}
+        currentRank={1}
+        currentPoints={userPoints}
         onPointsUpdated={(newPts) => setUserPoints(newPts)}
       />
 

@@ -277,3 +277,22 @@ export async function deductPointsForLaunch(userId: string): Promise<{ success: 
   return { success: true };
 }
 
+/**
+ * Calculate dynamic launch score for leaderboard ranking and display.
+ * Formula: (reactions count * 1) + (comments count * 2) + (additional boost points)
+ */
+export function calculateLaunchPoints(
+  launch: {
+    reactions?: { emoji_type?: string; user_id?: string }[] | null;
+    comments?: { id?: string }[] | null;
+    boost_points?: number;
+  },
+  extraBoostPoints: number = 0
+): number {
+  if (!launch) return 0;
+  const reactionPts = (launch.reactions?.length || 0) * 1;
+  const commentPts = (launch.comments?.length || 0) * 2;
+  const directBoost = typeof launch.boost_points === 'number' ? launch.boost_points : 0;
+  return reactionPts + commentPts + directBoost + extraBoostPoints;
+}
+
