@@ -21,3 +21,4 @@ console.log(' - 🚀 Embed Website Badge: +100 Pts');
 console.log(' - 📅 Daily Streak & Check-in: +10 to +40 Pts');
 console.log(' - 🤝 Invite / Refer Another Founder: +50 Pts');
 console.log(' - 👤 Verified Founder Profile Setup: +5 Pts');
+

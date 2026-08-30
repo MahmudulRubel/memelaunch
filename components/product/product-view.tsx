@@ -9,6 +9,7 @@ import { useAuth } from '@/components/auth-provider';
 import { insforge, insforgeAdmin, resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
 import { rewardLike, revokeLike, rewardComment, revokeComment, calculateLaunchPoints } from '@/lib/points';
 import { LaunchBoostModal } from '@/components/points/launch-boost-modal';
+import { EmbedBadgeModal } from '@/components/points/embed-badge-modal';
 import {
   ExternalLink,
   Globe,
@@ -24,6 +25,7 @@ import {
   Zap,
   Trophy,
   Sparkles,
+  Code2,
 } from 'lucide-react';
 import type { Launch } from '@/components/feed/meme-card';
 import { parseCaption, getCaptionText } from '@/lib/meme';
@@ -71,6 +73,7 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isReacting, setIsReacting] = useState<Record<string, boolean>>({});
   const [isBoostModalOpen, setIsBoostModalOpen] = useState(false);
+  const [isEmbedBadgeModalOpen, setIsEmbedBadgeModalOpen] = useState(false);
 
   const [commentText, setCommentText] = useState('');
   const [activeScreenshotIdx, setActiveScreenshotIdx] = useState(0);
@@ -324,6 +327,17 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
               <span>{calculateLaunchPoints({ reactions, comments })} Points</span>
             </div>
 
+            {/* Embed Badge Button */}
+            <button
+              type="button"
+              onClick={() => setIsEmbedBadgeModalOpen(true)}
+              className="inline-flex items-center justify-center gap-2 px-4 py-3 bg-zinc-900 hover:bg-zinc-800 text-lime-400 border-2 border-lime-400/60 rounded-xl font-black text-xs uppercase font-impact tracking-wider shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+              title="Embed 'Launched on MemeLaunch' badge on your website and earn +100 Points"
+            >
+              <Code2 className="h-4 w-4" />
+              <span>Embed Badge (+100 Pts)</span>
+            </button>
+
             {/* Boost Button */}
             <button
               type="button"
@@ -536,6 +550,17 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
         currentPoints={calculateLaunchPoints({ reactions, comments })}
         onPointsUpdated={() => {
           // Trigger refresh if needed
+        }}
+      />
+
+      {/* Embed Badge Modal Popup */}
+      <EmbedBadgeModal
+        isOpen={isEmbedBadgeModalOpen}
+        onClose={() => setIsEmbedBadgeModalOpen(false)}
+        productName={launch?.product_name || 'Product'}
+        defaultWebsiteUrl={launch?.product_url || ''}
+        onClaimSuccess={() => {
+          // Refresh if needed
         }}
       />
     </div>

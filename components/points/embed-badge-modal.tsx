@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/components/auth-provider';
-import { claimSocialTask } from '@/lib/points';
 import { playLevelUpSound } from '@/lib/reward-sound';
 import {
   X,
@@ -14,13 +13,16 @@ import {
   ExternalLink,
   Award,
   Globe,
-  Zap,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface EmbedBadgeModalProps {
   isOpen: boolean;
   onClose: () => void;
   productName?: string;
+  defaultWebsiteUrl?: string;
   onClaimSuccess?: (newPoints: number) => void;
 }
 
@@ -28,26 +30,31 @@ export function EmbedBadgeModal({
   isOpen,
   onClose,
   productName = 'MyProduct',
+  defaultWebsiteUrl = '',
   onClaimSuccess,
 }: EmbedBadgeModalProps) {
   const { user } = useAuth();
-  const [theme, setTheme] = useState<'dark' | 'gold'>('dark');
+  const [theme, setTheme] = useState<'dark' | 'white' | 'gold'>('dark');
   const [codeType, setCodeType] = useState<'html' | 'markdown' | 'react'>('html');
   const [copied, setCopied] = useState(false);
+  
+  const [websiteUrl, setWebsiteUrl] = useState(defaultWebsiteUrl);
   const [isVerifying, setIsVerifying] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
 
   if (!isOpen) return null;
 
-  const originUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.launchme.me';
+  // Always use the official production domain
+  const canonicalDomain = 'https://www.launchme.me';
   const encodedName = encodeURIComponent(productName);
-  const badgeImgUrl = `${originUrl}/api/badge/${encodedName}?theme=${theme}`;
-  const productPageUrl = `${originUrl}/products/${encodedName}`;
+  const badgeImgUrl = `${canonicalDomain}/api/badge/${encodedName}?theme=${theme}`;
+  const productPageUrl = `${canonicalDomain}/products/${encodedName}`;
 
   const snippets = {
-    html: `<a href="${productPageUrl}" target="_blank" rel="noopener noreferrer">\n  <img src="${badgeImgUrl}" alt="Featured on MemeLaunch" width="220" height="54" />\n</a>`,
+    html: `<a href="${productPageUrl}" target="_blank" rel="noopener noreferrer">\n  <img src="${badgeImgUrl}" alt="Featured on MemeLaunch" width="230" height="54" />\n</a>`,
     markdown: `[![Featured on MemeLaunch](${badgeImgUrl})](${productPageUrl})`,
-    react: `<a href="${productPageUrl}" target="_blank" rel="noopener noreferrer">\n  <img src="${badgeImgUrl}" alt="Featured on MemeLaunch" width={220} height={54} />\n</a>`,
+    react: `<a href="${productPageUrl}" target="_blank" rel="noopener noreferrer">\n  <img src="${badgeImgUrl}" alt="Featured on MemeLaunch" width={230} height={54} />\n</a>`,
   };
 
   const currentSnippet = snippets[codeType];
@@ -62,36 +69,53 @@ export function EmbedBadgeModal({
     }
   };
 
-  const handleClaimBadgePoints = async () => {
+  const handleVerifyEmbed = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!user || isVerifying) return;
+
+    if (!websiteUrl.trim()) {
+      setFeedback({ type: 'error', text: 'Please enter the URL of the website where you added the badge.' });
+      return;
+    }
+
     setIsVerifying(true);
     setFeedback(null);
 
     try {
-      const taskKey = `embed_badge_${encodedName}`;
-      const res = await claimSocialTask(user.id, taskKey, 100, 'embed_badge');
+      const res = await fetch('/api/points/verify-embed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          websiteUrl: websiteUrl.trim(),
+          productName,
+        }),
+      });
 
-      if (res.success) {
+      const data = await res.json();
+
+      if (data.success) {
+        setIsVerified(true);
         playLevelUpSound();
-        setFeedback({ type: 'success', text: '🎉 +100 Points Awarded for Embedding the MemeLaunch Badge!' });
-        if (onClaimSuccess) onClaimSuccess(res.points);
+        setFeedback({ type: 'success', text: data.message || '🎉 Verified! +100 Points Awarded!' });
+        if (onClaimSuccess) onClaimSuccess(data.points);
       } else {
-        setFeedback({ type: 'error', text: res.message });
+        setFeedback({ type: 'error', text: data.message || 'Verification failed. Badge not found on page.' });
       }
     } catch (err: any) {
-      setFeedback({ type: 'error', text: err.message || 'Failed to claim badge points.' });
+      setFeedback({ type: 'error', text: err.message || 'Could not verify badge. Please try again.' });
     } finally {
       setIsVerifying(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-xl bg-zinc-950 border-4 border-black rounded-3xl p-6 shadow-brutal-lg max-h-[90vh] overflow-y-auto space-y-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="relative w-full max-w-xl bg-zinc-950 border-4 border-black rounded-3xl p-5 sm:p-7 shadow-brutal-lg max-h-[90vh] overflow-y-auto space-y-6">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 bg-zinc-900 border-2 border-black rounded-xl hover:bg-zinc-800 text-zinc-400 hover:text-white transition shadow-brutal-sm"
+          className="absolute top-4 right-4 p-2 bg-zinc-900 border-2 border-black rounded-xl hover:bg-zinc-800 text-zinc-400 hover:text-white transition shadow-brutal-sm z-10"
         >
           <X className="h-5 w-5" />
         </button>
@@ -101,46 +125,59 @@ export function EmbedBadgeModal({
           <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-lime-400/10 border-2 border-lime-400/30 text-lime-400 rounded-full font-mono text-xs font-bold uppercase">
             <Award className="h-3.5 w-3.5" /> +100 Points Bounty
           </div>
-          <h2 className="text-2xl font-black uppercase text-zinc-100 font-impact tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-black uppercase text-zinc-100 font-impact tracking-tight">
             Embed <span className="text-lime-400">"Launched on MemeLaunch"</span> Badge
           </h2>
           <p className="text-xs text-zinc-400">
-            Add this badge to your product’s website or README to show off your launch and claim <span className="text-lime-400 font-bold">+100 Points</span> instantly!
+            Add this badge to your website or README. Our bot will verify the embed on your live page and award <span className="text-lime-400 font-bold">+100 Points</span> instantly!
           </p>
         </div>
 
         {/* Badge Live Preview */}
         <div className="p-5 bg-zinc-900 border-2 border-black rounded-2xl flex flex-col items-center justify-center space-y-3 shadow-brutal-sm">
           <p className="text-[11px] font-mono text-zinc-400 uppercase font-bold">Live Badge Preview</p>
-          <div className="p-3 bg-zinc-950 border-2 border-black rounded-xl flex items-center justify-center">
+          
+          <div className={`p-4 rounded-2xl border-2 border-black flex items-center justify-center transition-all ${
+            theme === 'white' ? 'bg-zinc-200' : 'bg-zinc-950'
+          }`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={badgeImgUrl}
               alt="MemeLaunch Badge Preview"
-              width={220}
+              width={230}
               height={54}
-              className="hover:scale-105 transition-transform"
+              className="hover:scale-105 transition-transform drop-shadow"
             />
           </div>
 
-          {/* Theme Selector */}
-          <div className="flex gap-2 pt-1">
+          {/* Theme Selector (Dark, White, Gold) */}
+          <div className="flex flex-wrap gap-2 pt-1 justify-center">
             <button
               onClick={() => setTheme('dark')}
-              className={`px-3 py-1 rounded-lg text-xs font-black uppercase border-2 transition ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase border-2 transition ${
                 theme === 'dark'
-                  ? 'bg-zinc-950 text-white border-lime-400'
-                  : 'bg-zinc-800 text-zinc-400 border-black'
+                  ? 'bg-zinc-950 text-white border-lime-400 shadow-brutal-sm'
+                  : 'bg-zinc-800 text-zinc-400 border-black hover:text-white'
               }`}
             >
               Dark Theme
             </button>
             <button
+              onClick={() => setTheme('white')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase border-2 transition ${
+                theme === 'white'
+                  ? 'bg-white text-zinc-950 border-black shadow-brutal-sm'
+                  : 'bg-zinc-800 text-zinc-400 border-black hover:text-white'
+              }`}
+            >
+              White Theme
+            </button>
+            <button
               onClick={() => setTheme('gold')}
-              className={`px-3 py-1 rounded-lg text-xs font-black uppercase border-2 transition ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase border-2 transition ${
                 theme === 'gold'
                   ? 'bg-[#ffe600] text-zinc-950 border-black shadow-brutal-sm'
-                  : 'bg-zinc-800 text-zinc-400 border-black'
+                  : 'bg-zinc-800 text-zinc-400 border-black hover:text-white'
               }`}
             >
               Gold Theme
@@ -169,7 +206,7 @@ export function EmbedBadgeModal({
 
             <button
               onClick={handleCopy}
-              className="inline-flex items-center gap-1 px-3 py-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs font-bold rounded-lg transition"
+              className="inline-flex items-center gap-1 px-3 py-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs font-bold rounded-lg transition shadow-brutal-sm"
             >
               {copied ? (
                 <>
@@ -185,37 +222,84 @@ export function EmbedBadgeModal({
             </button>
           </div>
 
-          <pre className="p-3 bg-zinc-950 border-2 border-black rounded-xl text-xs text-lime-400 font-mono overflow-x-auto whitespace-pre">
+          <pre className="p-3.5 bg-zinc-950 border-2 border-black rounded-xl text-xs text-lime-400 font-mono overflow-x-auto whitespace-pre">
             {currentSnippet}
           </pre>
         </div>
 
-        {/* Feedback Alert */}
+        {/* Step 2: Live Verification Form */}
+        <form onSubmit={handleVerifyEmbed} className="p-4 bg-zinc-900 border-2 border-lime-400/50 rounded-2xl space-y-3">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-lime-400" />
+            <h3 className="font-heading text-sm font-black uppercase text-zinc-100">
+              Verify Live Embed on Your Website
+            </h3>
+          </div>
+          <p className="text-xs text-zinc-400">
+            Paste the URL of your website where the badge is live (e.g. <code className="text-zinc-300">https://myproject.com</code>). Our automated crawler will check the page and release your +100 points!
+          </p>
+
+          <div className="space-y-2 pt-1">
+            <div className="relative">
+              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+              <input
+                type="text"
+                value={websiteUrl}
+                onChange={(e) => setWebsiteUrl(e.target.value)}
+                placeholder="https://my-saas-website.com"
+                required
+                className="w-full pl-9 pr-4 py-2.5 bg-zinc-950 border-2 border-black rounded-xl text-xs font-mono text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-lime-400"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isVerifying || isVerified}
+              className="w-full py-3 px-4 bg-lime-400 hover:bg-lime-300 disabled:bg-zinc-800 disabled:text-zinc-600 text-zinc-950 font-black rounded-xl text-xs transition shadow-brutal uppercase font-impact tracking-wider flex items-center justify-center gap-2"
+            >
+              {isVerifying ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Checking Your Website HTML...</span>
+                </>
+              ) : isVerified ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 text-emerald-950" />
+                  <span>Verified (+100 Points Claimed!)</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 fill-zinc-950" />
+                  <span>Verify Embed & Claim +100 Points</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+
+        {/* Feedback Message */}
         {feedback && (
           <div
-            className={`p-3 rounded-xl text-xs font-bold border-2 ${
+            className={`p-3.5 rounded-2xl text-xs font-bold border-2 flex items-center gap-2.5 ${
               feedback.type === 'success'
                 ? 'bg-emerald-950/60 border-emerald-500 text-emerald-300'
                 : 'bg-rose-950/60 border-rose-500 text-rose-300'
             }`}
           >
-            {feedback.text}
+            {feedback.type === 'success' ? (
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+            ) : (
+              <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
+            )}
+            <span>{feedback.text}</span>
           </div>
         )}
 
-        {/* Bottom Verification Action */}
-        <div className="pt-2 flex flex-col sm:flex-row gap-3">
-          <button
-            onClick={handleClaimBadgePoints}
-            disabled={isVerifying}
-            className="flex-1 py-3 px-4 bg-lime-400 hover:bg-lime-300 text-black font-extrabold rounded-2xl text-center text-sm transition shadow-brutal uppercase font-impact tracking-wider flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            <Sparkles className="h-4 w-4 fill-zinc-950" />
-            <span>{isVerifying ? 'Verifying...' : 'Claim +100 Points Now'}</span>
-          </button>
+        {/* Bottom Done Button */}
+        <div className="pt-1 flex justify-end">
           <button
             onClick={onClose}
-            className="py-3 px-4 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-bold rounded-2xl text-sm border-2 border-black transition"
+            className="py-2.5 px-6 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-bold rounded-xl text-xs border-2 border-black transition"
           >
             Done
           </button>
