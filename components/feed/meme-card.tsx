@@ -152,33 +152,10 @@ export function MemeCard({ launch, rank, onSelect, onBoost, priority = false }: 
   return (
     <div
       onClick={handleCardClick}
-      className="group relative flex flex-col bg-zinc-950 border-2 border-black rounded-2xl sm:rounded-3xl overflow-hidden shadow-brutal hover-brutal transition-all cursor-pointer break-inside-avoid mb-8 sm:mb-10"
+      className="group relative flex flex-col h-full bg-zinc-950 border-2 border-black rounded-2xl sm:rounded-3xl overflow-hidden shadow-brutal hover-brutal transition-all cursor-pointer"
     >
       {/* Aspect Ratio Box for Meme */}
       <div className="relative aspect-square w-full bg-zinc-900 border-b-2 border-black overflow-hidden flex items-center justify-center">
-        {/* Dynamic Rank Badge */}
-        {typeof rank === 'number' && (
-          <div className="absolute top-2.5 left-2.5 z-20">
-            {rank === 1 ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-zinc-950 font-black font-impact text-xs sm:text-sm tracking-wider uppercase rounded-xl border-2 border-black shadow-brutal animate-pulse">
-                <span>🥇</span> #1 TOP PRODUCT
-              </span>
-            ) : rank === 2 ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-slate-200 to-slate-100 text-zinc-950 font-black font-impact text-xs tracking-wider uppercase rounded-xl border-2 border-black shadow-brutal-sm">
-                <span>🥈</span> #2
-              </span>
-            ) : rank === 3 ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-amber-600 to-amber-500 text-white font-black font-impact text-xs tracking-wider uppercase rounded-xl border-2 border-black shadow-brutal-sm">
-                <span>🥉</span> #3
-              </span>
-            ) : (
-              <span className="inline-flex items-center px-2 py-0.5 bg-zinc-950/90 text-zinc-200 font-black font-impact text-xs tracking-wider uppercase rounded-lg border-2 border-black shadow-brutal-sm">
-                #{rank}
-              </span>
-            )}
-          </div>
-        )}
-
         {launch.is_approved === false && (
           <div className="absolute top-2.5 right-2.5 z-20 px-2.5 py-1 rounded-lg bg-[#ffe600] text-zinc-950 border-2 border-black font-black text-[10px] uppercase tracking-wider shadow-brutal-sm select-none">
             Pending Approval
@@ -271,6 +248,35 @@ export function MemeCard({ launch, rank, onSelect, onBoost, priority = false }: 
       {/* Product Details Bar */}
       <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between space-y-5">
         <div className="space-y-3">
+          {/* Dynamic Rank Bar (Shown BELOW the meme image) */}
+          {typeof rank === 'number' && (
+            <div className="flex items-center justify-between gap-2 pb-0.5">
+              {rank === 1 ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-zinc-950 font-black font-impact text-xs sm:text-sm tracking-wider uppercase rounded-xl border-2 border-black shadow-brutal animate-pulse">
+                  <span>🥇</span> #1 TOP PRODUCT
+                </span>
+              ) : rank === 2 ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-slate-200 to-slate-100 text-zinc-950 font-black font-impact text-xs tracking-wider uppercase rounded-xl border-2 border-black shadow-brutal-sm">
+                  <span>🥈</span> #2 RANKED
+                </span>
+              ) : rank === 3 ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-amber-600 to-amber-500 text-white font-black font-impact text-xs tracking-wider uppercase rounded-xl border-2 border-black shadow-brutal-sm">
+                  <span>🥉</span> #3 RANKED
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-2 py-0.5 bg-zinc-900 text-zinc-300 font-black font-impact text-xs tracking-wider uppercase rounded-lg border-2 border-black shadow-brutal-sm">
+                  RANK #{rank}
+                </span>
+              )}
+
+              {/* Points Indicator Pill */}
+              <span className="inline-flex items-center gap-1 text-lime-400 bg-lime-950/60 border-2 border-lime-400/40 px-2.5 py-1 rounded-xl text-xs font-black uppercase font-mono shadow-brutal-sm">
+                <Zap className="h-3.5 w-3.5 fill-lime-400" />
+                <span>{totalPoints} pts</span>
+              </span>
+            </div>
+          )}
+
           <div className="flex items-center gap-3.5 sm:gap-4">
             {launch.product_logo_url && (
               <div className="relative h-10 w-10 rounded-xl overflow-hidden shrink-0 border-2 border-black bg-zinc-900 shadow-brutal-sm">
@@ -303,12 +309,6 @@ export function MemeCard({ launch, rank, onSelect, onBoost, priority = false }: 
             <span className="inline-flex items-center gap-1.5 text-zinc-200 bg-zinc-900 border-2 border-black px-3 py-1 rounded-xl text-xs font-black uppercase shadow-brutal-sm">
               <span className="text-[#ffe600]">◇</span>
               <span>{launch.category}</span>
-            </span>
-
-            {/* Points Indicator Pill */}
-            <span className="inline-flex items-center gap-1 text-lime-400 bg-lime-950/60 border-2 border-lime-400/40 px-2.5 py-1 rounded-xl text-xs font-black uppercase font-mono shadow-brutal-sm">
-              <Zap className="h-3.5 w-3.5 fill-lime-400" />
-              <span>{totalPoints} pts</span>
             </span>
 
             {/* Boost Button */}

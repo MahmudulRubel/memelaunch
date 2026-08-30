@@ -29,7 +29,7 @@ export default function SupportPage() {
         name: 'How do points work?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Founders need 15 points to launch a product. Points can be earned by liking products (+1 pt), commenting (+2 pts), or following social channels (+5 pts).',
+          text: 'Product launches on MemeLaunch are 100% free with 0 points required. Founders and community members can earn points by liking products (+1 pt), commenting (+2 pts), and sharing boosts (+5 pts) to push their product to #1 on the leaderboard.',
         },
       },
     ],
@@ -38,23 +38,27 @@ export default function SupportPage() {
   const faqs = [
     {
       q: 'What is MemeLaunch?',
-      a: 'MemeLaunch is a meme-native alternative to Product Hunt. Founders pitch their products using funny, high-impact memes to grab attention, win votes, and drive real user conversions.',
+      a: 'MemeLaunch is a meme-native product discovery arena. Founders pitch their products using funny, high-impact memes to grab attention, win votes, and drive real user conversions.',
     },
     {
-      q: 'How do I earn points to launch my product?',
-      a: 'You need 15 points to submit a product launch. You can earn points by liking products (+1 pt), leaving genuine comments (+2 pts), or completing verified social media tasks (+5 pts).',
+      q: 'Is it free to launch a product on MemeLaunch?',
+      a: 'Yes! Anyone can launch their product for 100% FREE with 0 points required.',
     },
     {
-      q: 'Why is there a 21-second timer on social tasks?',
+      q: 'How do points work and how do I rank #1?',
+      a: 'Points determine your product ranking on the leaderboard. The product with the highest total score (from community likes, comments, and promotional social boosts) gets the #1 spot!',
+    },
+    {
+      q: 'Why is there a 21-second timer on social boost tasks?',
       a: 'To maintain platform integrity and prevent fraud, social tasks require spending at least 21 seconds on the opened page before submitting your social handle for verification.',
     },
     {
       q: 'Can I launch multiple products?',
-      a: 'Yes! Each product submission requires 15 points. As long as you maintain enough points, you can launch multiple products.',
+      a: 'Yes! Product launches are completely free, so you can submit all of your software products, SaaS tools, and side projects.',
     },
     {
       q: 'How are weekly winners determined?',
-      a: 'Product rankings are determined by community reaction votes (🔥, 😂, 🤔) and genuine engagement during the active weekly cycle.',
+      a: 'Product rankings are determined in real-time by total points accumulated from community votes, reactions, discussions, and verified creator promotional boosts.',
     },
   ];
 

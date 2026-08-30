@@ -126,11 +126,23 @@ export async function POST(req: NextRequest) {
       .update({ points: updatedTotalPoints })
       .eq('id', userId);
 
+    // Custom dynamic messaging based on action
+    let claimMsg = `🎉 Verified ${cleanHandle || 'task'}! +${amount} points awarded!`;
+    if (taskKey.startsWith('embed_badge_')) {
+      claimMsg = `🚀 "Launched on MemeLaunch" Badge verified! +${amount} points awarded!`;
+    } else if (taskKey.startsWith('checkin_')) {
+      claimMsg = `🔥 Daily Check-in claimed! +${amount} points added to your streak!`;
+    } else if (taskKey.startsWith('referral_')) {
+      claimMsg = `🤝 Founder Referral credited! +${amount} points awarded!`;
+    } else if (taskKey === 'profile_setup') {
+      claimMsg = `👤 Verified Founder Profile completed! +${amount} points awarded!`;
+    }
+
     if (!hasRecordedTx || !hasCompletedTask) {
       return NextResponse.json({
         success: true,
         points: updatedTotalPoints,
-        message: `🎉 Verified ${cleanHandle}! +${amount} points awarded!`,
+        message: claimMsg,
       });
     }
 

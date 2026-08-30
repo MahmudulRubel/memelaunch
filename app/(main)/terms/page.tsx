@@ -217,9 +217,9 @@ export default function TermsPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
               <div className="p-3.5 bg-zinc-900 border-2 border-black rounded-xl space-y-1">
                 <span className="font-black text-cyan-400 uppercase flex items-center gap-1">
-                  <Coins className="h-4 w-4 text-cyan-400" /> Submission Cost
+                  <Coins className="h-4 w-4 text-cyan-400" /> Free Submission
                 </span>
-                <p className="text-zinc-400">Submitting a product launch costs exactly 15 points per submission.</p>
+                <p className="text-zinc-400">Product launches are 100% free with 0 points required. Points determine your leaderboard rank.</p>
               </div>
               <div className="p-3.5 bg-zinc-900 border-2 border-black rounded-xl space-y-1">
                 <span className="font-black text-cyan-400 uppercase flex items-center gap-1">
