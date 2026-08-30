@@ -8,6 +8,7 @@ import {
   claimSocialTask,
 } from '@/lib/points';
 import { playLevelUpSound } from '@/lib/reward-sound';
+import { EmbedBadgeModal } from '@/components/points/embed-badge-modal';
 import {
   Zap,
   X,
@@ -21,6 +22,12 @@ import {
   TrendingUp,
   Trophy,
   Share2,
+  Award,
+  Flame,
+  UserPlus,
+  Copy,
+  Check,
+  Code2,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -140,6 +147,54 @@ export function LaunchBoostModal({
   const [confettiActive, setConfettiActive] = useState(false);
   const [celebrationMsg, setCelebrationMsg] = useState<{ amount: number; title: string; handle: string } | null>(null);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false);
+  const [referralCopied, setReferralCopied] = useState(false);
+  const [claimingSpecialKey, setClaimingSpecialKey] = useState<string | null>(null);
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const dailyCheckinKey = `checkin_${todayStr}`;
+  const isDailyDone = completedTaskKeys.some((k) => k.startsWith(`checkin_${todayStr}`));
+  const isProfileDone = completedTaskKeys.includes('profile_setup');
+  const isReferralDone = completedTaskKeys.includes('referral_invite');
+  const isEmbedDone = completedTaskKeys.some((k) => k.startsWith('embed_badge_'));
+
+  const originUrlRaw = typeof window !== 'undefined' ? window.location.origin : 'https://www.launchme.me';
+  const referralLink = `${originUrlRaw}/launch?ref=${user?.id || 'founder'}`;
+
+  const handleCopyReferral = async () => {
+    try {
+      await navigator.clipboard.writeText(referralLink);
+      setReferralCopied(true);
+      setTimeout(() => setReferralCopied(false), 2000);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleClaimDirectTask = async (taskKey: string, amount: number, title: string) => {
+    if (!user || claimingSpecialKey) return;
+    setClaimingSpecialKey(taskKey);
+    setFeedbackMsg(null);
+
+    try {
+      const res = await claimSocialTask(user.id, taskKey, amount, taskKey);
+      if (res.success) {
+        setPoints(res.points);
+        setCompletedTaskKeys((prev) => Array.from(new Set([...prev, taskKey])));
+        playLevelUpSound();
+        setConfettiActive(true);
+        setTimeout(() => setConfettiActive(false), 2500);
+        setCelebrationMsg({ amount, title, handle: user.email?.split('@')[0] || 'Founder' });
+        if (onPointsUpdated) onPointsUpdated(res.points);
+      } else {
+        setFeedbackMsg({ type: 'error', text: res.message });
+      }
+    } catch (err: any) {
+      setFeedbackMsg({ type: 'error', text: err.message || 'Failed to claim points.' });
+    } finally {
+      setClaimingSpecialKey(null);
+    }
+  };
 
   // Trigger confetti on initial open for celebration
   useEffect(() => {
@@ -455,8 +510,106 @@ export function LaunchBoostModal({
 
         {/* Boost Task Cards */}
         <div className="space-y-2.5">
-          <p className="text-xs font-mono uppercase text-zinc-400 tracking-wider">
-            Available Boost Options:
+          <p className="text-xs font-mono uppercase text-[#ffe600] tracking-wider font-bold flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5 fill-[#ffe600]" />
+            <span>High-Impact Founder Bounties:</span>
+          </p>
+
+          {/* 1. Embed "Launched on MemeLaunch" Badge (+100 Pts) */}
+          <div className="p-3.5 bg-gradient-to-r from-zinc-900 to-zinc-950 border-2 border-lime-400 rounded-2xl flex items-center justify-between shadow-brutal-sm gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-9 w-9 rounded-xl bg-lime-400/10 border border-lime-400/40 text-lime-400 flex items-center justify-center shrink-0">
+                <Code2 className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs sm:text-sm font-bold text-zinc-100 truncate">Embed Website Badge</p>
+                  <span className="px-1.5 py-0.5 bg-lime-400 text-zinc-950 text-[9px] font-black uppercase rounded">
+                    +100 Pts
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-400 truncate">Put badge on {prodName}'s site or GitHub README</p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setIsEmbedModalOpen(true)}
+              className="px-3 py-1.5 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-black text-xs uppercase rounded-xl border-2 border-black shadow-brutal-sm hover:-translate-x-0.5 transition shrink-0"
+            >
+              Get Badge
+            </button>
+          </div>
+
+          {/* 2. Daily Launch Streak & Check-in (+10 to +40 Pts) */}
+          <div className="p-3 sm:p-3.5 rounded-2xl border-2 border-amber-400/40 bg-zinc-900 flex items-center justify-between gap-3 shadow-brutal-sm">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-8 w-8 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-400 flex items-center justify-center shrink-0">
+                <Flame className="h-4 w-4 fill-amber-400" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs sm:text-sm font-bold text-zinc-200 truncate">Daily Launch Check-In</p>
+                  <span className="px-1.5 py-0.5 bg-amber-400 text-zinc-950 text-[9px] font-black uppercase rounded">
+                    +10 to +40 Pts
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-400 truncate">Check in daily (+10 pts Day 1, +20 pts Day 3, +40 pts Day 7)</p>
+              </div>
+            </div>
+
+            {isDailyDone ? (
+              <span className="px-2.5 py-1 bg-amber-950/60 border border-amber-500/40 text-amber-400 rounded-lg text-[11px] font-bold flex items-center gap-1 shrink-0">
+                <CheckCircle2 className="h-3 w-3" /> Claimed
+              </span>
+            ) : (
+              <button
+                onClick={() => handleClaimDirectTask(dailyCheckinKey, 10, 'Daily Check-in Streak')}
+                disabled={claimingSpecialKey === dailyCheckinKey}
+                className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 font-black text-xs uppercase rounded-xl border border-black shadow-brutal-sm transition shrink-0"
+              >
+                Claim +10
+              </button>
+            )}
+          </div>
+
+          {/* 3. Referral / Invite Another Founder (+50 Pts) */}
+          <div className="p-3 sm:p-3.5 rounded-2xl border-2 border-cyan-400/40 bg-zinc-900 flex items-center justify-between gap-3 shadow-brutal-sm">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-8 w-8 rounded-xl bg-cyan-400/10 border border-cyan-400/30 text-cyan-400 flex items-center justify-center shrink-0">
+                <UserPlus className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs sm:text-sm font-bold text-zinc-200 truncate">Invite Another Founder</p>
+                  <span className="px-1.5 py-0.5 bg-cyan-400 text-zinc-950 text-[9px] font-black uppercase rounded">
+                    +50 Pts
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-400 truncate">Share your invite link with fellow creators</p>
+              </div>
+            </div>
+
+            <div className="flex gap-1.5 shrink-0">
+              <button
+                onClick={handleCopyReferral}
+                className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-lg border border-zinc-700 transition"
+              >
+                {referralCopied ? 'Copied!' : 'Copy Link'}
+              </button>
+              {!isReferralDone && (
+                <button
+                  onClick={() => handleClaimDirectTask('referral_invite', 50, 'Founder Referral Bonus')}
+                  disabled={claimingSpecialKey === 'referral_invite'}
+                  className="px-2.5 py-1 bg-cyan-400 hover:bg-cyan-300 text-zinc-950 font-black text-xs uppercase rounded-lg border border-black transition"
+                >
+                  +50 Pts
+                </button>
+              )}
+            </div>
+          </div>
+
+          <p className="text-xs font-mono uppercase text-zinc-400 tracking-wider pt-2">
+            Social Share Boosts:
           </p>
 
           {boostTasks.map((t) => {
@@ -524,6 +677,19 @@ export function LaunchBoostModal({
             Done
           </button>
         </div>
+
+        {/* Embed Badge Modal */}
+        <EmbedBadgeModal
+          isOpen={isEmbedModalOpen}
+          onClose={() => setIsEmbedModalOpen(false)}
+          productName={prodName}
+          onClaimSuccess={(newPoints) => {
+            setPoints(newPoints);
+            setCompletedTaskKeys((prev) => Array.from(new Set([...prev, `embed_badge_${encodeURIComponent(prodName)}`])));
+            if (onPointsUpdated) onPointsUpdated(newPoints);
+          }}
+        />
+
       </div>
     </div>
   );

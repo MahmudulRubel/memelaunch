@@ -8,6 +8,7 @@ import {
   claimSocialTask,
 } from '@/lib/points';
 import { playLevelUpSound } from '@/lib/reward-sound';
+import { EmbedBadgeModal } from '@/components/points/embed-badge-modal';
 import {
   Zap,
   X,
@@ -22,7 +23,13 @@ import {
   ShieldCheck,
   Rocket,
   AtSign,
-  Clock
+  Clock,
+  Award,
+  Flame,
+  UserPlus,
+  Copy,
+  Check,
+  Code2,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -129,26 +136,54 @@ export function EarnPointsModal({
   const [confettiActive, setConfettiActive] = useState(false);
   const [celebrationMsg, setCelebrationMsg] = useState<{ amount: number; title: string; handle: string } | null>(null);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false);
+  const [referralCopied, setReferralCopied] = useState(false);
+  const [claimingSpecialKey, setClaimingSpecialKey] = useState<string | null>(null);
 
-  // Load points data when modal opens
-  useEffect(() => {
-    if (!isOpen || !user) return;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const dailyCheckinKey = `checkin_${todayStr}`;
+  const isDailyDone = completedTaskKeys.some((k) => k.startsWith(`checkin_${todayStr}`));
+  const isProfileDone = completedTaskKeys.includes('profile_setup');
+  const isReferralDone = completedTaskKeys.includes('referral_invite');
+  const isEmbedDone = completedTaskKeys.some((k) => k.startsWith('embed_badge_'));
 
-    async function loadData() {
-      try {
-        const [pts, keys] = await Promise.all([
-          getUserPoints(user!.id),
-          getUserCompletedTaskKeys(user!.id),
-        ]);
-        setPoints(pts);
-        setCompletedTaskKeys(keys);
-      } catch (err) {
-        console.error('Error loading points data:', err);
-      }
+  const originUrlRaw = typeof window !== 'undefined' ? window.location.origin : 'https://www.launchme.me';
+  const referralLink = `${originUrlRaw}/launch?ref=${user?.id || 'founder'}`;
+
+  const handleCopyReferral = async () => {
+    try {
+      await navigator.clipboard.writeText(referralLink);
+      setReferralCopied(true);
+      setTimeout(() => setReferralCopied(false), 2000);
+    } catch (e) {
+      console.error(e);
     }
+  };
 
-    loadData();
-  }, [isOpen, user]);
+  const handleClaimDirectTask = async (taskKey: string, amount: number, title: string) => {
+    if (!user || claimingSpecialKey) return;
+    setClaimingSpecialKey(taskKey);
+    setFeedbackMsg(null);
+
+    try {
+      const res = await claimSocialTask(user.id, taskKey, amount, taskKey);
+      if (res.success) {
+        setPoints(res.points);
+        setCompletedTaskKeys((prev) => Array.from(new Set([...prev, taskKey])));
+        playLevelUpSound();
+        setConfettiActive(true);
+        setTimeout(() => setConfettiActive(false), 3000);
+        setCelebrationMsg({ amount, title, handle: user.email?.split('@')[0] || 'Founder' });
+        if (onPointsUpdated) onPointsUpdated(res.points);
+      } else {
+        setFeedbackMsg({ type: 'error', text: res.message });
+      }
+    } catch (err: any) {
+      setFeedbackMsg({ type: 'error', text: err.message || 'Failed to claim points.' });
+    } finally {
+      setClaimingSpecialKey(null);
+    }
+  };
 
   // 21-second dwell timer countdown ticker
   useEffect(() => {
@@ -455,7 +490,174 @@ export function EarnPointsModal({
 
         {/* SCROLLABLE TASK LIST AREA */}
         <div className="flex-1 overflow-y-auto p-5 md:p-6 pt-4 space-y-3 custom-scrollbar">
-          <h3 className="font-black text-xs uppercase text-zinc-400 tracking-wider">
+          
+          {/* HIGH-VALUE FOUNDER BOUNTIES */}
+          <div className="space-y-3">
+            <h3 className="font-black text-xs uppercase text-[#ffe600] tracking-wider flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 fill-[#ffe600]" />
+              <span>Featured Founder Bounties</span>
+            </h3>
+
+            {/* 1. Embed "Launched on MemeLaunch" Badge (+100 Pts) */}
+            <div className="p-4 bg-gradient-to-br from-zinc-950 to-zinc-900 border-2 border-lime-400/80 rounded-2xl shadow-brutal-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative overflow-hidden">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-11 w-11 rounded-xl bg-lime-400/10 border-2 border-lime-400/40 text-lime-400 flex items-center justify-center shrink-0 shadow-brutal-sm">
+                  <Code2 className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-black text-xs sm:text-sm text-zinc-100 uppercase truncate">
+                      Embed "Launched on MemeLaunch" Badge
+                    </h4>
+                    <span className="px-2 py-0.5 bg-lime-400 text-zinc-950 text-[10px] font-black uppercase rounded-md border border-black shrink-0">
+                      +100 Pts
+                    </span>
+                  </div>
+                  <p className="text-zinc-400 text-[11px] truncate">
+                    Add our badge to your product site or README & get +100 points
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setIsEmbedModalOpen(true)}
+                className="px-4 py-2 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-black text-xs uppercase rounded-xl border-2 border-black shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all shrink-0 inline-flex items-center justify-center gap-1.5"
+              >
+                <span>{isEmbedDone ? 'View Badge Code' : 'Get Badge (+100 Pts)'}</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            {/* 2. Daily Launch Streak & Check-in (+10 to +40 Pts) */}
+            <div className="flex items-center justify-between p-3.5 bg-zinc-950 border-2 border-amber-400/50 rounded-2xl shadow-brutal-sm gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-10 w-10 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-400 flex items-center justify-center shrink-0">
+                  <Flame className="h-5 w-5 fill-amber-400" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-black text-xs sm:text-sm text-zinc-100 uppercase truncate">
+                      Daily Launch Streak & Check-In
+                    </h4>
+                    <span className="px-1.5 py-0.5 bg-amber-400 text-zinc-950 text-[9px] font-black uppercase rounded-md border border-black shrink-0">
+                      +10 to +40 Pts
+                    </span>
+                  </div>
+                  <p className="text-zinc-400 text-[11px] truncate">
+                    Check in every 24h (+10 pts Day 1, +20 pts Day 3, +40 pts Day 7 streak)
+                  </p>
+                </div>
+              </div>
+
+              {isDailyDone ? (
+                <span className="px-3 py-1.5 bg-amber-500/20 border border-amber-500/40 text-amber-300 font-black text-[11px] uppercase rounded-xl inline-flex items-center gap-1 shrink-0">
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Claimed Today
+                </span>
+              ) : (
+                <button
+                  onClick={() => handleClaimDirectTask(dailyCheckinKey, 10, 'Daily Check-in Streak')}
+                  disabled={claimingSpecialKey === dailyCheckinKey}
+                  className="px-3.5 py-1.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 font-black text-[11px] uppercase rounded-xl border-2 border-black shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all shrink-0 inline-flex items-center gap-1.5"
+                >
+                  <Zap className="h-3.5 w-3.5 fill-zinc-950" />
+                  <span>{claimingSpecialKey === dailyCheckinKey ? 'Claiming...' : 'Claim +10 Pts'}</span>
+                </button>
+              )}
+            </div>
+
+            {/* 3. Referral / Invite Another Founder (+50 Pts) */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 bg-zinc-950 border-2 border-cyan-400/50 rounded-2xl shadow-brutal-sm gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-10 w-10 rounded-xl bg-cyan-400/10 border border-cyan-400/30 text-cyan-400 flex items-center justify-center shrink-0">
+                  <UserPlus className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-black text-xs sm:text-sm text-zinc-100 uppercase truncate">
+                      Invite & Refer Another Founder
+                    </h4>
+                    <span className="px-1.5 py-0.5 bg-cyan-400 text-zinc-950 text-[9px] font-black uppercase rounded-md border border-black shrink-0">
+                      +50 Pts
+                    </span>
+                  </div>
+                  <p className="text-zinc-400 text-[11px] truncate">
+                    Share your unique founder link & claim +50 points
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCopyReferral}
+                  className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-100 font-bold text-[11px] uppercase rounded-xl border border-zinc-700 transition inline-flex items-center gap-1 shrink-0"
+                >
+                  {referralCopied ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-emerald-400" />
+                      <span className="text-emerald-400">Copied Link!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5" />
+                      <span>Copy Link</span>
+                    </>
+                  )}
+                </button>
+
+                {!isReferralDone ? (
+                  <button
+                    onClick={() => handleClaimDirectTask('referral_invite', 50, 'Founder Referral Bonus')}
+                    disabled={claimingSpecialKey === 'referral_invite'}
+                    className="px-3 py-1.5 bg-cyan-400 hover:bg-cyan-300 text-zinc-950 font-black text-[11px] uppercase rounded-xl border-2 border-black shadow-brutal-sm hover:-translate-x-0.5 transition shrink-0 inline-flex items-center gap-1"
+                  >
+                    <span>{claimingSpecialKey === 'referral_invite' ? 'Claiming...' : 'Claim +50 Pts'}</span>
+                  </button>
+                ) : (
+                  <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 font-bold text-[10px] uppercase rounded-lg inline-flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" /> Claimed
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* 4. Verified Founder Profile Setup (+5 Pts) */}
+            <div className="flex items-center justify-between p-3.5 bg-zinc-950 border-2 border-purple-400/50 rounded-2xl shadow-brutal-sm gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-10 w-10 rounded-xl bg-purple-400/10 border border-purple-400/30 text-purple-400 flex items-center justify-center shrink-0">
+                  <UserCheck className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-black text-xs sm:text-sm text-zinc-100 uppercase truncate">
+                      Verified Founder Profile Setup
+                    </h4>
+                    <span className="px-1.5 py-0.5 bg-purple-400 text-zinc-950 text-[9px] font-black uppercase rounded-md border border-black shrink-0">
+                      +5 Pts
+                    </span>
+                  </div>
+                  <p className="text-zinc-400 text-[11px] truncate">
+                    Set up your founder avatar & bio for +5 points one-time bonus
+                  </p>
+                </div>
+              </div>
+
+              {isProfileDone ? (
+                <span className="px-3 py-1.5 bg-purple-500/20 border border-purple-500/40 text-purple-300 font-black text-[11px] uppercase rounded-xl inline-flex items-center gap-1 shrink-0">
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Verified
+                </span>
+              ) : (
+                <button
+                  onClick={() => handleClaimDirectTask('profile_setup', 5, 'Verified Founder Profile Setup')}
+                  disabled={claimingSpecialKey === 'profile_setup'}
+                  className="px-3.5 py-1.5 bg-purple-400 hover:bg-purple-300 text-zinc-950 font-black text-[11px] uppercase rounded-xl border-2 border-black shadow-brutal-sm hover:-translate-x-0.5 transition shrink-0 inline-flex items-center gap-1"
+                >
+                  <span>{claimingSpecialKey === 'profile_setup' ? 'Claiming...' : 'Claim +5 Pts'}</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          <h3 className="font-black text-xs uppercase text-zinc-400 tracking-wider pt-2">
             Social & Community Tasks
           </h3>
 
@@ -641,6 +843,17 @@ export function EarnPointsModal({
             </div>
           </div>
         )}
+
+        {/* Embed Badge Modal */}
+        <EmbedBadgeModal
+          isOpen={isEmbedModalOpen}
+          onClose={() => setIsEmbedModalOpen(false)}
+          onClaimSuccess={(newPoints) => {
+            setPoints(newPoints);
+            setCompletedTaskKeys((prev) => Array.from(new Set([...prev, 'embed_badge_site'])));
+            if (onPointsUpdated) onPointsUpdated(newPoints);
+          }}
+        />
 
       </div>
     </div>
