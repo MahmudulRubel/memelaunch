@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { MEMELAUNCH_ICON_BASE64 } from '@/lib/logo-icon-base64';
 
 export async function GET(
   request: NextRequest,
@@ -13,7 +14,6 @@ export async function GET(
   let textColor = '#ffffff';
   let subtextColor = '#a1a1aa';
   let borderColor = '#000000';
-  let iconBg = '#18181b';
   let accentColor = '#a3e635';
   let shadowColor = '#000000';
 
@@ -22,38 +22,28 @@ export async function GET(
     textColor = '#09090b';
     subtextColor = '#71717a';
     borderColor = '#000000';
-    iconBg = '#f4f4f5';
     accentColor = '#16a34a';
   } else if (theme === 'gold') {
     bgColor = '#ffe600';
     textColor = '#09090b';
     subtextColor = '#3f3f46';
     borderColor = '#000000';
-    iconBg = '#09090b';
     accentColor = '#ffe600';
   }
 
   const svg = `
-<svg width="230" height="54" viewBox="0 0 230 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="230" height="54" viewBox="0 0 230 54" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <!-- Brutalist Drop Shadow -->
   <rect x="4" y="4" width="222" height="46" rx="14" fill="${shadowColor}"/>
   
   <!-- Main Badge Box -->
   <rect x="0" y="0" width="222" height="46" rx="14" fill="${bgColor}" stroke="${borderColor}" stroke-width="2.5"/>
   
-  <!-- Rocket Icon Circle Container -->
-  <rect x="7" y="7" width="32" height="32" rx="10" fill="${iconBg}" stroke="${borderColor}" stroke-width="1.5"/>
-  
-  <!-- Vector Rocket Graphic -->
-  <g transform="translate(13, 13)">
-    <path d="M10 2C7 2 3.5 4.5 2 9.5C4 9 6.5 9.5 8 11L9 12C10.5 13.5 11 16 10.5 18C15.5 16.5 18 13 18 10C18 10 18 2 10 2Z" fill="${theme === 'gold' ? '#ffe600' : '#f59e0b'}"/>
-    <circle cx="12" cy="8" r="2" fill="${bgColor}"/>
-    <path d="M4 14L2 18L6 16L4 14Z" fill="#ef4444"/>
-    <path d="M2 18L1 20L3 19L2 18Z" fill="#fbbf24"/>
-  </g>
+  <!-- Exact MemeLaunch Website Logo Mark -->
+  <image href="${MEMELAUNCH_ICON_BASE64}" x="7" y="5.5" width="35" height="35" preserveAspectRatio="xMidYMid meet"/>
 
   <!-- Divider Line -->
-  <line x1="47" y1="10" x2="47" y2="36" stroke="${borderColor}" stroke-width="2" opacity="${theme === 'white' ? '0.3' : '0.4'}"/>
+  <line x1="47" y1="10" x2="47" y2="36" stroke="${borderColor}" stroke-width="2" opacity="${theme === 'white' ? '0.25' : '0.35'}"/>
 
   <!-- Typography -->
   <!-- Top Subtitle -->
