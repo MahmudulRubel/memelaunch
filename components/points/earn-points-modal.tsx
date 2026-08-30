@@ -399,7 +399,7 @@ export function EarnPointsModal({
                 EARN <span className="text-[#ffe600]">POINTS</span>
               </h2>
               <p className="text-zinc-400 text-xs font-medium">
-                The first 100 founders launch for FREE! After 100 founders, 15 points are required to submit.
+                Product launches are 100% FREE! Earn points with the tasks below to boost your product to #1 on the leaderboard.
               </p>
             </div>
           </div>
@@ -410,35 +410,22 @@ export function EarnPointsModal({
               <span className="text-zinc-300">Your Current Balance</span>
               <span className="text-[#ffe600] font-mono text-base transition-all duration-300 font-extrabold flex items-center gap-1">
                 <Zap className="h-4 w-4 fill-[#ffe600] inline animate-pulse" />
-                <span>{points}</span> / {pointsTarget} Pts
+                <span>{points}</span> Pts
               </span>
             </div>
-            {/* Progress Bar */}
-            <div className="h-3 w-full bg-zinc-900 border border-zinc-800 rounded-full overflow-hidden p-0.5">
-              <div
-                className="h-full bg-gradient-to-r from-amber-400 via-[#ffe600] to-lime-400 transition-all duration-500 rounded-full shadow-[0_0_12px_rgba(255,230,0,0.5)]"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
 
-            {points >= 15 ? (
-              <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-2 px-3 mt-2">
-                <p className="text-emerald-400 text-xs font-black uppercase flex items-center gap-1.5">
-                  <Rocket className="h-4 w-4 animate-bounce" /> You have enough points to launch!
-                </p>
-                <Link
-                  href="/launch"
-                  onClick={onClose}
-                  className="px-3 py-1 bg-[#ffe600] text-zinc-950 font-black text-[10px] uppercase rounded-lg border border-black shadow-brutal-sm hover:scale-105 transition-all"
-                >
-                  Pitch Now &rarr;
-                </Link>
-              </div>
-            ) : (
-              <p className="text-zinc-400 text-[11px]">
-                Earn <span className="text-amber-400 font-bold">{pointsTarget - points} more points</span> to unlock product submission.
+            <div className="flex items-center justify-between bg-lime-400/10 border border-lime-400/30 rounded-xl p-2 px-3 mt-2">
+              <p className="text-lime-400 text-xs font-bold flex items-center gap-1.5">
+                <Rocket className="h-4 w-4" /> Anyone can launch for free. Boost your rank anytime!
               </p>
-            )}
+              <Link
+                href="/launch"
+                onClick={onClose}
+                className="px-3 py-1 bg-[#ffe600] text-zinc-950 font-black text-[10px] uppercase rounded-lg border border-black shadow-brutal-sm hover:scale-105 transition-all"
+              >
+                Launch Free &rarr;
+              </Link>
+            </div>
           </div>
 
           {/* Gamified Celebratory Banner Toast */}
