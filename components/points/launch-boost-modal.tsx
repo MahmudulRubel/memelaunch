@@ -683,6 +683,7 @@ export function LaunchBoostModal({
           isOpen={isEmbedModalOpen}
           onClose={() => setIsEmbedModalOpen(false)}
           productName={prodName}
+          defaultWebsiteUrl={launch?.product_url || ''}
           onClaimSuccess={(newPoints) => {
             setPoints(newPoints);
             setCompletedTaskKeys((prev) => Array.from(new Set([...prev, `embed_badge_${encodeURIComponent(prodName)}`])));

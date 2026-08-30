@@ -26,6 +26,132 @@ interface EmbedBadgeModalProps {
   onClaimSuccess?: (newPoints: number) => void;
 }
 
+// Inline pure SVG component for unbreakable 60fps instant preview
+function BadgeSvgPreview({ theme }: { theme: 'dark' | 'white' | 'gold' }) {
+  let bgColor = '#09090b';
+  let textColor = '#ffffff';
+  let subtextColor = '#a1a1aa';
+  let borderColor = '#000000';
+  let iconBg = '#18181b';
+  let accentColor = '#a3e635';
+  let shadowColor = '#000000';
+
+  if (theme === 'white') {
+    bgColor = '#ffffff';
+    textColor = '#09090b';
+    subtextColor = '#71717a';
+    borderColor = '#000000';
+    iconBg = '#f4f4f5';
+    accentColor = '#16a34a';
+  } else if (theme === 'gold') {
+    bgColor = '#ffe600';
+    textColor = '#09090b';
+    subtextColor = '#3f3f46';
+    borderColor = '#000000';
+    iconBg = '#09090b';
+    accentColor = '#ffe600';
+  }
+
+  return (
+    <svg
+      width="230"
+      height="54"
+      viewBox="0 0 230 54"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="hover:scale-105 transition-transform drop-shadow select-none"
+    >
+      {/* Brutalist Drop Shadow */}
+      <rect x="4" y="4" width="222" height="46" rx="14" fill={shadowColor} />
+
+      {/* Main Badge Box */}
+      <rect
+        x="0"
+        y="0"
+        width="222"
+        height="46"
+        rx="14"
+        fill={bgColor}
+        stroke={borderColor}
+        strokeWidth="2.5"
+      />
+
+      {/* Rocket Icon Circle Container */}
+      <rect
+        x="7"
+        y="7"
+        width="32"
+        height="32"
+        rx="10"
+        fill={iconBg}
+        stroke={borderColor}
+        strokeWidth="1.5"
+      />
+
+      {/* Vector Rocket Graphic */}
+      <g transform="translate(13, 13)">
+        <path
+          d="M10 2C7 2 3.5 4.5 2 9.5C4 9 6.5 9.5 8 11L9 12C10.5 13.5 11 16 10.5 18C15.5 16.5 18 13 18 10C18 10 18 2 10 2Z"
+          fill={theme === 'gold' ? '#ffe600' : '#f59e0b'}
+        />
+        <circle cx="12" cy="8" r="2" fill={bgColor} />
+        <path d="M4 14L2 18L6 16L4 14Z" fill="#ef4444" />
+        <path d="M2 18L1 20L3 19L2 18Z" fill="#fbbf24" />
+      </g>
+
+      {/* Divider Line */}
+      <line
+        x1="47"
+        y1="10"
+        x2="47"
+        y2="36"
+        stroke={borderColor}
+        strokeWidth="2"
+        opacity={theme === 'white' ? 0.3 : 0.4}
+      />
+
+      {/* Typography */}
+      <text
+        x="56"
+        y="19"
+        fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+        fontSize="9"
+        fontWeight="800"
+        letterSpacing="1.2"
+        fill={subtextColor}
+      >
+        FEATURED ON
+      </text>
+
+      <text
+        x="56"
+        y="34"
+        fontFamily="'Impact', 'Arial Black', -apple-system, sans-serif"
+        fontSize="16"
+        fontWeight="900"
+        letterSpacing="0.5"
+        fill={textColor}
+      >
+        MEMELAUNCH
+      </text>
+
+      {/* Power-Up Zap Sparkle Badge */}
+      <circle
+        cx="204"
+        cy="23"
+        r="9"
+        fill={theme === 'gold' ? '#09090b' : accentColor}
+        stroke={borderColor}
+        strokeWidth="1.5"
+      />
+      <path
+        d="M205 18L201.5 23H204L203 28L207 22.5H204.5L205 18Z"
+        fill={theme === 'gold' ? '#ffe600' : '#09090b'}
+      />
+    </svg>
+  );
+}
+
 export function EmbedBadgeModal({
   isOpen,
   onClose,
@@ -37,7 +163,7 @@ export function EmbedBadgeModal({
   const [theme, setTheme] = useState<'dark' | 'white' | 'gold'>('dark');
   const [codeType, setCodeType] = useState<'html' | 'markdown' | 'react'>('html');
   const [copied, setCopied] = useState(false);
-  
+
   const [websiteUrl, setWebsiteUrl] = useState(defaultWebsiteUrl);
   const [isVerifying, setIsVerifying] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -129,25 +255,21 @@ export function EmbedBadgeModal({
             Embed <span className="text-lime-400">"Launched on MemeLaunch"</span> Badge
           </h2>
           <p className="text-xs text-zinc-400">
-            Add this badge to your website or README. Our bot will verify the embed on your live page and award <span className="text-lime-400 font-bold">+100 Points</span> instantly!
+            Add this badge to your website or README. Our bot will verify the embed on your live page and award{' '}
+            <span className="text-lime-400 font-bold">+100 Points</span> instantly!
           </p>
         </div>
 
-        {/* Badge Live Preview */}
+        {/* Badge Live Preview (Rendered as Instant Vector SVG) */}
         <div className="p-5 bg-zinc-900 border-2 border-black rounded-2xl flex flex-col items-center justify-center space-y-3 shadow-brutal-sm">
           <p className="text-[11px] font-mono text-zinc-400 uppercase font-bold">Live Badge Preview</p>
-          
-          <div className={`p-4 rounded-2xl border-2 border-black flex items-center justify-center transition-all ${
-            theme === 'white' ? 'bg-zinc-200' : 'bg-zinc-950'
-          }`}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={badgeImgUrl}
-              alt="MemeLaunch Badge Preview"
-              width={230}
-              height={54}
-              className="hover:scale-105 transition-transform drop-shadow"
-            />
+
+          <div
+            className={`p-4 rounded-2xl border-2 border-black flex items-center justify-center transition-all ${
+              theme === 'white' ? 'bg-zinc-200' : 'bg-zinc-950'
+            }`}
+          >
+            <BadgeSvgPreview theme={theme} />
           </div>
 
           {/* Theme Selector (Dark, White, Gold) */}
@@ -236,7 +358,9 @@ export function EmbedBadgeModal({
             </h3>
           </div>
           <p className="text-xs text-zinc-400">
-            Paste the URL of your website where the badge is live (e.g. <code className="text-zinc-300">https://myproject.com</code>). Our automated crawler will check the page and release your +100 points!
+            Paste the URL of your website where the badge is live (e.g.{' '}
+            <code className="text-zinc-300">https://myproject.com</code>). Our automated crawler will check the page and
+            release your +100 points!
           </p>
 
           <div className="space-y-2 pt-1">
