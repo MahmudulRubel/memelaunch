@@ -83,12 +83,12 @@ export function Navigation() {
             <Link 
               href="/" 
               className="flex items-center group hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform shrink-0"
-              title="MemeLaunch Home"
+              title="LaunchMeme Home"
             >
               <SafeImage 
                 src="/logo.png"
                 fallbackType="logo" 
-                alt="Launchme MemeLaunch Logo" 
+                alt="LaunchMeme Logo" 
                 width={180}
                 height={48}
                 priority
@@ -316,8 +316,8 @@ export function Navigation() {
               ) : (
                 <div className="flex items-center justify-between p-4 bg-gradient-to-r from-yellow-500/10 via-zinc-900/90 to-zinc-900/90 rounded-2xl border border-yellow-500/30">
                   <div>
-                    <p className="text-sm font-extrabold text-zinc-100">Welcome to MemeLaunch</p>
-                    <p className="text-xs text-zinc-400">Join to pitch & upvote viral memes</p>
+                    <p className="text-sm font-extrabold text-zinc-100">Welcome to LaunchMeme</p>
+                    <p className="text-xs text-zinc-400">Launch viral memes & seduce real users</p>
                   </div>
                   <Link
                     href="/login"

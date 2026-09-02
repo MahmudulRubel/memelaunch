@@ -261,6 +261,12 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
           {/* Left Column: Headline, Copy, Trust Pills & Launch Form */}
           <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left space-y-4 w-full min-w-0">
 
+            {/* Eyebrow Pill */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-lime-400/10 border border-lime-400/30 rounded-full text-lime-400 text-[11px] sm:text-xs font-black uppercase tracking-wider mb-1 shadow-[0_0_15px_rgba(163,230,53,0.15)]">
+              <span className="w-2 h-2 rounded-full bg-lime-400 animate-ping inline-block" />
+              The shortcut from &ldquo;nobody cares&rdquo; to trending #1 🚀
+            </div>
+
             <h1 className="font-heading text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-zinc-50 leading-tight break-words w-full">
               BUILD IN PUBLIC.<br className="block" />
               LAUNCH IN HUMOR.
@@ -275,7 +281,7 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
             </p>
 
             {/* Hero URL Box & Quick Launch */}
-            <div className="flex flex-col gap-3 w-full max-w-xl mt-2">
+            <div className="flex flex-col gap-2.5 w-full max-w-xl mt-2">
               <form onSubmit={handleQuickLaunchSubmit} className="flex flex-col sm:flex-row items-stretch gap-2.5 w-full">
                 <div className="relative flex-1">
                   <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
@@ -283,7 +289,7 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
                     type="text"
                     value={quickUrl}
                     onChange={(e) => setQuickUrl(e.target.value)}
-                    placeholder="Enter Your URL..."
+                    placeholder="Paste your product URL (e.g. yourapp.com)..."
                     className="w-full pl-10 pr-4 py-3.5 bg-zinc-900 border-2 border-black rounded-2xl text-xs sm:text-sm font-medium text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-[#ffe600] shadow-brutal-sm transition-all"
                   />
                 </div>
@@ -292,11 +298,20 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
                   className="px-6 py-3.5 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 font-black text-xs uppercase tracking-wider rounded-2xl border-2 border-black shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
                 >
                   <Rocket className="h-4 w-4 stroke-[2.5]" />
-                  <span>Launch Free 🚀</span>
+                  <span>Launch Free Now 🚀</span>
                 </button>
               </form>
 
-
+              {/* Trust / Benefit Chips */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-3 gap-y-1 text-[11px] font-bold text-zinc-400 pt-1">
+                <span className="flex items-center gap-1 text-zinc-300">⚡ 100% Free</span>
+                <span>•</span>
+                <span className="flex items-center gap-1 text-zinc-300">🚫 Zero VC Cringe</span>
+                <span>•</span>
+                <span className="flex items-center gap-1 text-zinc-300">🔥 Instant Viral Reach</span>
+                <span>•</span>
+                <span className="flex items-center gap-1 text-zinc-300">👥 Real Paying Customers</span>
+              </div>
             </div>
           </div>
 
@@ -390,7 +405,7 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
                   })()}
 
                   <div className="absolute top-2 right-2 text-[9px] font-mono text-zinc-400 font-extrabold tracking-widest uppercase bg-zinc-950/80 px-2 py-0.5 rounded border border-black z-20">
-                    MEMELAUNCH
+                    LAUNCHMEME
                   </div>
                 </div>
 
@@ -410,7 +425,7 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
               <div className="relative w-full max-w-sm bg-zinc-950 border-2 border-black rounded-2xl p-3 shadow-brutal hover:rotate-0 transition-transform duration-300 rotate-2">
                 <div className="flex items-center justify-between mb-3 border-b-2 border-black pb-2">
                   <span className="bg-[#ffe600] text-zinc-950 font-black text-xs uppercase px-2.5 py-0.5 rounded-lg border-2 border-black shadow-brutal-sm flex items-center gap-1">
-                    <span>🥇</span> #1 MEME THIS WEEK
+                    <span>👑</span> #1 VIRAL CRUSH THIS WEEK
                   </span>
                   <span className="text-zinc-400 font-mono text-[10px] font-extrabold uppercase">SPOTLIGHT</span>
                 </div>
@@ -422,24 +437,23 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
                     alt="Drake Meme" 
                     fill
                     sizes="(max-width: 640px) 100vw, 384px"
-                    className="object-cover"
                     priority
                   />
                   <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950/90 to-transparent p-3 text-center">
-                    <p className="font-impact text-zinc-100 uppercase text-xs sm:text-sm tracking-wider">
-                      BUILDING IN SECRET FOR 6 MONTHS
+                    <p className="font-impact text-zinc-100 uppercase text-xs sm:text-sm tracking-wider leading-tight">
+                      SPENDING $5,000 ON ADS THAT NOBODY CLICKS
                     </p>
                   </div>
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950/90 to-transparent p-3 text-center">
-                    <p className="font-impact text-[#ffe600] uppercase text-xs sm:text-sm tracking-wider">
-                      LAUNCHING ON MEMELAUNCH TO 10K BUILDERS
+                    <p className="font-impact text-[#ffe600] uppercase text-xs sm:text-sm tracking-wider leading-tight">
+                      DROPPING ONE FIRE MEME ON LAUNCHMEME & GETTING 10K USERS
                     </p>
                   </div>
                 </div>
                 <div className="mt-3 pt-2 border-t-2 border-black flex items-center justify-between">
                   <div>
-                    <h4 className="font-black text-sm text-zinc-100">LaunchDock Track</h4>
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase">◇ SaaS • FREE</p>
+                    <h4 className="font-black text-sm text-zinc-100">LaunchDock Pro</h4>
+                    <p className="text-[10px] font-bold text-zinc-400 uppercase">◇ SaaS • FREE TIER</p>
                   </div>
                   <div className="flex items-center gap-1 text-xs font-black bg-rose-400 text-zinc-950 border-2 border-black px-2.5 py-1 rounded-lg shadow-brutal-sm">
                     <span>🔥</span>
@@ -466,7 +480,7 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
             }`}
           >
             <TrendingUp className="h-4 w-4" />
-            <span>Trending</span>
+            <span>Trending 🔥</span>
           </button>
 
           <button
@@ -478,9 +492,8 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
             }`}
           >
             <Clock className="h-4 w-4" />
-            <span>Fresh</span>
+            <span>Fresh ⚡</span>
           </button>
-
         </div>
 
         {/* Search & Category Filter Controls */}
@@ -498,7 +511,6 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
                 'Developer Tools',
                 'AI & Machine Learning',
                 'Mobile Apps',
-                'Web Utilities',
                 'Design & Creative',
                 'Marketing & Sales',
                 'Productivity',
@@ -526,7 +538,7 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search products, memes..."
+              placeholder="Search viral products, memes, creators..."
               className="w-full h-[46px] pl-11 pr-4 py-2.5 bg-zinc-900 border-2 border-black rounded-2xl text-xs sm:text-sm font-bold text-zinc-100 placeholder-zinc-500 shadow-brutal-sm focus:outline-none focus:border-[#ffe600] transition-all"
             />
           </div>
@@ -551,21 +563,21 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
           
           <div className="space-y-2">
             <h3 className="text-2xl font-extrabold text-zinc-100 tracking-tight">
-              {searchQuery ? 'Well, this is dry...' : 'Did the founders go back to writing slide decks?'}
+              {searchQuery ? 'Well, this search came up dry...' : 'Did the founders go back to boring slide decks?'}
             </h3>
             <p className="text-zinc-400 text-sm max-w-md">
               {searchQuery
-                ? `No memes found matching "${searchQuery}". Maybe search for something that actually exists?`
-                : 'No memes have been launched yet. Be the absolute legend to kick off the week with some elite meme slop!'}
+                ? `No memes found matching "${searchQuery}". Try a different search or launch your own product right now!`
+                : 'No memes have been launched yet. Be the first absolute legend to drop a viral meme and claim the #1 spot uncontested!'}
             </p>
           </div>
 
           {!searchQuery && (
             <Link
               href={user ? '/launch' : '/login'}
-              className="px-6 py-3 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-extrabold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_20px_rgba(163,230,53,0.15)]"
+              className="px-6 py-3.5 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 font-black uppercase text-xs tracking-wider rounded-xl transition-all border-2 border-black shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5"
             >
-              Be the First Hero
+              Claim the Spotlight 🚀
             </Link>
           )}
         </div>

@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 
-export const alt = 'MemeLaunch — Build in Public. Launch in Humor.';
+export const alt = 'LaunchMeme — Stop Launching to Crickets. Go Viral with Memes.';
 export const size = {
   width: 1200,
   height: 630,
@@ -90,7 +90,7 @@ export default async function Image() {
                 letterSpacing: '-0.5px',
               }}
             >
-              launchme<span style={{ color: '#ffe600' }}>.me</span>
+              launch<span style={{ color: '#ffe600' }}>meme</span>
             </span>
             <div
               style={{
@@ -109,26 +109,26 @@ export default async function Image() {
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span
                 style={{
-                  fontSize: '50px',
+                  fontSize: '46px',
                   fontWeight: 900,
                   color: '#ffffff',
                   letterSpacing: '-1.5px',
                   lineHeight: 1.05,
                 }}
               >
-                BUILD IN PUBLIC.
+                STOP LAUNCHING TO CRICKETS.
               </span>
               <div style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
                 <span
                   style={{
-                    fontSize: '50px',
+                    fontSize: '46px',
                     fontWeight: 900,
                     color: '#ffffff',
                     letterSpacing: '-1.5px',
                     lineHeight: 1.05,
                   }}
                 >
-                  LAUNCH IN <span style={{ color: '#ffe600' }}>HUMOR.</span>
+                  MAKE THEM <span style={{ color: '#ffe600' }}>BUY.</span>
                 </span>
                 {/* Yellow Brush Underline */}
                 <svg
@@ -150,7 +150,7 @@ export default async function Image() {
 
             <div
               style={{
-                fontSize: '21px',
+                fontSize: '20px',
                 fontWeight: 700,
                 color: '#facc15',
                 display: 'flex',
@@ -159,19 +159,19 @@ export default async function Image() {
                 marginTop: '10px',
               }}
             >
-              Where solo founders become viral legends 🏆
+              The seductive shortcut to trending #1 🚀
             </div>
 
             <p
               style={{
-                fontSize: '17px',
+                fontSize: '16px',
                 color: '#a1a1aa',
                 lineHeight: 1.45,
                 margin: 0,
                 maxWidth: '520px',
               }}
             >
-              Pitch your product with memes, compete for gold badges, and win real customers.
+              Boring pitch decks get ignored. Hilarious memes get shared, upvoted, and showered with paying users.
             </p>
 
             {/* CTAs */}
@@ -343,7 +343,7 @@ export default async function Image() {
                   borderRadius: '6px',
                 }}
               >
-                MEME LAUNCH
+                LAUNCHMEME
               </div>
 
               {/* Meme Top Text */}

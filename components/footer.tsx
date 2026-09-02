@@ -24,6 +24,42 @@ const PARTNERS: PartnerItem[] = [
     width: 244,
     height: 56,
   },
+  {
+    id: 'saascity',
+    name: 'SaaSCity',
+    href: 'https://saascity.io',
+    imgSrc: 'https://saascity.io/badges/featured-light.svg',
+    alt: 'Featured on SaaSCity',
+    width: 150,
+    height: 54,
+  },
+  {
+    id: 'scrolllaunch',
+    name: 'ScrollLaunch',
+    href: 'https://www.scrolllaunch.com/products/memelaunch?ref=badge',
+    imgSrc: 'https://www.scrolllaunch.com/api/badge/memelaunch',
+    alt: 'Featured on ScrollLaunch',
+    width: 220,
+    height: 48,
+  },
+  {
+    id: 'ai-directories',
+    name: 'AI Directories',
+    href: 'https://www.aidirectori.es',
+    imgSrc: 'https://cdn.aidirectori.es/ai-tools/badges/light-mode.png',
+    alt: 'AI Directories Badge',
+    width: 200,
+    height: 54,
+  },
+  {
+    id: 'fazier',
+    name: 'Fazier',
+    href: 'https://fazier.com/launches/www.launchme.me',
+    imgSrc: 'https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=featured&theme=light',
+    alt: 'Fazier badge',
+    width: 250,
+    height: 54,
+  },
 ];
 
 export function Footer() {
@@ -43,19 +79,19 @@ export function Footer() {
               id="footer-logo"
               href="/" 
               className="inline-block group hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform"
-              title="MemeLaunch Home"
+              title="LaunchMeme Home"
             >
               <SafeImage 
                 src="/logo.png" 
                 fallbackType="logo"
-                alt="Launchme MemeLaunch Logo" 
+                alt="LaunchMeme Logo" 
                 width={160}
                 height={40}
                 className="h-10 w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
               />
             </Link>
             <p className="text-zinc-400 text-xs font-medium leading-relaxed max-w-xs pt-1">
-              Building the future of product discovery, one elite meme at a time. Where SaaS founders pitch with humor.
+              Building the future of viral product discovery. Where ambitious founders seduce users with humor and win the internet.
             </p>
           </div>
 
@@ -235,7 +271,7 @@ export function Footer() {
         {/* Bottom copyright row */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 text-xs text-zinc-400 font-bold">
           <div>
-            © {new Date().getFullYear()} MemeLaunch. All memes reserved.
+            © {new Date().getFullYear()} LaunchMeme. All memes reserved.
           </div>
           <div className="text-center sm:text-right text-zinc-500 font-mono">
             Not responsible for lost VC funding, tanked conversions, or burnt brain cells.
