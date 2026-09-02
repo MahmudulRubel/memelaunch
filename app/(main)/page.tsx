@@ -9,23 +9,23 @@ import type { Launch } from '@/components/feed/meme-card';
 export const revalidate = 30;
 
 export const metadata: Metadata = {
-  title: 'MemeLaunch - Build in Public. Launch in Humor. Win the Week.',
-  description: 'MemeLaunch is the weekly battleground where indie hackers drop their funniest product memes, compete for top gold badges, and win real customers.',
+  title: 'LaunchMeme — Stop Launching to Crickets. Go Viral with Memes.',
+  description: 'LaunchMeme is the seductive viral battleground where founders turn software into irresistible sensations. Drop your meme, hook paying users, and claim the #1 weekly crown.',
   alternates: {
     canonical: 'https://www.launchme.me',
   },
   openGraph: {
-    title: 'MemeLaunch - Build in Public. Launch in Humor. Win the Week.',
-    description: 'MemeLaunch is the weekly battleground where indie hackers drop their funniest product memes, compete for top gold badges, and win real customers.',
+    title: 'LaunchMeme — Stop Launching to Crickets. Go Viral with Memes.',
+    description: 'LaunchMeme is the seductive viral battleground where founders turn software into irresistible sensations. Drop your meme, hook paying users, and claim the #1 weekly crown.',
     url: 'https://www.launchme.me',
-    siteName: 'MemeLaunch',
+    siteName: 'LaunchMeme',
     images: [
       {
         url: 'https://www.launchme.me/og-image.png',
         width: 1200,
         height: 630,
         type: 'image/png',
-        alt: 'MemeLaunch — Build in Public. Launch in Humor.',
+        alt: 'LaunchMeme — Stop Launching to Crickets. Go Viral with Memes.',
       },
     ],
     locale: 'en_US',
@@ -33,8 +33,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'MemeLaunch - Build in Public. Launch in Humor. Win the Week.',
-    description: 'MemeLaunch is the weekly battleground where indie hackers drop their funniest product memes, compete for top gold badges, and win real customers.',
+    title: 'LaunchMeme — Stop Launching to Crickets. Go Viral with Memes.',
+    description: 'LaunchMeme is the seductive viral battleground where founders turn software into irresistible sensations. Drop your meme, hook paying users, and claim the #1 weekly crown.',
     site: '@launchme_me',
     creator: '@launchme_me',
     images: ['https://www.launchme.me/og-image.png'],
@@ -68,8 +68,8 @@ export default async function HomePage() {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: 'MemeLaunch',
-    description: 'MemeLaunch is the weekly battleground where indie hackers drop their funniest product memes, compete for top gold badges, and win real customers.',
+    name: 'LaunchMeme',
+    description: 'LaunchMeme is the seductive viral battleground where founders turn software into irresistible sensations. Drop your meme, hook paying users, and claim the #1 weekly crown.',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'All',
     offers: {
@@ -79,7 +79,7 @@ export default async function HomePage() {
     },
     publisher: {
       '@type': 'Organization',
-      name: 'MemeLaunch',
+      name: 'LaunchMeme',
       url: 'https://www.launchme.me',
       logo: 'https://www.launchme.me/favicon.ico',
     },

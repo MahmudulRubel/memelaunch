@@ -31,23 +31,25 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://www.launchme.me"),
   title: {
-    default: "MemeLaunch — Build in Public. Launch in Humor. Win the Week.",
-    template: "%s | MemeLaunch",
+    default: "LaunchMeme — Pitch with Memes. Launch Virally. Win Real Users.",
+    template: "%s | LaunchMeme",
   },
-  description: "MemeLaunch is the viral product launch arena where indie hackers, founders, and creators drop their funniest software memes, compete for gold badges, and win real users.",
+  description: "LaunchMeme is the seductive, high-converting product launch arena for founders, indie hackers, and SaaS creators. Stop launching to crickets — drop your funniest software memes, dominate the leaderboard, and hook thousands of paying users.",
   keywords: [
-    "meme launch",
-    "product hunt alternative",
+    "launchmeme",
+    "launch meme",
+    "product launch",
     "indie hacker launch",
     "viral product pitch",
     "saas memes",
-    "startup launch platform",
+    "product hunt alternative",
+    "startup launch arena",
     "meme marketing",
-    "software launch arena"
+    "growth hacking"
   ],
-  authors: [{ name: "MemeLaunch Team", url: "https://www.launchme.me" }],
-  creator: "MemeLaunch",
-  publisher: "MemeLaunch",
+  authors: [{ name: "LaunchMeme Team", url: "https://www.launchme.me" }],
+  creator: "LaunchMeme",
+  publisher: "LaunchMeme",
   robots: {
     index: true,
     follow: true,
@@ -63,23 +65,23 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://www.launchme.me",
-    siteName: "MemeLaunch",
-    title: "MemeLaunch — Build in Public. Launch in Humor. Win the Week.",
-    description: "The playful, high-contrast alternative to Product Hunt. Pitch your SaaS or dev tool using viral memes.",
+    siteName: "LaunchMeme",
+    title: "LaunchMeme — Pitch with Memes. Launch Virally. Win Real Users.",
+    description: "Tired of launching to crickets? LaunchMeme turns your product into viral gold. Pitch with memes, compete for gold badges, and seduce real customers.",
     images: [
       {
         url: "https://www.launchme.me/og-image.png",
         width: 1200,
         height: 630,
         type: "image/png",
-        alt: "MemeLaunch — Build in Public. Launch in Humor.",
+        alt: "LaunchMeme — Pitch with Memes. Launch Virally. Win Real Users.",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "MemeLaunch — Build in Public. Launch in Humor. Win the Week.",
-    description: "The playful, high-contrast alternative to Product Hunt. Pitch your SaaS or dev tool using viral memes.",
+    title: "LaunchMeme — Pitch with Memes. Launch Virally. Win Real Users.",
+    description: "Tired of launching to crickets? LaunchMeme turns your product into viral gold. Pitch with memes, compete for gold badges, and seduce real customers.",
     site: "@launchme_me",
     creator: "@launchme_me",
     images: ["https://www.launchme.me/og-image.png"],
@@ -105,19 +107,19 @@ export default function RootLayout({
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "MemeLaunch",
+    name: "LaunchMeme",
     url: "https://www.launchme.me",
     logo: "https://www.launchme.me/favicon.ico",
     sameAs: [
       "https://x.com/builtwithrubel"
     ],
-    description: "Meme-native product launch arena for indie hackers and startup founders.",
+    description: "The viral, meme-powered product launch arena where founders and creators win real users.",
   };
 
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "MemeLaunch",
+    name: "LaunchMeme",
     url: "https://www.launchme.me",
     potentialAction: {
       "@type": "SearchAction",
