@@ -1,9 +1,12 @@
+import { synthesizeSeoDossier, SeoDossier } from './seo-dossier';
+
 export interface AutofillResult {
   productName: string;
   category: string;
   pricing: 'free' | 'paid' | 'freemium';
   productDescription: string;
   productLogoUrl: string;
+  seoDossier?: SeoDossier;
 }
 
 const CATEGORIES = [
@@ -95,6 +98,13 @@ export async function extractAndAutofillProduct(url: string): Promise<AutofillRe
     productDescription: metaDescription || `${domainName} - Discover tech products with meme launch campaigns.`,
     productLogoUrl: finalLogoUrl,
   };
+  fallbackResult.seoDossier = synthesizeSeoDossier({
+    product_name: fallbackResult.productName,
+    product_description: fallbackResult.productDescription,
+    category: fallbackResult.category,
+    pricing: fallbackResult.pricing,
+    product_url: validUrl,
+  });
 
   const apiKey = process.env.DEEPSEEK_API_KEY || process.env.RUNWARE_API_KEY;
   if (!apiKey) {
@@ -194,12 +204,22 @@ Return ONLY a raw JSON object (no markdown quotes, no codeblocks) with this exac
     const validCategory = CATEGORIES.includes(parsed.category) ? parsed.category : 'SaaS';
     const validPricing = ['free', 'paid', 'freemium'].includes(parsed.pricing) ? parsed.pricing : 'free';
 
+    const finalName = parsed.productName || fallbackResult.productName;
+    const finalDesc = parsed.productDescription || fallbackResult.productDescription;
+
     return {
-      productName: parsed.productName || fallbackResult.productName,
+      productName: finalName,
       category: validCategory,
       pricing: validPricing,
-      productDescription: parsed.productDescription || fallbackResult.productDescription,
+      productDescription: finalDesc,
       productLogoUrl: finalLogoUrl,
+      seoDossier: synthesizeSeoDossier({
+        product_name: finalName,
+        product_description: finalDesc,
+        category: validCategory,
+        pricing: validPricing,
+        product_url: validUrl,
+      }),
     };
   } catch (err) {
     console.warn('DeepSeek Autofill fallback used due to error:', err);

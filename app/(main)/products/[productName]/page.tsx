@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { cache } from 'react';
 import Link from 'next/link';
 import { insforge, insforgeAdmin } from '@/lib/insforge';
 import { ProductView } from '@/components/product/product-view';
+import { synthesizeSeoDossier } from '@/lib/seo-dossier';
 import { AlertCircle, ArrowLeft, Rocket } from 'lucide-react';
 
 interface PageProps {
@@ -10,38 +11,86 @@ interface PageProps {
   }>;
 }
 
-export async function generateMetadata({ params }: PageProps) {
-  const { productName } = await params;
-  const decodedName = decodeURIComponent(productName);
-
-  let description = `Check out ${decodedName} on MemeLaunch - Build in Public. Launch in Humor. Win the Week.`;
-  let logoUrl = 'https://www.launchme.me/logo.png';
-
+/**
+ * Deduplicated per-request product lookup cached across generateMetadata and Page render
+ */
+const getLaunchData = cache(async (rawProductName: string) => {
+  const decodedName = decodeURIComponent(rawProductName).trim();
   try {
-    const { data: launch } = await insforgeAdmin.database
+    // 1. Primary lookup: Case-insensitive search on product_name
+    const { data: nameMatch, error: nameErr } = await insforgeAdmin.database
       .from('launches')
-      .select('product_description, product_logo_url, meme_image_url')
+      .select('id, product_name, product_description, product_url, category, pricing, meme_image_url, product_logo_url')
       .ilike('product_name', decodedName)
+      .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    if (launch?.product_description) {
-      description = launch.product_description;
+    if (nameErr) {
+      console.error('GETLAUNCHDATA PRIMARY ERROR:', nameErr);
     }
-  } catch (e) {
-    // fallback
+
+    if (nameMatch?.id) {
+      return nameMatch;
+    }
+
+    // 2. Fallback lookup: Search by UUID if parameter is an ID
+    const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(decodedName);
+    if (isUuid) {
+      const { data: idMatch } = await insforge.database
+        .from('launches')
+        .select('id, product_name, product_description, product_url, category, pricing, meme_image_url, product_logo_url')
+        .eq('id', decodedName)
+        .maybeSingle();
+
+      if (idMatch?.id) {
+        return idMatch;
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching launch in getLaunchData:', err);
+  }
+  return null;
+});
+
+export async function generateMetadata({ params }: PageProps) {
+  const { productName } = await params;
+  const decodedName = decodeURIComponent(productName);
+  const launch = await getLaunchData(productName);
+
+  let description = `Check out ${decodedName} on MemeLaunch - Build in Public. Launch in Humor. Win the Week.`;
+  let title = `${decodedName} — Reviews, Features, Memes & Pricing | MemeLaunch`;
+  let category = 'SaaS & Tech';
+
+  if (launch) {
+    const dossier = synthesizeSeoDossier(launch);
+    category = launch.category || category;
+    title = `${launch.product_name} — ${dossier.tagline ? dossier.tagline.slice(0, 60) : 'Reviews & Pricing'} | MemeLaunch`;
+    description = dossier.tagline
+      ? `${dossier.tagline}. ${launch.product_description || dossier.solution}`.slice(0, 160)
+      : launch.product_description || description;
   }
 
   const encodedPath = encodeURIComponent(decodedName);
 
   return {
-    title: `${decodedName} | MemeLaunch Product Page`,
+    title,
     description,
+    keywords: [
+      decodedName,
+      category,
+      'MemeLaunch',
+      'product launch',
+      'software reviews',
+      'startup pricing',
+      'AI memes',
+      'indie hackers',
+    ],
     alternates: {
       canonical: `https://www.launchme.me/products/${encodedPath}`,
     },
     openGraph: {
-      title: `${decodedName} | MemeLaunch Product Page`,
+      title,
       description,
       url: `https://www.launchme.me/products/${encodedPath}`,
       siteName: 'MemeLaunch',
@@ -57,7 +106,7 @@ export async function generateMetadata({ params }: PageProps) {
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${decodedName} | MemeLaunch Product Page`,
+      title,
       description,
       site: '@launchme_me',
       creator: '@launchme_me',
@@ -69,47 +118,11 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function ProductPage({ params }: PageProps) {
   const { productName } = await params;
   const decodedName = decodeURIComponent(productName);
+  const launch = await getLaunchData(productName);
 
-  let launchId: string | null = null;
+  console.log('PAGE LAUNCH OBJ:', { productName, decodedName, launch });
 
-  try {
-    // 1. Primary lookup: Case-insensitive search on product_name
-    const primaryQuery = insforgeAdmin.database
-      .from('launches')
-      .select('id')
-      .ilike('product_name', decodedName)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    const timeoutPromise = new Promise<{ data: null; error: { message: string } }>((resolve) =>
-      setTimeout(() => resolve({ data: null, error: { message: 'Product lookup timeout' } }), 10000)
-    );
-
-    const { data: nameMatch } = await Promise.race([primaryQuery, timeoutPromise]);
-
-    if (nameMatch?.id) {
-      launchId = nameMatch.id;
-    } else {
-      // 2. Fallback lookup: Search by UUID if parameter is an ID
-      const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(decodedName);
-      if (isUuid) {
-        const idQuery = insforge.database
-          .from('launches')
-          .select('id')
-          .eq('id', decodedName)
-          .maybeSingle();
-        const { data: idMatch } = await Promise.race([idQuery, timeoutPromise]);
-        if (idMatch?.id) {
-          launchId = idMatch.id;
-        }
-      }
-    }
-  } catch (err) {
-    console.error('Error looking up launch by product name:', err);
-  }
-
-  if (!launchId) {
+  if (!launch?.id) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center p-8 text-center space-y-6 max-w-lg mx-auto">
         <div className="h-20 w-20 bg-rose-500/10 border-2 border-rose-500/30 rounded-3xl flex items-center justify-center text-rose-500 shadow-brutal">
@@ -143,18 +156,68 @@ export default async function ProductPage({ params }: PageProps) {
     );
   }
 
+  const encodedPath = encodeURIComponent(launch.product_name);
+  const dossier = synthesizeSeoDossier(launch);
+
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'SoftwareApplication',
-    name: decodedName,
-    url: `https://memelaunch.insforge.app/products/${encodeURIComponent(decodedName)}`,
-    applicationCategory: 'BusinessApplication',
-    operatingSystem: 'All',
-    publisher: {
-      '@type': 'Organization',
-      name: 'MemeLaunch',
-      url: 'https://memelaunch.insforge.app',
-    },
+    '@graph': [
+      {
+        '@type': 'SoftwareApplication',
+        name: launch.product_name,
+        headline: dossier.tagline,
+        description: launch.product_description || dossier.solution,
+        url: `https://www.launchme.me/products/${encodedPath}`,
+        applicationCategory: launch.category || 'BusinessApplication',
+        operatingSystem: 'All',
+        image: launch.meme_image_url || `https://www.launchme.me/products/${encodedPath}/opengraph-image`,
+        offers: {
+          '@type': 'Offer',
+          price: launch.pricing === 'paid' ? 'Paid' : '0',
+          priceCurrency: 'USD',
+          availability: 'https://schema.org/InStock',
+        },
+        publisher: {
+          '@type': 'Organization',
+          name: 'MemeLaunch',
+          url: 'https://www.launchme.me',
+        },
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: dossier.faqs.map((faq) => ({
+          '@type': 'Question',
+          name: faq.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: faq.answer,
+          },
+        })),
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: 'https://www.launchme.me',
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: launch.category || 'Products',
+            item: `https://www.launchme.me/?category=${encodeURIComponent(launch.category || 'All')}`,
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: launch.product_name,
+            item: `https://www.launchme.me/products/${encodedPath}`,
+          },
+        ],
+      },
+    ],
   };
 
   return (
@@ -163,7 +226,7 @@ export default async function ProductPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <ProductView initialLaunchId={launchId} />
+      <ProductView initialLaunchId={launch.id} />
     </>
   );
 }

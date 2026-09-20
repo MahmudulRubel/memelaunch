@@ -40,6 +40,7 @@ export interface Launch {
   is_approved?: boolean;
   product_description?: string;
   product_logo_url?: string;
+  seo_dossier?: any;
   users?: UserProfile;
   reactions?: Reaction[];
   comments?: Comment[];

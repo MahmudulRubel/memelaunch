@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to process product URL with DeepSeek AI.',
+        error: error.message || 'Unable to automatically analyze this URL. Please check the link or enter product details manually.',
       },
       { status: 500 }
     );

@@ -23,7 +23,45 @@ export async function POST(request: Request) {
       }
     }
 
-    if (action === 'approve') {
+    if (action === 'ai-evaluate') {
+      const { data: launchData, error: fetchErr } = await insforgeAdmin.database
+        .from('launches')
+        .select('*')
+        .eq('id', launchId)
+        .maybeSingle();
+
+      if (fetchErr || !launchData) {
+        throw new Error(fetchErr?.message || 'Launch not found');
+      }
+
+      const { evaluateProductWithAi } = await import('@/lib/ai-product-evaluator');
+      const aiEvaluation = await evaluateProductWithAi({
+        productName: launchData.product_name,
+        productDescription: launchData.product_description || '',
+        productUrl: launchData.product_url,
+        category: launchData.category,
+        pricing: launchData.pricing,
+      });
+
+      const updatedSeoDossier = launchData.seo_dossier ? { ...launchData.seo_dossier } : {};
+      updatedSeoDossier.ai_evaluation = aiEvaluation;
+
+      const { data, error } = await insforgeAdmin.database
+        .from('launches')
+        .update({
+          is_approved: aiEvaluation.isApproved,
+          seo_dossier: updatedSeoDossier,
+        })
+        .eq('id', launchId)
+        .select('*');
+
+      if (error) throw error;
+      try {
+        revalidatePath('/');
+        revalidatePath('/products');
+      } catch (rErr) {}
+      return NextResponse.json({ success: true, data: data?.[0], ai_evaluation: aiEvaluation });
+    } else if (action === 'approve') {
       const { data, error } = await insforgeAdmin.database
         .from('launches')
         .update({ is_approved: true })

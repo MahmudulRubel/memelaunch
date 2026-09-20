@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { uploadImageToStorage } from '@/lib/insforge';
@@ -9,6 +10,9 @@ import { getUserPoints, getLaunchPointCost } from '@/lib/points';
 import { EarnPointsModal } from '@/components/points/earn-points-modal';
 import { LaunchBoostModal } from '@/components/points/launch-boost-modal';
 import { AuthModal } from '@/components/auth/auth-modal';
+import { MemeIdeogramGenerator, GeneratedMemeItem } from '@/components/launch/meme-ideogram-generator';
+import { SeoDossierEditor } from '@/components/launch/seo-dossier-editor';
+import { SeoDossier, synthesizeSeoDossier } from '@/lib/seo-dossier';
 import { z } from 'zod';
 import {
   Upload,
@@ -78,6 +82,12 @@ function LaunchForm() {
   const [memePreview, setMemePreview] = useState<string | null>(null);
   const memeInputRef = useRef<HTMLInputElement>(null);
 
+  // AI Meme Generation & SEO Dossier state
+  const [generatedMemes, setGeneratedMemes] = useState<GeneratedMemeItem[]>([]);
+  const [selectedMemeIdx, setSelectedMemeIdx] = useState<number>(0);
+  const [seoDossier, setSeoDossier] = useState<SeoDossier | null>(null);
+  const [showManualMemeUpload, setShowManualMemeUpload] = useState<boolean>(false);
+
   // Logo upload (required)
   const [productLogoFile, setProductLogoFile] = useState<File | null>(null);
   const [productLogoPreview, setProductLogoPreview] = useState<string | null>(null);
@@ -99,6 +109,8 @@ function LaunchForm() {
   const [isEarnPointsModalOpen, setIsEarnPointsModalOpen] = useState(false);
   const [isBoostModalOpen, setIsBoostModalOpen] = useState(false);
   const [createdLaunchData, setCreatedLaunchData] = useState<{ id?: string; product_name?: string; product_url?: string; meme_image_url?: string } | null>(null);
+  const [isAiApproved, setIsAiApproved] = useState<boolean | null>(null);
+  const [aiEvaluationData, setAiEvaluationData] = useState<{ isApproved?: boolean; score?: number; reason?: string; feedback?: string } | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // AI Autofill state
@@ -159,6 +171,10 @@ function LaunchForm() {
         } catch (err) {
           setProductLogoPreview(data.productLogoUrl);
         }
+      }
+
+      if (data.seoDossier) {
+        setSeoDossier(data.seoDossier);
       }
 
       setAutofillSuccess(true);
@@ -373,8 +389,8 @@ function LaunchForm() {
       errors.productLogo = 'Please upload a product logo';
     }
 
-    if (!memeFile) {
-      errors.meme = 'Please upload a product meme image (required)';
+    if (!memeFile && !memePreview) {
+      errors.meme = 'Please generate or upload a product meme image (required)';
     }
 
     if (screenshotPreviews.length < 2) {
@@ -493,8 +509,23 @@ function LaunchForm() {
         }
       }
 
-      // Step 4: Submit launch via /api/launch/create (bypasses browser RLS policy constraints)
-      setStatusMessage('Publishing launch details...');
+      // Prepare SEO dossier and alternate memes
+      const dossierToSave =
+        seoDossier ||
+        synthesizeSeoDossier({
+          product_name: productName.trim(),
+          product_description: productDescription.trim(),
+          category: category.trim(),
+          pricing,
+          product_url: validUrl,
+        });
+
+      const alternateMemesToSave = generatedMemes
+        .filter((_, idx) => idx !== selectedMemeIdx)
+        .map((m) => ({ url: m.url, caption: m.caption, angle: m.angle }));
+
+      // Step 4: Submit launch via /api/launch/create with autonomous AI evaluation
+      setStatusMessage('🤖 AI Reviewing & Verifying Product Quality...');
       const createRes = await fetch('/api/launch/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -508,6 +539,8 @@ function LaunchForm() {
           productDescription: productDescription.trim(),
           productLogoUrl: logoUrl,
           screenshotUrls: uploadedScreenshotUrls,
+          seoDossier: dossierToSave,
+          alternateMemes: alternateMemesToSave,
         }),
       });
 
@@ -532,10 +565,20 @@ function LaunchForm() {
         meme_image_url: memeImageUrl,
       };
 
+      const approved = createJson.is_approved === true;
+      const aiEval = createJson.ai_evaluation;
+
+      setIsAiApproved(approved);
+      setAiEvaluationData(aiEval || null);
       setCreatedLaunchData(createdLaunch);
       setStatusMessage('');
-      setIsBoostModalOpen(true);
-      setSuccessMessage('🎉 Product launched successfully! Complete boosts to take the #1 spot.');
+
+      if (approved) {
+        setIsBoostModalOpen(true);
+        setSuccessMessage(aiEval?.reason || 'Product passed automated AI review and is published live on the community feed.');
+      } else {
+        setSuccessMessage(aiEval?.reason || 'Submission did not meet automated quality/safety guidelines and was saved as unapproved.');
+      }
 
     } catch (err: any) {
       console.error('Launch error:', err);
@@ -566,12 +609,74 @@ function LaunchForm() {
       </div>
 
       {successMessage ? (
-        <div className="flex flex-col items-center justify-center p-12 bg-zinc-900/40 border border-lime-400/20 rounded-3xl text-center space-y-4 max-w-xl mx-auto shadow-2xl">
-          <div className="h-16 w-16 bg-lime-400/10 border border-lime-400/20 rounded-full flex items-center justify-center text-lime-400 animate-bounce">
-            <CheckCircle2 className="h-8 w-8" />
+        <div className={`flex flex-col items-center justify-center p-8 sm:p-12 border rounded-3xl text-center space-y-5 max-w-xl mx-auto shadow-2xl ${
+          isAiApproved
+            ? 'bg-zinc-900/40 border-lime-400/30'
+            : 'bg-zinc-900/50 border-amber-500/40'
+        }`}>
+          {isAiApproved ? (
+            <div className="h-16 w-16 bg-lime-400/10 border border-lime-400/30 rounded-full flex items-center justify-center text-lime-400 animate-bounce">
+              <CheckCircle2 className="h-8 w-8" />
+            </div>
+          ) : (
+            <div className="h-16 w-16 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center text-amber-400">
+              <AlertCircle className="h-8 w-8" />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold uppercase ${
+              isAiApproved
+                ? 'bg-lime-400/20 text-lime-300 border border-lime-400/40'
+                : 'bg-amber-400/20 text-amber-300 border border-amber-400/40'
+            }`}>
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{isAiApproved ? 'Autonomous AI Approved & Live' : 'AI Review: Not Approved'}</span>
+            </div>
+            <h2 className="text-2xl font-extrabold text-zinc-100 tracking-tight">
+              {isAiApproved ? 'Mission Accomplished!' : 'Submission Needs Revision'}
+            </h2>
+            <p className="text-zinc-300 text-sm leading-relaxed max-w-md mx-auto">
+              {successMessage}
+            </p>
+            {aiEvaluationData?.feedback && (
+              <p className="text-zinc-400 text-xs font-mono bg-zinc-950 p-3 rounded-xl border border-zinc-800 text-left max-w-md mx-auto">
+                💡 <strong className="text-zinc-300">AI Feedback:</strong> {aiEvaluationData.feedback}
+              </p>
+            )}
           </div>
-          <h2 className="text-2xl font-extrabold text-zinc-100 tracking-tight">Mission Accomplished!</h2>
-          <p className="text-zinc-400 text-sm leading-relaxed">{successMessage}</p>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            {isAiApproved ? (
+              <>
+                <Link
+                  href={`/products/${encodeURIComponent(productName.trim())}`}
+                  className="px-5 py-2.5 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md"
+                >
+                  View Product in Arena
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setIsBoostModalOpen(true)}
+                  className="px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-lime-400 font-mono text-xs font-bold uppercase tracking-wider rounded-xl border border-zinc-800 transition-colors cursor-pointer"
+                >
+                  Boost Points
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setSuccessMessage('');
+                  setIsAiApproved(null);
+                  setAiEvaluationData(null);
+                }}
+                className="px-5 py-2.5 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md cursor-pointer"
+              >
+                Edit Product & Resubmit
+              </button>
+            )}
+          </div>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -614,7 +719,7 @@ function LaunchForm() {
                 {isAutofilling ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>{autofillStep === 1 ? 'Reading HTML...' : 'DeepSeek Analyzing...'}</span>
+                    <span>{autofillStep === 1 ? 'Reading Page...' : 'AI Analyzing...'}</span>
                   </>
                 ) : (
                   <>
@@ -658,8 +763,8 @@ function LaunchForm() {
 
               {/* Feed Card Mockup Container */}
               <div className="bg-zinc-950 border border-zinc-800/90 rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 hover:border-zinc-700">
-                {/* Image Header Preview */}
-                <div className="relative aspect-[16/10] bg-zinc-900 overflow-hidden border-b border-zinc-800/80 group flex items-center justify-center">
+                {/* Image Header Preview (1:1 Square matching Feed Card MemeCard standard) */}
+                <div className="relative aspect-square bg-zinc-900 overflow-hidden border-b border-zinc-800/80 group flex items-center justify-center">
                   {memePreview ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -935,6 +1040,22 @@ function LaunchForm() {
                   </div>
                 </div>
 
+                {/* In-Depth SEO Dossier Customizer */}
+                <SeoDossierEditor
+                  dossier={
+                    seoDossier ||
+                    synthesizeSeoDossier({
+                      product_name: productName,
+                      product_description: productDescription,
+                      category,
+                      pricing,
+                      product_url: productUrl,
+                    })
+                  }
+                  onChange={setSeoDossier}
+                  productName={productName}
+                />
+
               </div>
 
               {/* Product Logo Upload (Directly Above Screenshots) */}
@@ -1063,64 +1184,102 @@ function LaunchForm() {
 
               {/* Upload Meme Section (Required) */}
               <div className="space-y-4 pt-4 border-t border-zinc-800/80" id="err-meme">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-extrabold flex items-center gap-2 text-zinc-100">
-                    <Sparkles className="h-5 w-5 text-lime-400" />
-                    <span>Upload Product Meme <span className="text-lime-400">*</span></span>
-                  </h2>
-                  <span className="text-xs font-mono text-zinc-500">
-                    Required Meme Image
-                  </span>
-                </div>
+                <MemeIdeogramGenerator
+                  productName={productName}
+                  productDescription={productDescription}
+                  productUrl={productUrl}
+                  category={category}
+                  onSelectMeme={(meme) => {
+                    setMemeFile(null);
+                    setMemePreview(meme.url);
+                    if (formErrors.meme) {
+                      setFormErrors((prev) => {
+                        const copy = { ...prev };
+                        delete copy.meme;
+                        return copy;
+                      });
+                    }
+                  }}
+                  selectedMemeUrl={memePreview}
+                  generatedMemes={generatedMemes}
+                  setGeneratedMemes={setGeneratedMemes}
+                  selectedMemeIdx={selectedMemeIdx}
+                  setSelectedMemeIdx={setSelectedMemeIdx}
+                  onUploadCustomClick={() => {
+                    setShowManualMemeUpload(true);
+                    setTimeout(() => memeInputRef.current?.click(), 100);
+                  }}
+                />
 
-                <div className="space-y-3">
-                  <div 
-                    onClick={() => memeInputRef.current?.click()}
-                    className={`border-2 border-dashed ${formErrors.meme ? 'border-rose-500/50 bg-rose-950/5' : 'border-zinc-800 hover:border-lime-400/50 bg-zinc-950'} rounded-2xl p-6 text-center cursor-pointer transition-all hover:bg-zinc-900/40 group`}
-                  >
-                    <input
-                      ref={memeInputRef}
-                      type="file"
-                      id="meme-upload"
-                      accept="image/*"
-                      onChange={handleMemeChange}
-                      className="hidden"
-                    />
-                    <Sparkles className="h-6 w-6 text-zinc-500 group-hover:text-lime-400 mx-auto mb-2 stroke-[1.5] transition-colors" />
-                    <p className="text-sm font-semibold text-zinc-300">
-                      {memeFile ? memeFile.name : 'Upload your product meme image'}
-                    </p>
-                    <p className="text-xs text-zinc-500 mt-1 font-mono">
-                      Upload a relatable or funny meme that highlights your product features.
-                    </p>
-                  </div>
-
-                  {memePreview && (
-                    <div className="relative aspect-[16/10] bg-zinc-950 rounded-2xl overflow-hidden border border-zinc-800 shadow-md group max-w-sm mx-auto">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={memePreview}
-                        alt="Meme preview"
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleClearMeme}
-                        className="absolute top-2 right-2 p-1.5 bg-zinc-950/80 hover:bg-rose-950 text-zinc-400 hover:text-rose-400 rounded-lg border border-zinc-800 hover:border-rose-800/50 transition-all opacity-0 group-hover:opacity-100 shadow"
-                        title="Remove meme"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                {/* Optional Manual File Upload Dropzone */}
+                {(showManualMemeUpload || generatedMemes.length === 0) && (
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-mono text-zinc-400">
+                        Or upload custom meme image from your device:
+                      </span>
+                      {showManualMemeUpload && generatedMemes.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setShowManualMemeUpload(false)}
+                          className="text-[11px] font-mono text-zinc-500 hover:text-zinc-300 underline cursor-pointer"
+                        >
+                          Hide manual upload
+                        </button>
+                      )}
                     </div>
-                  )}
 
-                  {formErrors.meme && (
-                    <p className="text-xs text-rose-400 mt-1 flex items-center gap-1 font-mono">
-                      <AlertCircle className="h-3.5 w-3.5" />
-                      {formErrors.meme}
-                    </p>
-                  )}
-                </div>
+                    <div 
+                      onClick={() => memeInputRef.current?.click()}
+                      className={`border-2 border-dashed ${formErrors.meme ? 'border-rose-500/50 bg-rose-950/5' : 'border-zinc-800 hover:border-lime-400/50 bg-zinc-950'} rounded-2xl p-5 text-center cursor-pointer transition-all hover:bg-zinc-900/40 group`}
+                    >
+                      <input
+                        ref={memeInputRef}
+                        type="file"
+                        id="meme-upload"
+                        accept="image/*"
+                        onChange={(e) => {
+                          handleMemeChange(e);
+                          setSelectedMemeIdx(-1);
+                        }}
+                        className="hidden"
+                      />
+                      <Upload className="h-5 w-5 text-zinc-500 group-hover:text-lime-400 mx-auto mb-1.5 stroke-[1.5] transition-colors" />
+                      <p className="text-xs font-semibold text-zinc-300">
+                        {memeFile ? memeFile.name : 'Upload custom meme image'}
+                      </p>
+                      <p className="text-[11px] text-zinc-500 font-mono mt-0.5">
+                        PNG, JPG, or WEBP up to 5MB
+                      </p>
+                    </div>
+
+                    {memeFile && memePreview && (
+                      <div className="relative aspect-square bg-zinc-950 rounded-2xl overflow-hidden border border-zinc-800 shadow-md group max-w-sm mx-auto">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={memePreview}
+                          alt="Custom meme preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleClearMeme}
+                          className="absolute top-2 right-2 p-1.5 bg-zinc-950/80 hover:bg-rose-950 text-zinc-400 hover:text-rose-400 rounded-lg border border-zinc-800 hover:border-rose-800/50 transition-all opacity-0 group-hover:opacity-100 shadow"
+                          title="Remove meme"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {formErrors.meme && (
+                  <p className="text-xs text-rose-400 mt-1 flex items-center gap-1 font-mono">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    {formErrors.meme}
+                  </p>
+                )}
               </div>
 
               {/* Action Bar Error Notice */}
@@ -1138,12 +1297,12 @@ function LaunchForm() {
                   disabled={isSubmitting}
                   className="px-6 py-3 font-extrabold uppercase text-xs tracking-wider rounded-xl transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-lime-400 hover:bg-lime-300 text-zinc-950 shadow-[0_0_25px_rgba(163,230,53,0.2)] hover:shadow-[0_0_40px_rgba(163,230,53,0.35)]"
                 >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin stroke-[2.5]" />
-                      <span>Publishing Launch...</span>
-                    </>
-                  ) : (
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin stroke-[2.5]" />
+                        <span>{statusMessage || 'Publishing Launch...'}</span>
+                      </>
+                    ) : (
                     <>
                       <span>Launch Product</span>
                       <ArrowRight className="h-4 w-4 stroke-[2.5]" />
