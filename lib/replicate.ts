@@ -163,17 +163,19 @@ export async function generate3IdeogramMemes(
     throw new Error('No meme concepts provided to generate3IdeogramMemes');
   }
 
-  const succeeded: GeneratedMeme[] = [];
-  const errors: string[] = [];
+  // Generate memes concurrently with a small stagger to avoid burst rate-limit collisions
+  const results = await Promise.allSettled(
+    concepts.map(async (concept, index) => {
+      if (index > 0) {
+        await new Promise((resolve) => setTimeout(resolve, index * 350));
+      }
 
-  for (const concept of concepts) {
-    try {
       const url = await generateIdeogramImage(concept.prompt, {
         aspectRatio: '1:1',
         promptUpsampling: false,
       });
 
-      succeeded.push({
+      return {
         id: concept.id,
         url,
         cleanImageUrl: url,
@@ -183,12 +185,23 @@ export async function generate3IdeogramMemes(
         angle: concept.angle,
         prompt: concept.prompt,
         vibe: concept.vibe,
-      });
-    } catch (err: any) {
-      console.warn(`Error generating meme for angle "${concept.angle}":`, err.message);
-      errors.push(`Angle "${concept.angle}": ${err?.message || 'Failed'}`);
+      } as GeneratedMeme;
+    })
+  );
+
+  const succeeded: GeneratedMeme[] = [];
+  const errors: string[] = [];
+
+  results.forEach((result, idx) => {
+    if (result.status === 'fulfilled') {
+      succeeded.push(result.value);
+    } else {
+      const angle = concepts[idx]?.angle || `Angle ${idx + 1}`;
+      const reasonMsg = result.reason?.message || String(result.reason);
+      console.warn(`Error generating meme for angle "${angle}":`, reasonMsg);
+      errors.push(`Angle "${angle}": ${reasonMsg}`);
     }
-  }
+  });
 
   if (succeeded.length === 0) {
     throw new Error(`All 3 meme generations failed: ${errors.join('; ')}`);

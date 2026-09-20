@@ -127,7 +127,9 @@ export function MemeIdeogramGenerator({
     }, 4000);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 50000);
+    const timeoutId = setTimeout(() => {
+      controller.abort(new DOMException('Meme generation request timed out after 90 seconds', 'TimeoutError'));
+    }, 90000);
 
     try {
       const res = await fetch('/api/ai/generate-memes', {
@@ -161,9 +163,15 @@ export function MemeIdeogramGenerator({
         throw new Error('No meme concepts were returned. Please try regenerating.');
       }
     } catch (err: any) {
-      console.error('Meme generation error:', err);
+      const isAbort = err?.name === 'AbortError' || err?.name === 'TimeoutError' || err?.message?.includes('aborted');
+      if (isAbort) {
+        console.warn('Meme generation request was aborted or timed out:', err?.message || err);
+      } else {
+        console.error('Meme generation error:', err);
+      }
+
       let friendlyMessage = 'Unable to generate memes right now. Please click Retry.';
-      if (err.name === 'AbortError') {
+      if (isAbort) {
         friendlyMessage = 'Generation took longer than expected. Please check your connection and click Retry.';
       } else if (typeof navigator !== 'undefined' && !navigator.onLine) {
         friendlyMessage = 'You appear to be offline. Please verify your internet connection.';

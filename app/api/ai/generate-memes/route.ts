@@ -3,6 +3,9 @@ import { generate3DeepSeekMemeConcepts, MemeStyleVibe } from '@/lib/deepseek-mem
 import { generate3IdeogramMemes } from '@/lib/replicate';
 import { generateMemeSvgComposite } from '@/lib/meme-compositor';
 
+export const maxDuration = 120;
+export const dynamic = 'force-dynamic';
+
 interface GenerateMemesRequest {
   productName: string;
   productDescription?: string;
