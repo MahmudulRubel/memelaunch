@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { uploadImageToStorage } from '@/lib/insforge';
@@ -108,6 +109,8 @@ function LaunchForm() {
   const [isEarnPointsModalOpen, setIsEarnPointsModalOpen] = useState(false);
   const [isBoostModalOpen, setIsBoostModalOpen] = useState(false);
   const [createdLaunchData, setCreatedLaunchData] = useState<{ id?: string; product_name?: string; product_url?: string; meme_image_url?: string } | null>(null);
+  const [isAiApproved, setIsAiApproved] = useState<boolean | null>(null);
+  const [aiEvaluationData, setAiEvaluationData] = useState<{ isApproved?: boolean; score?: number; reason?: string; feedback?: string } | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // AI Autofill state
@@ -521,8 +524,8 @@ function LaunchForm() {
         .filter((_, idx) => idx !== selectedMemeIdx)
         .map((m) => ({ url: m.url, caption: m.caption, angle: m.angle }));
 
-      // Step 4: Submit launch via /api/launch/create (bypasses browser RLS policy constraints)
-      setStatusMessage('Publishing launch details...');
+      // Step 4: Submit launch via /api/launch/create with autonomous AI evaluation
+      setStatusMessage('🤖 AI Reviewing & Verifying Product Quality...');
       const createRes = await fetch('/api/launch/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -562,10 +565,20 @@ function LaunchForm() {
         meme_image_url: memeImageUrl,
       };
 
+      const approved = createJson.is_approved === true;
+      const aiEval = createJson.ai_evaluation;
+
+      setIsAiApproved(approved);
+      setAiEvaluationData(aiEval || null);
       setCreatedLaunchData(createdLaunch);
       setStatusMessage('');
-      setIsBoostModalOpen(true);
-      setSuccessMessage('🎉 Product launched successfully! Complete boosts to take the #1 spot.');
+
+      if (approved) {
+        setIsBoostModalOpen(true);
+        setSuccessMessage(aiEval?.reason || 'Product passed automated AI review and is published live on the community feed.');
+      } else {
+        setSuccessMessage(aiEval?.reason || 'Submission did not meet automated quality/safety guidelines and was saved as unapproved.');
+      }
 
     } catch (err: any) {
       console.error('Launch error:', err);
@@ -596,12 +609,74 @@ function LaunchForm() {
       </div>
 
       {successMessage ? (
-        <div className="flex flex-col items-center justify-center p-12 bg-zinc-900/40 border border-lime-400/20 rounded-3xl text-center space-y-4 max-w-xl mx-auto shadow-2xl">
-          <div className="h-16 w-16 bg-lime-400/10 border border-lime-400/20 rounded-full flex items-center justify-center text-lime-400 animate-bounce">
-            <CheckCircle2 className="h-8 w-8" />
+        <div className={`flex flex-col items-center justify-center p-8 sm:p-12 border rounded-3xl text-center space-y-5 max-w-xl mx-auto shadow-2xl ${
+          isAiApproved
+            ? 'bg-zinc-900/40 border-lime-400/30'
+            : 'bg-zinc-900/50 border-amber-500/40'
+        }`}>
+          {isAiApproved ? (
+            <div className="h-16 w-16 bg-lime-400/10 border border-lime-400/30 rounded-full flex items-center justify-center text-lime-400 animate-bounce">
+              <CheckCircle2 className="h-8 w-8" />
+            </div>
+          ) : (
+            <div className="h-16 w-16 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center text-amber-400">
+              <AlertCircle className="h-8 w-8" />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold uppercase ${
+              isAiApproved
+                ? 'bg-lime-400/20 text-lime-300 border border-lime-400/40'
+                : 'bg-amber-400/20 text-amber-300 border border-amber-400/40'
+            }`}>
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{isAiApproved ? 'Autonomous AI Approved & Live' : 'AI Review: Not Approved'}</span>
+            </div>
+            <h2 className="text-2xl font-extrabold text-zinc-100 tracking-tight">
+              {isAiApproved ? 'Mission Accomplished!' : 'Submission Needs Revision'}
+            </h2>
+            <p className="text-zinc-300 text-sm leading-relaxed max-w-md mx-auto">
+              {successMessage}
+            </p>
+            {aiEvaluationData?.feedback && (
+              <p className="text-zinc-400 text-xs font-mono bg-zinc-950 p-3 rounded-xl border border-zinc-800 text-left max-w-md mx-auto">
+                💡 <strong className="text-zinc-300">AI Feedback:</strong> {aiEvaluationData.feedback}
+              </p>
+            )}
           </div>
-          <h2 className="text-2xl font-extrabold text-zinc-100 tracking-tight">Mission Accomplished!</h2>
-          <p className="text-zinc-400 text-sm leading-relaxed">{successMessage}</p>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            {isAiApproved ? (
+              <>
+                <Link
+                  href={`/products/${encodeURIComponent(productName.trim())}`}
+                  className="px-5 py-2.5 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md"
+                >
+                  View Product in Arena
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setIsBoostModalOpen(true)}
+                  className="px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-lime-400 font-mono text-xs font-bold uppercase tracking-wider rounded-xl border border-zinc-800 transition-colors cursor-pointer"
+                >
+                  Boost Points
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setSuccessMessage('');
+                  setIsAiApproved(null);
+                  setAiEvaluationData(null);
+                }}
+                className="px-5 py-2.5 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md cursor-pointer"
+              >
+                Edit Product & Resubmit
+              </button>
+            )}
+          </div>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -644,7 +719,7 @@ function LaunchForm() {
                 {isAutofilling ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>{autofillStep === 1 ? 'Reading HTML...' : 'DeepSeek Analyzing...'}</span>
+                    <span>{autofillStep === 1 ? 'Reading Page...' : 'AI Analyzing...'}</span>
                   </>
                 ) : (
                   <>
@@ -1222,12 +1297,12 @@ function LaunchForm() {
                   disabled={isSubmitting}
                   className="px-6 py-3 font-extrabold uppercase text-xs tracking-wider rounded-xl transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-lime-400 hover:bg-lime-300 text-zinc-950 shadow-[0_0_25px_rgba(163,230,53,0.2)] hover:shadow-[0_0_40px_rgba(163,230,53,0.35)]"
                 >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin stroke-[2.5]" />
-                      <span>Publishing Launch...</span>
-                    </>
-                  ) : (
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin stroke-[2.5]" />
+                        <span>{statusMessage || 'Publishing Launch...'}</span>
+                      </>
+                    ) : (
                     <>
                       <span>Launch Product</span>
                       <ArrowRight className="h-4 w-4 stroke-[2.5]" />

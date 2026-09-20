@@ -1,14 +1,66 @@
 /**
- * Direct DeepSeek Meme Concept & Prompt Synthesis Engine
- * Calls https://api.deepseek.com/chat/completions (model: deepseek-chat)
- * to analyze tech products and craft 3 hilarious, viral meme angles & Ideogram prompts.
+ * DeepSeek Creative Director & Viral Meme Prompting Engine
+ * Specially engineered for Replicate prunaai/p-image-ideogram
+ * Synthesizes 3 world-class viral tech meme posters with 100% accurate,
+ * bold, punchy typography rendered natively inside the image every time.
  */
+
+export type MemeStyleVibe = 'cyberpunk' | 'pixar3d' | 'vintage_comic' | 'dark_satire' | 'auto';
+
+export interface VibeMeta {
+  id: MemeStyleVibe;
+  label: string;
+  badge: string;
+  description: string;
+  promptStyleCue: string;
+}
+
+export const MEME_VIBE_PRESETS: Record<MemeStyleVibe, VibeMeta> = {
+  cyberpunk: {
+    id: 'cyberpunk',
+    label: 'Cyberpunk Neo-Brutalist',
+    badge: '⚡ Cyberpunk',
+    description: 'Electric lime & amber neon, terminal glitch, retro-futuristic hacker satire',
+    promptStyleCue: 'Neo-Brutalist Cyberpunk aesthetic with high-contrast shadows, bold electric lime (#a3e635) and amber neon glow, holographic terminal UI elements, tactile industrial sticker accents, dramatic lighting.',
+  },
+  pixar3d: {
+    id: 'pixar3d',
+    label: '3D Pixar / Claymation',
+    badge: '🎨 3D Animated',
+    description: 'Expressive characters, tactile clay textures, warm cinematic studio lighting',
+    promptStyleCue: 'Expressive 3D stylized animated character style with tactile soft clay textures, warm cinematic volumetric studio lighting, rich colors, and playful tech comedy.',
+  },
+  vintage_comic: {
+    id: 'vintage_comic',
+    label: 'Vintage Comic Satire',
+    badge: '📰 Retro Comic',
+    description: 'Halftone dot textures, inked linework, retro speech banners, editorial satire',
+    promptStyleCue: 'Classic vintage comic book and newspaper editorial satire aesthetic with authentic halftone print dots, dynamic black ink lines, retro pop-art colors, and stylized framing.',
+  },
+  dark_satire: {
+    id: 'dark_satire',
+    label: 'Dark Mode Minimalist',
+    badge: '🌑 Dark Satire',
+    description: 'Deep zinc backgrounds, glowing vector accents, crisp tech elegance',
+    promptStyleCue: 'Sleek dark-mode aesthetic with deep charcoal and matte zinc tones, glowing neon vector highlights, crisp modern compositions, and witty Scandinavian tech elegance.',
+  },
+  auto: {
+    id: 'auto',
+    label: 'Auto AI Vibe',
+    badge: '✨ Auto AI',
+    description: 'AI automatically selects the highest-converting visual aesthetic for the product',
+    promptStyleCue: 'Vibrant modern tech meme aesthetic with cinematic lighting, high-contrast vibrant colors, expressive characters, and comedic timing.',
+  },
+};
 
 export interface DeepSeekMemeConcept {
   id: string;
   angle: string;
+  topText: string;
+  bottomText: string;
   caption: string;
   prompt: string;
+  vibe: MemeStyleVibe;
 }
 
 export async function generate3DeepSeekMemeConcepts(params: {
@@ -16,50 +68,64 @@ export async function generate3DeepSeekMemeConcepts(params: {
   productDescription?: string;
   productUrl?: string;
   category?: string;
+  vibe?: MemeStyleVibe;
 }): Promise<DeepSeekMemeConcept[]> {
-  const { productName, productDescription = '', productUrl = '', category = 'SaaS' } = params;
+  const { productName, productDescription = '', productUrl = '', category = 'SaaS', vibe = 'auto' } = params;
   const name = productName.trim();
   const desc = productDescription.trim() || `${name} is an innovative ${category} product.`;
+
+  const selectedVibe = vibe && MEME_VIBE_PRESETS[vibe] ? vibe : 'auto';
+  const vibeInfo = MEME_VIBE_PRESETS[selectedVibe];
 
   const apiKey = process.env.DEEPSEEK_API_KEY;
 
   if (apiKey) {
     try {
-      const systemPrompt = `You are a world-class tech satirist and viral meme creator for MemeLaunch.
-Your mission is to understand what makes a tech product genuinely compelling or what pain point it solves, and turn that into 3 viral, laugh-out-loud funny meme concepts.
+      const systemPrompt = `You are the world's greatest tech meme creative director for MemeLaunch.
+Your mission is to analyze a tech product and create 3 VIRAL, HILARIOUS, LAUGH-OUT-LOUD MEME POSTERS designed specifically for the Ideogram model (prunaai/p-image-ideogram).
 
-Guidelines:
-1. Understand the core human emotion: the sheer pain of legacy manual ways, the frustration with bloated competitors charging $99/mo, or the euphoric feeling of 10x superpowers.
-2. Invent 3 DISTINCT comedic angles:
-   - Angle 1: "The Relatable Struggle" (The pain / absurdity of doing it without this product)
-   - Angle 2: "The 10x Superpower" (The absurdly fast, god-mode feeling of using this product)
-   - Angle 3: "The Savage Competitor" (Mocking legacy enterprise bloatware, overpriced alternatives, or status quo)
-3. For each angle, create an image generation prompt for the Ideogram model:
-   - Must specify a 1:1 square composition.
-   - Describe hilarious, highly expressive visual characters or metaphors (e.g. sweating developer, flaming servers, cyberpunk rocket, shocked cat, exhausted office worker).
-   - Integrate clear, bold readable typography in quotes inside the scene (e.g. neon sign, billboard, or labels reading "${name.toUpperCase()}").
-   - Cinematic or stylized neo-brutalist / 3D cartoon aesthetic with vivid colors, high contrast, clean meme graphics.
+Ideogram Formula for 100% Perfect Text and World-Class Viral Imagery:
+Every prompt MUST follow this exact 4-part structure:
+"A hilarious viral tech meme poster in 1:1 square aspect ratio.
+At the top, bold uppercase typography in white with black outline reads: \"[PUNCHY TOP TEXT]\"
+In the center: [Extremely funny, expressive character scene or visual metaphor depicting the situation, with dynamic lighting and hilarious facial expressions matching the vibe: ${vibeInfo.promptStyleCue}].
+At the bottom, bold uppercase neon lime typography with black outline reads: \"[PUNCHY BOTTOM TEXT]\"
+Clean graphic meme composition, vibrant contrast, studio lighting."
+
+Viral Meme Rules:
+1. TOP TEXT: Short, witty setup in ALL CAPS (punchy, under 32 chars, e.g. "CONFIGURING FIREBASE FOR HOURS", "DEPLOYING TO PROD AT 5PM", "ME FIXING ONE BUG").
+2. BOTTOM TEXT: Hilarious punchline highlighting ${name} in ALL CAPS (punchy, under 32 chars, e.g. "${name.toUpperCase()}: INSTANT POSTGRES", "${name.toUpperCase()} CAUGHT IT BEFORE MY BOSS", "10X SUPERPOWERS WITH ${name.toUpperCase()}").
+3. Create 3 COMPLETELY CONTRASTING comedic angles:
+   - Angle 1: "The Relatable Struggle" (The agony/chaos of doing it without ${name})
+   - Angle 2: "The 10x Superpower" (The god-mode feeling of shipping with ${name})
+   - Angle 3: "The Savage Comparison" (Mocking bloated legacy tools or status quo)
 
 Return ONLY a valid JSON object matching this exact schema:
 {
   "concepts": [
     {
       "id": "meme-angle-1",
-      "angle": "Snappy title (3-5 words)",
-      "caption": "Punchy, witty meme caption (under 120 chars)",
-      "prompt": "Detailed 1:1 prompt for Ideogram image generator with integrated typography"
+      "angle": "The Relatable Struggle",
+      "topText": "...",
+      "bottomText": "...",
+      "caption": "...",
+      "prompt": "A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: \"...\". In the center: ... At the bottom, bold uppercase neon lime typography with black outline reads: \"...\". Clean graphic meme composition, vibrant contrast, studio lighting."
     },
     {
       "id": "meme-angle-2",
-      "angle": "Snappy title (3-5 words)",
-      "caption": "Punchy, witty meme caption (under 120 chars)",
-      "prompt": "Detailed 1:1 prompt for Ideogram image generator with integrated typography"
+      "angle": "The 10x Superpower",
+      "topText": "...",
+      "bottomText": "...",
+      "caption": "...",
+      "prompt": "A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: \"...\". In the center: ... At the bottom, bold uppercase neon lime typography with black outline reads: \"...\". Clean graphic meme composition, vibrant contrast, studio lighting."
     },
     {
       "id": "meme-angle-3",
-      "angle": "Snappy title (3-5 words)",
-      "caption": "Punchy, witty meme caption (under 120 chars)",
-      "prompt": "Detailed 1:1 prompt for Ideogram image generator with integrated typography"
+      "angle": "The Savage Comparison",
+      "topText": "...",
+      "bottomText": "...",
+      "caption": "...",
+      "prompt": "A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: \"...\". In the center: ... At the bottom, bold uppercase neon lime typography with black outline reads: \"...\". Clean graphic meme composition, vibrant contrast, studio lighting."
     }
   ]
 }`;
@@ -82,7 +148,7 @@ Product Description: ${desc}`;
             { role: 'user', content: userContent },
           ],
           response_format: { type: 'json_object' },
-          temperature: 0.8,
+          temperature: 0.85,
         }),
       });
 
@@ -91,13 +157,25 @@ Product Description: ${desc}`;
         const content = json?.choices?.[0]?.message?.content;
         if (content) {
           const parsed = JSON.parse(content);
-          if (Array.isArray(parsed.concepts) && parsed.concepts.length === 3) {
-            return parsed.concepts.map((c: any, i: number) => ({
-              id: c.id || `meme-angle-${i + 1}`,
-              angle: c.angle || `Angle #${i + 1}`,
-              caption: c.caption || `Meme about ${name}`,
-              prompt: c.prompt || `A hilarious 1:1 square meme depicting ${name}`,
-            }));
+          const rawConcepts = parsed.concepts || parsed.memes;
+          if (Array.isArray(rawConcepts) && rawConcepts.length >= 3) {
+            return rawConcepts.slice(0, 3).map((c: any, i: number) => {
+              const fallbackAngle = i === 0 ? 'The Relatable Struggle' : i === 1 ? 'The 10x Superpower' : 'The Savage Comparison';
+              const angle = c.angle || fallbackAngle;
+              const topText = (c.topText || `Manual work without ${name}`).toUpperCase().trim();
+              const bottomText = (c.bottomText || `10x Superpower with ${name}`).toUpperCase().trim();
+              const caption = c.caption || `${topText} — ${bottomText}`;
+              const prompt = c.prompt || `A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: "${topText}". In the center: An exhausted developer looking shocked as a futuristic portal opens. At the bottom, bold uppercase neon lime typography with black outline reads: "${bottomText}". Clean graphic meme composition, vibrant contrast, studio lighting.`;
+              return {
+                id: c.id || `meme-angle-${i + 1}`,
+                angle,
+                topText,
+                bottomText,
+                caption,
+                prompt,
+                vibe: selectedVibe,
+              };
+            });
           }
         }
       } else {
@@ -108,25 +186,34 @@ Product Description: ${desc}`;
     }
   }
 
-  // Resilient heuristic fallback customized to product details
+  // Resilient heuristic fallback customized to product details & selected vibe
   return [
     {
       id: 'meme-angle-1',
       angle: 'The Relatable Struggle',
-      caption: `When you realize you've been doing it manually instead of using ${name}`,
-      prompt: `A hilarious, expressive cartoon meme in 1:1 square aspect ratio. An exhausted person crying at a desk buried under piles of chaotic paper and 50 glowing red error popups, looking shocked as a futuristic glowing neon portal opens with bold bright 3D text reading "${name.toUpperCase()}". Vibrant neo-brutalist 3D comic style, high contrast, clean typography.`,
+      topText: `DOING IT MANUALLY: 40 HOURS`,
+      bottomText: `USING ${name.toUpperCase()}: 3 MINUTES`,
+      caption: `Doing it manually for 40 hours — Using ${name} in 3 minutes`,
+      prompt: `A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: "DOING IT MANUALLY: 40 HOURS". In the center: A funny exhausted programmer crying at a chaotic desk buried in burning servers and error popups. At the bottom, bold uppercase neon lime typography with black outline reads: "USING ${name.toUpperCase()}: 3 MINUTES". Clean graphic meme composition, vibrant contrast, hilarious facial expressions, studio lighting.`,
+      vibe: selectedVibe,
     },
     {
       id: 'meme-angle-2',
       angle: 'The 10x Superpower',
+      topText: `ME DISCOVERING ${name.toUpperCase()}`,
+      bottomText: `SHIPPING 10X FASTER WITH ZERO BUGS`,
       caption: `How it feels shipping in 5 minutes with ${name}`,
-      prompt: `An epic cinematic 1:1 square meme illustration of a cool coder wearing futuristic sunglasses drinking iced coffee while rocket thrusters blast them into hyper-speed. Floating holographic banner above with glowing yellow 3D text reading "POWERED BY ${name.toUpperCase()}". Cyberpunk neo-brutalist aesthetic, highly detailed, sharp lighting.`,
+      prompt: `A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: "ME DISCOVERING ${name.toUpperCase()}". In the center: A cool programmer wearing sunglasses sipping iced coffee while floating in zero gravity with rocket thrusters. At the bottom, bold uppercase neon lime typography with black outline reads: "SHIPPING 10X FASTER WITH ZERO BUGS". Clean graphic meme composition, vibrant contrast, studio lighting.`,
+      vibe: selectedVibe,
     },
     {
       id: 'meme-angle-3',
-      angle: 'The Savage Competitor',
+      angle: 'The Savage Comparison',
+      topText: `LEGACY TOOLS: $99/MO & SLOW`,
+      bottomText: `${name.toUpperCase()}: INSTANT & FREE`,
       caption: `Legacy tools charging $99/month vs ${name} just working`,
-      prompt: `A funny high-contrast 1:1 square comparison meme poster. Left side: a sad sluggish rusty dinosaur labeled "Old Expensive Tools". Right side: a lightning-fast futuristic hovercraft labeled with glowing neon lime text "${name.toUpperCase()}". Clean modern typography, comic book style, dark background with vibrant accents.`,
+      prompt: `A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: "LEGACY TOOLS: $99/MO & SLOW". In the center: A split scene with a sad rusty dinosaur on the left and a supersonic glowing hovercraft on the right. At the bottom, bold uppercase neon lime typography with black outline reads: "${name.toUpperCase()}: INSTANT & FREE". Clean graphic meme composition, vibrant contrast, studio lighting.`,
+      vibe: selectedVibe,
     },
   ];
 }

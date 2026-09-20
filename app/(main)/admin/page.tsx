@@ -25,7 +25,8 @@ import {
   Megaphone,
   Coins,
   Sparkles,
-  BarChart3
+  BarChart3,
+  Bot
 } from 'lucide-react';
 
 export default function AdminPage() {
@@ -137,6 +138,34 @@ export default function AdminPage() {
       fetchModerationData();
     }
   }, [isAdmin]);
+
+  // Re-evaluate a launch with AI
+  const handleAiEvaluate = async (launchId: string) => {
+    setActioningId(launchId);
+    try {
+      const res = await fetch('/api/admin/moderate-launch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          launchId,
+          action: 'ai-evaluate',
+          userId: user?.id,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Failed to evaluate launch with AI');
+      }
+
+      await fetchModerationData();
+    } catch (err: any) {
+      console.error('AI evaluation error:', err);
+      setErrorMsg(err.message || 'AI evaluation failed. Please try again.');
+    } finally {
+      setActioningId(null);
+    }
+  };
 
   // Approve a launch
   const handleApprove = async (launchId: string) => {
@@ -496,14 +525,51 @@ export default function AdminPage() {
                     <MemeCard launch={launch} />
                   </div>
 
+                  {/* AI Evaluation Status Banner */}
+                  {(launch.seo_dossier as any)?.ai_evaluation && (
+                    <div className="px-4 py-2.5 bg-zinc-950/90 border-t border-zinc-900 text-[11px] font-mono flex items-start gap-2">
+                      <Bot className={`w-4 h-4 shrink-0 mt-0.5 ${(launch.seo_dossier as any).ai_evaluation.isApproved ? 'text-lime-400' : 'text-amber-400'}`} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`font-bold ${(launch.seo_dossier as any).ai_evaluation.isApproved ? 'text-lime-400' : 'text-amber-400'}`}>
+                            {(launch.seo_dossier as any).ai_evaluation.isApproved ? '🤖 AI Approved' : '⚠️ AI Rejected'}
+                          </span>
+                          <span className="text-[10px] text-zinc-500">
+                            Score: {(launch.seo_dossier as any).ai_evaluation.score}/100
+                          </span>
+                        </div>
+                        <p className="text-zinc-400 text-[11px] mt-0.5 line-clamp-2">
+                          {(launch.seo_dossier as any).ai_evaluation.reason}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="p-4 bg-zinc-950/70 border-t border-zinc-900 flex items-center justify-between gap-3">
-                    <button
-                      onClick={() => router.push(`/products/${encodeURIComponent(launch.product_name)}`)}
-                      className="px-3.5 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Eye className="h-3.5 w-3.5 text-zinc-400" />
-                      <span>Inspect</span>
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => router.push(`/products/${encodeURIComponent(launch.product_name)}`)}
+                        className="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                        title="Inspect Product Page"
+                      >
+                        <Eye className="h-3.5 w-3.5 text-zinc-400" />
+                        <span className="hidden sm:inline">Inspect</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleAiEvaluate(launch.id)}
+                        disabled={actioningId !== null}
+                        className="px-2.5 py-2 bg-lime-400/10 hover:bg-lime-400/20 border border-lime-400/30 text-lime-400 font-mono text-xs rounded-xl transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                        title="Re-run Autonomous AI Evaluation"
+                      >
+                        {actioningId === launch.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Bot className="h-3.5 w-3.5" />
+                        )}
+                        <span className="hidden sm:inline">AI Review</span>
+                      </button>
+                    </div>
 
                     <div className="flex items-center gap-2">
                       {activeModerationTab === 'pending' ? (

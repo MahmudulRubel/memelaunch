@@ -4,7 +4,7 @@ const baseUrl = process.env.NEXT_PUBLIC_INSFORGE_BASE_URL || 'https://fw47aqh3.a
 const anonKey = process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY || 'anon_5a5ec51717d846950da308c3afa26361da06231743c2627f6ce1a187732b4c51';
 
 // Connection pooling & HTTP keep-alive options for high performance & resilience
-const CONNECTION_TIMEOUT_MS = parseInt(process.env.DB_CONNECTION_TIMEOUT_MS || '10000', 10);
+const CONNECTION_TIMEOUT_MS = parseInt(process.env.DB_CONNECTION_TIMEOUT_MS || '30000', 10);
 const POOL_MAX_CONNECTIONS = parseInt(process.env.DB_POOL_MAX_CONNECTIONS || '20', 10);
 
 export const insforge = createClient({

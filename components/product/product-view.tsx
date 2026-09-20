@@ -30,6 +30,8 @@ import {
 import type { Launch } from '@/components/feed/meme-card';
 import { parseCaption, getCaptionText } from '@/lib/meme';
 import { trackLaunchView, trackLaunchClick } from '@/lib/analytics';
+import { SeoDossierView } from '@/components/product/seo-dossier-view';
+import { synthesizeSeoDossier } from '@/lib/seo-dossier';
 
 interface Screenshot {
   id: string;
@@ -540,6 +542,18 @@ export function ProductView({ initialLaunchId }: ProductViewProps) {
 
         </div>
       </div>
+
+      {/* In-Depth Authoritative SEO Product Dossier & Meme Spotlight */}
+      {launch && (
+        <SeoDossierView
+          dossier={synthesizeSeoDossier(launch)}
+          productName={launch.product_name}
+          productUrl={launch.product_url}
+          category={launch.category}
+          pricing={launch.pricing}
+          primaryMemeUrl={launch.meme_image_url}
+        />
+      )}
 
       {/* Launch Boost Modal Popup */}
       <LaunchBoostModal

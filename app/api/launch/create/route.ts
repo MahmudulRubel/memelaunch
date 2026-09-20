@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { insforgeAdmin } from '@/lib/insforge';
 import { deductPointsForLaunch } from '@/lib/points';
 import { revalidatePath } from 'next/cache';
+import { evaluateProductWithAi } from '@/lib/ai-product-evaluator';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,6 +17,8 @@ export async function POST(request: NextRequest) {
       productDescription,
       productLogoUrl,
       screenshotUrls,
+      seoDossier,
+      alternateMemes,
     } = body;
 
     if (!userId || !productName || !productUrl || !category) {
@@ -42,13 +45,81 @@ export async function POST(request: NextRequest) {
       console.warn('User record check warning:', uErr);
     }
 
+    // Step 1.5: If memeImageUrl is a data URI or remote URL, persist it into InsForge storage
+    let finalMemeUrl = memeImageUrl || productLogoUrl || screenshotUrls?.[0] || '';
+    if (finalMemeUrl && finalMemeUrl.startsWith('data:')) {
+      try {
+        const match = finalMemeUrl.match(/^data:([^;]+);base64,(.+)$/);
+        if (match) {
+          const mime = match[1];
+          const ext = mime.includes('svg') ? 'svg' : mime.includes('png') ? 'png' : 'jpg';
+          const buffer = Buffer.from(match[2], 'base64');
+          const objectPath = `${userId}/${Date.now()}_viral_meme.${ext}`;
+          const uploadFile = new File([buffer], `viral_meme.${ext}`, { type: mime });
+          const { data: storageData } = await insforgeAdmin.storage
+            .from('memes')
+            .upload(objectPath, uploadFile);
+
+          if (storageData?.url) {
+            finalMemeUrl = storageData.url;
+          }
+        }
+      } catch (storageErr) {
+        console.warn('Error persisting data URI meme to InsForge storage:', storageErr);
+      }
+    } else if (
+      finalMemeUrl &&
+      finalMemeUrl.startsWith('http') &&
+      !finalMemeUrl.includes('/api/storage/')
+    ) {
+      try {
+        const imageRes = await fetch(finalMemeUrl);
+        if (imageRes.ok) {
+          const blob = await imageRes.blob();
+          const buffer = Buffer.from(await blob.arrayBuffer());
+          const objectPath = `${userId}/${Date.now()}_viral_meme.jpg`;
+          const uploadFile = new File([buffer], 'viral_meme.jpg', { type: 'image/jpeg' });
+          const { data: storageData } = await insforgeAdmin.storage
+            .from('memes')
+            .upload(objectPath, uploadFile);
+
+          if (storageData?.url) {
+            finalMemeUrl = storageData.url;
+          }
+        }
+      } catch (storageErr) {
+        console.warn('Error persisting remote meme to InsForge storage:', storageErr);
+      }
+    }
+
+    // Step 1.8: Autonomous AI Product Review
+    // No human admin needed: AI evaluates legitimacy, safety, and coherence in real-time.
+    // If all ok, it is approved immediately. If not ok, it is marked unapproved.
+    const aiEvaluation = await evaluateProductWithAi({
+      productName: productName.trim(),
+      productDescription: (productDescription || '').trim(),
+      productUrl: productUrl.trim(),
+      category: category.trim(),
+      pricing: pricing || 'free',
+      memeCaption: '',
+    });
+
+    const isApproved = aiEvaluation.isApproved;
+
+    // Build final SEO dossier with alternate memes & AI evaluation audit trail
+    const finalSeoDossier = seoDossier ? { ...seoDossier } : {};
+    if (Array.isArray(alternateMemes) && alternateMemes.length > 0) {
+      finalSeoDossier.alternateMemes = alternateMemes;
+    }
+    finalSeoDossier.ai_evaluation = aiEvaluation;
+
     // Step 2: Insert into launches table using Admin SDK
     const { data: launchData, error: launchError } = await insforgeAdmin.database
       .from('launches')
       .insert([
         {
           user_id: userId,
-          meme_image_url: memeImageUrl || productLogoUrl || screenshotUrls?.[0] || '',
+          meme_image_url: finalMemeUrl,
           caption: '',
           product_name: productName.trim(),
           product_url: productUrl.trim(),
@@ -57,7 +128,8 @@ export async function POST(request: NextRequest) {
           template_id: null,
           product_description: (productDescription || '').trim(),
           product_logo_url: productLogoUrl || '',
-          is_approved: true,
+          seo_dossier: finalSeoDossier,
+          is_approved: isApproved,
         },
       ])
       .select();
@@ -108,6 +180,8 @@ export async function POST(request: NextRequest) {
       success: true,
       launchId,
       launch: launchData[0],
+      is_approved: isApproved,
+      ai_evaluation: aiEvaluation,
     });
   } catch (err: any) {
     console.error('Launch create API exception:', err);
