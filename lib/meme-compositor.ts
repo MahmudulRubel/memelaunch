@@ -96,3 +96,93 @@ export function generateMemeSvgComposite(params: {
 
   return `data:image/svg+xml;base64,${base64Svg}`;
 }
+
+/**
+ * Renders an image URL and top/bottom text onto an HTML5 Canvas and returns
+ * a clean high-res data:image/jpeg;base64,... URL for downloading or exporting.
+ */
+export async function renderMemeToCanvas(params: {
+  imageUrl: string;
+  topText?: string;
+  bottomText?: string;
+}): Promise<string> {
+  const { imageUrl, topText = '', bottomText = '' } = params;
+
+  if (typeof window === 'undefined') {
+    return imageUrl;
+  }
+
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;
+        canvas.height = 1024;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return resolve(imageUrl);
+
+        // Draw base image centered and scaled to cover 1024x1024
+        const imgAspect = img.width / img.height;
+        let sx = 0, sy = 0, sWidth = img.width, sHeight = img.height;
+        if (imgAspect > 1) {
+          sWidth = img.height;
+          sx = (img.width - sWidth) / 2;
+        } else if (imgAspect < 1) {
+          sHeight = img.width;
+          sy = (img.height - sHeight) / 2;
+        }
+        ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, 1024, 1024);
+
+        if (topText.trim() || bottomText.trim()) {
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#ffffff';
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 12;
+          ctx.lineJoin = 'round';
+          ctx.miterLimit = 2;
+
+          // Draw Top Text
+          if (topText.trim()) {
+            const topLines = wrapMemeLines(topText, 22);
+            const fontSize = topLines.length > 2 ? 46 : 56;
+            ctx.font = `900 ${fontSize}px Impact, "Arial Black", sans-serif`;
+            topLines.forEach((line, i) => {
+              const y = 90 + i * (fontSize + 12);
+              ctx.strokeText(line, 512, y);
+              ctx.fillText(line, 512, y);
+            });
+          }
+
+          // Draw Bottom Text
+          if (bottomText.trim()) {
+            const botLines = wrapMemeLines(bottomText, 22);
+            const fontSize = botLines.length > 2 ? 46 : 56;
+            ctx.font = `900 ${fontSize}px Impact, "Arial Black", sans-serif`;
+            const totalHeight = botLines.length * (fontSize + 12);
+            const startY = 960 - totalHeight;
+            botLines.forEach((line, i) => {
+              const y = startY + i * (fontSize + 12);
+              ctx.strokeText(line, 512, y);
+              ctx.fillText(line, 512, y);
+            });
+          }
+        }
+
+        resolve(canvas.toDataURL('image/jpeg', 0.95));
+      } catch (err) {
+        console.warn('Canvas export error:', err);
+        resolve(imageUrl);
+      }
+    };
+
+    img.onerror = () => {
+      resolve(imageUrl);
+    };
+
+    img.src = imageUrl;
+  });
+}
+

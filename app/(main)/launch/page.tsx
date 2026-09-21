@@ -436,7 +436,7 @@ function LaunchForm() {
 
         memeImageUrl = await uploadImageToStorage(compressedMemeFile, 'memes', memePath);
       } else if (memePreview) {
-        if (memePreview.startsWith('blob:')) {
+        if (memePreview.startsWith('blob:') || memePreview.startsWith('data:')) {
           setStatusMessage('Processing product meme...');
           const blob = await fetch(memePreview).then((r) => r.blob());
           const compressedBlob = await compressImage(blob as any, 1200, 0.8);

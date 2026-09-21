@@ -24,7 +24,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { MEME_VIBE_PRESETS, MemeStyleVibe } from '@/lib/deepseek-meme';
-import { generateMemeSvgComposite } from '@/lib/meme-compositor';
+import { generateMemeSvgComposite, renderMemeToCanvas } from '@/lib/meme-compositor';
 
 export interface GeneratedMemeItem {
   id: string;
@@ -37,6 +37,7 @@ export interface GeneratedMemeItem {
   angle: string;
   prompt?: string;
   vibe?: MemeStyleVibe | string;
+  overlayText?: boolean;
 }
 
 interface MemeIdeogramGeneratorProps {
@@ -194,18 +195,15 @@ export function MemeIdeogramGenerator({
       if (!target) return prev;
 
       const baseImg = target.cleanImageUrl || target.url;
-      const newComposite = generateMemeSvgComposite({
-        imageUrl: baseImg,
-        topText: newTopText,
-        bottomText: newBottomText,
-      });
 
-      const newMeme = {
+      const newMeme: GeneratedMemeItem = {
         ...target,
-        url: newComposite,
+        url: baseImg,
+        cleanImageUrl: baseImg,
         topText: newTopText,
         bottomText: newBottomText,
         caption: `${newTopText} — ${newBottomText}`,
+        overlayText: true,
       };
 
       updated[idx] = newMeme;
@@ -467,13 +465,39 @@ export function MemeIdeogramGenerator({
                         </button>
                       </div>
                     ) : (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={meme.url}
-                        alt={meme.caption || `Meme Option ${idx + 1}`}
-                        onError={() => setBrokenImages((prev) => ({ ...prev, [meme.url]: true }))}
-                        className="w-full h-full object-contain group-hover/img:scale-102 transition-transform duration-300"
-                      />
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={meme.cleanImageUrl || meme.url}
+                          alt={meme.caption || `Meme Option ${idx + 1}`}
+                          onError={(e) => {
+                            const fallback = ['/drake.png', '/boyfriend.png', '/buttons.png'][idx % 3];
+                            const currentTarget = e.currentTarget;
+                            if (currentTarget.src && !currentTarget.src.includes(fallback)) {
+                              currentTarget.src = fallback;
+                            } else {
+                              setBrokenImages((prev) => ({ ...prev, [meme.url]: true }));
+                            }
+                          }}
+                          className="w-full h-full object-contain group-hover/img:scale-102 transition-transform duration-300"
+                        />
+
+                        {/* Classic Impact Typography Overlay for templates & edited memes */}
+                        {(meme.overlayText || (meme.url && meme.url.startsWith('/')) || (meme.cleanImageUrl && meme.cleanImageUrl.startsWith('/'))) && (
+                          <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-3 select-none">
+                            {meme.topText ? (
+                              <p className="font-impact text-white uppercase text-center text-xs sm:text-sm font-black tracking-wide leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] [text-shadow:_2px_2px_0_#000,_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_0_2px_0_#000,_0_-2px_0_#000,_2px_0_0_#000,_-2px_0_0_#000]">
+                                {meme.topText}
+                              </p>
+                            ) : <div />}
+                            {meme.bottomText ? (
+                              <p className="font-impact text-white uppercase text-center text-xs sm:text-sm font-black tracking-wide leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] [text-shadow:_2px_2px_0_#000,_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_0_2px_0_#000,_0_-2px_0_#000,_2px_0_0_#000,_-2px_0_0_#000]">
+                                {meme.bottomText}
+                              </p>
+                            ) : <div />}
+                          </div>
+                        )}
+                      </>
                     )}
 
                     {/* Overlay Action Badges */}
@@ -492,17 +516,28 @@ export function MemeIdeogramGenerator({
                         >
                           <Maximize2 className="w-3.5 h-3.5" />
                         </button>
-                        <a
-                          href={meme.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          download={`memelaunch_${productName}_meme_${idx + 1}.jpg`}
-                          onClick={(e) => e.stopPropagation()}
+                        <button
+                          type="button"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            const hasTextOverlay = !!(meme.overlayText || meme.url?.startsWith('/') || meme.cleanImageUrl?.startsWith('/'));
+                            const downloadUrl = await renderMemeToCanvas({
+                              imageUrl: meme.cleanImageUrl || meme.url,
+                              topText: hasTextOverlay ? (meme.topText || '') : '',
+                              bottomText: hasTextOverlay ? (meme.bottomText || '') : '',
+                            });
+                            const a = document.createElement('a');
+                            a.href = downloadUrl;
+                            a.download = `memelaunch_${productName}_meme_${idx + 1}.jpg`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                          }}
                           className="p-1.5 bg-zinc-950/90 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-lg border border-zinc-700 backdrop-blur-md cursor-pointer transition-all shadow-lg"
                           title="Download Meme"
                         >
                           <Download className="w-3.5 h-3.5" />
-                        </a>
+                        </button>
                       </div>
 
                       <div className="flex justify-center pointer-events-auto">
@@ -701,7 +736,7 @@ export function MemeIdeogramGenerator({
                   title={`Switch to Meme #${i + 1}`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={m.url} alt="" className="w-full h-full object-cover" />
+                  <img src={m.cleanImageUrl || m.url} alt="" className="w-full h-full object-cover" />
                   <span className="absolute bottom-0 inset-x-0 bg-black/85 text-[8px] font-mono text-zinc-200 text-center font-bold">
                     #{i + 1}
                   </span>
@@ -791,13 +826,39 @@ export function MemeIdeogramGenerator({
                     </button>
                   </div>
                 ) : (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={zoomMeme.url}
-                    alt={zoomMeme.caption || 'Hero Meme Preview'}
-                    onError={() => setBrokenImages((prev) => ({ ...prev, [zoomMeme.url]: true }))}
-                    className="w-full h-full object-contain select-none"
-                  />
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={zoomMeme.cleanImageUrl || zoomMeme.url}
+                      alt={zoomMeme.caption || 'Hero Meme Preview'}
+                      onError={(e) => {
+                        const fallback = ['/drake.png', '/boyfriend.png', '/buttons.png'][zoomIdx % 3];
+                        const currentTarget = e.currentTarget;
+                        if (currentTarget.src && !currentTarget.src.includes(fallback)) {
+                          currentTarget.src = fallback;
+                        } else {
+                          setBrokenImages((prev) => ({ ...prev, [zoomMeme.url]: true }));
+                        }
+                      }}
+                      className="w-full h-full object-contain select-none"
+                    />
+
+                    {/* Classic Impact Typography Overlay for templates & edited memes */}
+                    {(zoomMeme.overlayText || (zoomMeme.url && zoomMeme.url.startsWith('/')) || (zoomMeme.cleanImageUrl && zoomMeme.cleanImageUrl.startsWith('/'))) && (
+                      <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-6 sm:p-8 select-none">
+                        {zoomMeme.topText ? (
+                          <p className="font-impact text-white uppercase text-center text-lg sm:text-2xl md:text-3xl font-black tracking-wide leading-tight drop-shadow-[0_3px_6px_rgba(0,0,0,0.9)] [text-shadow:_3px_3px_0_#000,_-3px_-3px_0_#000,_3px_-3px_0_#000,_-3px_3px_0_#000,_0_3px_0_#000,_0_-3px_0_#000,_3px_0_0_#000,_-3px_0_0_#000]">
+                            {zoomMeme.topText}
+                          </p>
+                        ) : <div />}
+                        {zoomMeme.bottomText ? (
+                          <p className="font-impact text-white uppercase text-center text-lg sm:text-2xl md:text-3xl font-black tracking-wide leading-tight drop-shadow-[0_3px_6px_rgba(0,0,0,0.9)] [text-shadow:_3px_3px_0_#000,_-3px_-3px_0_#000,_3px_-3px_0_#000,_-3px_3px_0_#000,_0_3px_0_#000,_0_-3px_0_#000,_3px_0_0_#000,_-3px_0_0_#000]">
+                            {zoomMeme.bottomText}
+                          </p>
+                        ) : <div />}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -943,16 +1004,27 @@ export function MemeIdeogramGenerator({
                     </button>
                   )}
 
-                  <a
-                    href={zoomMeme.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    download={`memelaunch_${productName}_meme_${zoomIdx + 1}.jpg`}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const hasTextOverlay = !!(zoomMeme.overlayText || zoomMeme.url?.startsWith('/') || zoomMeme.cleanImageUrl?.startsWith('/'));
+                      const downloadUrl = await renderMemeToCanvas({
+                        imageUrl: zoomMeme.cleanImageUrl || zoomMeme.url,
+                        topText: hasTextOverlay ? (zoomMeme.topText || '') : '',
+                        bottomText: hasTextOverlay ? (zoomMeme.bottomText || '') : '',
+                      });
+                      const a = document.createElement('a');
+                      a.href = downloadUrl;
+                      a.download = `memelaunch_${productName}_meme_${zoomIdx + 1}.jpg`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                    }}
                     className="w-full py-2.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white font-mono text-xs font-bold uppercase rounded-xl border border-zinc-800 transition-colors flex items-center justify-center gap-2 cursor-pointer text-center"
                   >
                     <Download className="w-4 h-4" />
                     <span>Download High-Res (1024x1024)</span>
-                  </a>
+                  </button>
                 </div>
               </div>
             )}
