@@ -4,407 +4,363 @@ import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
-import { uploadImageToStorage } from '@/lib/insforge';
-import { compressImage } from '@/lib/image';
-import { getUserPoints, getLaunchPointCost } from '@/lib/points';
+import { getUserPoints } from '@/lib/points';
 import { EarnPointsModal } from '@/components/points/earn-points-modal';
 import { LaunchBoostModal } from '@/components/points/launch-boost-modal';
 import { AuthModal } from '@/components/auth/auth-modal';
-import { MemeIdeogramGenerator, GeneratedMemeItem } from '@/components/launch/meme-ideogram-generator';
-import { SeoDossierEditor } from '@/components/launch/seo-dossier-editor';
-import { SeoDossier, synthesizeSeoDossier } from '@/lib/seo-dossier';
-import { z } from 'zod';
+import { MemePicker3, type MemePickerItem } from '@/components/launch/meme-picker-3';
+import { InDepthDossierPreview } from '@/components/launch/in-depth-dossier-preview';
 import {
-  Upload,
-  Image as ImageIcon,
+  VALID_CATEGORIES,
+  type InstantLaunchMeme,
+  type InstantLaunchResult,
+} from '@/lib/instant-launch';
+import { type SeoDossier, synthesizeSeoDossier } from '@/lib/seo-dossier';
+import {
+  Globe,
   Sparkles,
   Tag,
-  Globe,
   DollarSign,
   AlertCircle,
-  Trash2,
   CheckCircle2,
   ArrowRight,
   Loader2,
+  RefreshCw,
+  Upload,
+  Flame,
+  Check,
+  Zap,
+  RotateCcw,
+  ExternalLink,
 } from 'lucide-react';
 
-const CATEGORIES = [
-  'SaaS',
-  'Developer Tools',
-  'AI & Machine Learning',
-  'Mobile Apps',
-  'Web Utilities',
-  'Design & Creative',
-  'Marketing & Sales',
-  'Productivity',
-  'Crypto & Web3',
-  'E-Commerce',
-  'Hardware',
-  'Other'
-];
-
-const launchFormSchema = z.object({
-  productName: z.string().min(2, 'Product name must be at least 2 characters'),
-  category: z.string().min(2, 'Please select a product category'),
-  pricing: z.enum(['free', 'paid', 'freemium']),
-  productUrl: z.string().url('Please enter a valid product URL (e.g. https://example.com)'),
-  productDescription: z.string().min(10, 'Product description must be at least 10 characters').max(500, 'Product description must be 500 characters or less'),
-});
+const SESSION_STORAGE_KEY = 'memelaunch_instant_launch_draft';
+const PENDING_AUTH_KEY = 'memelaunch_pending_launch_after_auth';
 
 export default function LaunchPage() {
   return (
-    <Suspense fallback={
-      <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <Loader2 className="h-10 w-10 text-lime-400 animate-spin" />
-        <p className="text-zinc-400 font-mono text-sm">Loading launch environment...</p>
-      </div>
-    }>
-      <LaunchForm />
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center py-24 space-y-4">
+          <Loader2 className="h-10 w-10 text-lime-400 animate-spin" />
+          <p className="text-zinc-400 font-mono text-sm">Loading launch environment...</p>
+        </div>
+      }
+    >
+      <LaunchPageContent />
     </Suspense>
   );
 }
 
-function LaunchForm() {
+function LaunchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlParam = searchParams ? searchParams.get('url') || searchParams.get('productUrl') : null;
   const { user, isLoading: authLoading } = useAuth();
 
-  // Form State
+  // Wizard Step: 'input' | 'generating' | 'review'
+  const [step, setStep] = useState<'input' | 'generating' | 'review'>('input');
+
+  // Hero URL Input
+  const [heroUrl, setHeroUrl] = useState('');
+  const [generationProgress, setGenerationProgress] = useState<number>(1);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Review & Edit State
   const [productName, setProductName] = useState('');
-  const [category, setCategory] = useState('');
-  const [pricing, setPricing] = useState<'free' | 'paid' | 'freemium'>('free');
+  const [category, setCategory] = useState<string>('SaaS');
+  const [pricing, setPricing] = useState<'free' | 'freemium' | 'paid'>('freemium');
   const [productUrl, setProductUrl] = useState('');
   const [productDescription, setProductDescription] = useState('');
-
-  // Meme upload (required)
-  const [memeFile, setMemeFile] = useState<File | null>(null);
-  const [memePreview, setMemePreview] = useState<string | null>(null);
-  const memeInputRef = useRef<HTMLInputElement>(null);
-
-  // AI Meme Generation & SEO Dossier state
-  const [generatedMemes, setGeneratedMemes] = useState<GeneratedMemeItem[]>([]);
-  const [selectedMemeIdx, setSelectedMemeIdx] = useState<number>(0);
+  const [productLogoUrl, setProductLogoUrl] = useState('');
   const [seoDossier, setSeoDossier] = useState<SeoDossier | null>(null);
-  const [showManualMemeUpload, setShowManualMemeUpload] = useState<boolean>(false);
+  const [memes, setMemes] = useState<MemePickerItem[]>([]);
+  const [selectedMemeIdx, setSelectedMemeIdx] = useState<number>(0);
+  const [isRegeneratingMemes, setIsRegeneratingMemes] = useState(false);
 
-  // Logo upload (required)
-  const [productLogoFile, setProductLogoFile] = useState<File | null>(null);
-  const [productLogoPreview, setProductLogoPreview] = useState<string | null>(null);
-  const logoInputRef = useRef<HTMLInputElement>(null);
-
-  // Screenshots upload (2-3)
-  const [screenshotFiles, setScreenshotFiles] = useState<(File | null)[]>([]);
-  const [screenshotPreviews, setScreenshotPreviews] = useState<string[]>([]);
-  const screenshotInputRef = useRef<HTMLInputElement>(null);
-
-  // Submission / Loading states
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  // Submission & Post-Launch Modals
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [isAiApproved, setIsAiApproved] = useState<boolean | null>(null);
+  const [aiEvaluationData, setAiEvaluationData] = useState<{
+    isApproved?: boolean;
+    score?: number;
+    reason?: string;
+    feedback?: string;
+  } | null>(null);
+  const [createdLaunchData, setCreatedLaunchData] = useState<{
+    id?: string;
+    product_name?: string;
+    product_url?: string;
+    meme_image_url?: string;
+  } | null>(null);
 
-  // Points & Auth Modal State
+  // Points & Auth Modals
   const [userPoints, setUserPoints] = useState<number>(0);
   const [isEarnPointsModalOpen, setIsEarnPointsModalOpen] = useState(false);
   const [isBoostModalOpen, setIsBoostModalOpen] = useState(false);
-  const [createdLaunchData, setCreatedLaunchData] = useState<{ id?: string; product_name?: string; product_url?: string; meme_image_url?: string } | null>(null);
-  const [isAiApproved, setIsAiApproved] = useState<boolean | null>(null);
-  const [aiEvaluationData, setAiEvaluationData] = useState<{ isApproved?: boolean; score?: number; reason?: string; feedback?: string } | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  // AI Autofill state
-  const [autofillUrl, setAutofillUrl] = useState('');
-  const [isAutofilling, setIsAutofilling] = useState(false);
-  const [autofillStep, setAutofillStep] = useState<number>(0);
-  const [autofillSuccess, setAutofillSuccess] = useState(false);
-  const [autofillError, setAutofillError] = useState<string | null>(null);
-  const hasAutofilledRef = useRef(false);
+  // Hidden file input refs
+  const customMemeInputRef = useRef<HTMLInputElement>(null);
+  const customLogoInputRef = useRef<HTMLInputElement>(null);
+  const hasTriggeredUrlParam = useRef(false);
 
-  const handleAutofill = async (targetUrl?: string) => {
-    const urlToUse = targetUrl || autofillUrl || productUrl;
-    if (!urlToUse.trim()) {
-      setAutofillError('Please enter your product website URL.');
-      return;
-    }
-
-    setAutofillError(null);
-    setIsAutofilling(true);
-    setAutofillStep(1);
-    setAutofillSuccess(false);
-
-    try {
-      const res = await fetch('/api/ai/autofill', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: urlToUse }),
-      });
-
-      setAutofillStep(2);
-      const json = await res.json();
-
-      if (!json.success || !json.data) {
-        throw new Error(json.error || 'Failed to extract product details.');
-      }
-
-      const { data } = json;
-
-      if (data.productName) setProductName(data.productName);
-      if (data.category && CATEGORIES.includes(data.category)) setCategory(data.category);
-      if (data.pricing) setPricing(data.pricing);
-      if (data.productDescription) setProductDescription(data.productDescription);
-      const formattedUrl = urlToUse.startsWith('http') ? urlToUse : `https://${urlToUse}`;
-      setProductUrl(formattedUrl);
-      setAutofillUrl(formattedUrl);
-
-      if (data.productLogoUrl) {
-        try {
-          const logoRes = await fetch(data.productLogoUrl);
-          if (logoRes.ok) {
-            const blob = await logoRes.blob();
-            const file = new File([blob], 'product-logo.png', { type: blob.type || 'image/png' });
-            setProductLogoFile(file);
-            setProductLogoPreview(URL.createObjectURL(blob));
-          } else {
-            setProductLogoPreview(data.productLogoUrl);
-          }
-        } catch (err) {
-          setProductLogoPreview(data.productLogoUrl);
-        }
-      }
-
-      if (data.seoDossier) {
-        setSeoDossier(data.seoDossier);
-      }
-
-      setAutofillSuccess(true);
-      setFormErrors({});
-    } catch (err: any) {
-      setAutofillError(err.message || 'Failed to autofill form. Please complete fields manually.');
-    } finally {
-      setIsAutofilling(false);
-      setAutofillStep(0);
-    }
-  };
-
-  // Check user points on mount
+  // Fetch user points on mount
   useEffect(() => {
     if (!user) return;
     async function checkPoints() {
-      const pts = await getUserPoints(user!.id);
-      setUserPoints(pts);
+      try {
+        const pts = await getUserPoints(user!.id);
+        setUserPoints(pts);
+      } catch (e) {
+        console.warn('Failed to load user points:', e);
+      }
     }
     checkPoints();
   }, [user]);
 
-  // Load draft from sessionStorage on mount
+  // Restore draft state from sessionStorage on mount (if no explicit urlParam)
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      const savedDraft = sessionStorage.getItem('memelaunch_form_draft');
-      if (savedDraft) {
-        const parsed = JSON.parse(savedDraft);
-        if (parsed.productName && !productName) setProductName(parsed.productName);
-        if (parsed.category && !category) setCategory(parsed.category);
-        if (parsed.pricing && !pricing) setPricing(parsed.pricing);
-        if (parsed.productUrl && !productUrl) setProductUrl(parsed.productUrl);
-        if (parsed.productDescription && !productDescription) setProductDescription(parsed.productDescription);
-        if (parsed.autofillUrl && !autofillUrl) setAutofillUrl(parsed.autofillUrl);
-        if (parsed.productLogoPreview && !productLogoPreview && parsed.productLogoPreview.startsWith('http')) {
-          setProductLogoPreview(parsed.productLogoPreview);
+      const saved = sessionStorage.getItem(SESSION_STORAGE_KEY);
+      if (saved && !urlParam) {
+        const parsed = JSON.parse(saved);
+        if (parsed.productName && parsed.productUrl && Array.isArray(parsed.memes) && parsed.memes.length > 0) {
+          setProductName(parsed.productName);
+          setCategory(parsed.category || 'SaaS');
+          setPricing(parsed.pricing || 'freemium');
+          setProductUrl(parsed.productUrl);
+          setHeroUrl(parsed.productUrl);
+          setProductDescription(parsed.productDescription || '');
+          setProductLogoUrl(parsed.productLogoUrl || '');
+          setSeoDossier(parsed.seoDossier || null);
+          setMemes(parsed.memes);
+          setSelectedMemeIdx(parsed.selectedMemeIdx || 0);
+          setStep('review');
         }
       }
     } catch (e) {
       console.warn('Draft restoration warning:', e);
     }
-  }, []);
+  }, [urlParam]);
 
-  // Save draft changes to sessionStorage
+  // Automatically sync draft state to sessionStorage during review
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || step !== 'review') return;
     try {
-      const draft = {
-        productName,
-        category,
-        pricing,
-        productUrl,
-        productDescription,
-        autofillUrl,
-        productLogoPreview: productLogoPreview && productLogoPreview.startsWith('http') ? productLogoPreview : null,
-      };
-      sessionStorage.setItem('memelaunch_form_draft', JSON.stringify(draft));
+      sessionStorage.setItem(
+        SESSION_STORAGE_KEY,
+        JSON.stringify({
+          productName,
+          category,
+          pricing,
+          productUrl,
+          productDescription,
+          productLogoUrl,
+          seoDossier,
+          memes,
+          selectedMemeIdx,
+        })
+      );
     } catch (e) {}
-  }, [productName, category, pricing, productUrl, productDescription, autofillUrl, productLogoPreview]);
+  }, [
+    step,
+    productName,
+    category,
+    pricing,
+    productUrl,
+    productDescription,
+    productLogoUrl,
+    seoDossier,
+    memes,
+    selectedMemeIdx,
+  ]);
 
-  // Handle post-auth pending launch submission
+  // Auto-trigger generation if urlParam exists on mount
+  useEffect(() => {
+    if (urlParam && !hasTriggeredUrlParam.current) {
+      hasTriggeredUrlParam.current = true;
+      let target = urlParam.trim();
+      if (!target.startsWith('http://') && !target.startsWith('https://')) {
+        target = `https://${target}`;
+      }
+      setHeroUrl(target);
+      handleGenerate(target);
+    }
+  }, [urlParam]);
+
+  // Resume submission after auth login
   useEffect(() => {
     if (typeof window === 'undefined' || !user) return;
-    const isPending = sessionStorage.getItem('pendingLaunchAfterAuth');
+    const isPending = sessionStorage.getItem(PENDING_AUTH_KEY);
     if (isPending === 'true') {
-      sessionStorage.removeItem('pendingLaunchAfterAuth');
-      // If form fields are ready, execute submission automatically
+      sessionStorage.removeItem(PENDING_AUTH_KEY);
       if (productName && productUrl && category) {
         executeSubmission(user);
       }
     }
   }, [user, productName, productUrl, category]);
 
-  // Auto-fill from homepage query param on mount (runs only once)
-  useEffect(() => {
-    if (urlParam && !hasAutofilledRef.current) {
-      hasAutofilledRef.current = true;
-      let formattedUrl = urlParam.trim();
-      if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
-        formattedUrl = `https://${formattedUrl}`;
-      }
-      setAutofillUrl(formattedUrl);
-      setProductUrl(formattedUrl);
-      handleAutofill(formattedUrl);
-    }
-  }, [urlParam]);
-
-  // Clean up object URLs
-  useEffect(() => {
-    return () => {
-      if (memePreview && memePreview.startsWith('blob:')) {
-        URL.revokeObjectURL(memePreview);
-      }
-      if (productLogoPreview && productLogoPreview.startsWith('blob:')) {
-        URL.revokeObjectURL(productLogoPreview);
-      }
-      screenshotPreviews.forEach((preview) => {
-        if (preview.startsWith('blob:')) {
-          URL.revokeObjectURL(preview);
-        }
-      });
-    };
-  }, [memePreview, productLogoPreview, screenshotPreviews]);
-
-  // Handle meme file change
-  const handleMemeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (memePreview && memePreview.startsWith('blob:')) {
-        URL.revokeObjectURL(memePreview);
-      }
-      setMemeFile(file);
-      setMemePreview(URL.createObjectURL(file));
-      setFormErrors((prev) => {
-        const copy = { ...prev };
-        delete copy.meme;
-        return copy;
-      });
-    }
-  };
-
-  const handleClearMeme = () => {
-    if (memePreview && memePreview.startsWith('blob:')) {
-      URL.revokeObjectURL(memePreview);
-    }
-    setMemeFile(null);
-    setMemePreview(null);
-  };
-
-  // Handle logo file change
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (productLogoPreview && productLogoPreview.startsWith('blob:')) {
-        URL.revokeObjectURL(productLogoPreview);
-      }
-      setProductLogoFile(file);
-      setProductLogoPreview(URL.createObjectURL(file));
-      setFormErrors((prev) => {
-        const copy = { ...prev };
-        delete copy.productLogo;
-        return copy;
-      });
-    }
-  };
-
-  // Handle screenshot files selection
-  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-
-    const currentCount = screenshotFiles.length;
-    const remainingCount = 3 - currentCount;
-    if (remainingCount <= 0) {
-      alert('You can only upload up to 3 screenshots.');
+  /**
+   * Main Generation Handler: Calls /api/ai/instant-launch
+   */
+  const handleGenerate = async (urlInput?: string) => {
+    const rawUrl = (urlInput || heroUrl).trim();
+    if (!rawUrl) {
+      setGenerationError('Please enter your product website URL.');
       return;
     }
 
-    const filesToAdd = files.slice(0, remainingCount);
-    const newPreviews = filesToAdd.map((file) => URL.createObjectURL(file));
-
-    setScreenshotFiles((prev) => [...prev, ...filesToAdd]);
-    setScreenshotPreviews((prev) => [...prev, ...newPreviews]);
-    setFormErrors((prev) => {
-      const copy = { ...prev };
-      delete copy.screenshots;
-      return copy;
-    });
-  };
-
-  // Remove individual screenshot
-  const removeScreenshot = (index: number) => {
-    const previewToRemove = screenshotPreviews[index];
-    if (previewToRemove && previewToRemove.startsWith('blob:')) {
-      URL.revokeObjectURL(previewToRemove);
-    }
-    setScreenshotFiles((prev) => prev.filter((_, i) => i !== index));
-    setScreenshotPreviews((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  // Handle Form Submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormErrors({});
-    setStatusMessage('');
-
-    let validUrl = productUrl.trim();
-    if (validUrl && !validUrl.startsWith('http://') && !validUrl.startsWith('https://')) {
+    let validUrl = rawUrl;
+    if (!validUrl.startsWith('http://') && !validUrl.startsWith('https://')) {
       validUrl = `https://${validUrl}`;
     }
 
-    const validationResult = launchFormSchema.safeParse({
-      productName: productName.trim(),
-      category: category.trim(),
-      pricing,
-      productUrl: validUrl,
-      productDescription: productDescription.trim(),
-    });
+    setHeroUrl(validUrl);
+    setGenerationError(null);
+    setStep('generating');
+    setIsGenerating(true);
+    setGenerationProgress(1);
 
-    const errors: Record<string, string> = {};
+    // Timed simulated steps for smooth UX
+    const t1 = setTimeout(() => setGenerationProgress(2), 2400);
+    const t2 = setTimeout(() => setGenerationProgress(3), 8500);
 
-    if (!validationResult.success) {
-      validationResult.error.issues.forEach((err: z.ZodIssue) => {
-        if (err.path[0]) {
-          errors[err.path[0] as string] = err.message;
-        }
+    try {
+      const res = await fetch('/api/ai/instant-launch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: validUrl }),
       });
-    }
 
-    if (!productLogoFile && !productLogoPreview) {
-      errors.productLogo = 'Please upload a product logo';
-    }
+      const json = await res.json();
+      if (!json.success || !json.data) {
+        throw new Error(json.error || 'Failed to generate instant launch details.');
+      }
 
-    if (!memeFile && !memePreview) {
-      errors.meme = 'Please generate or upload a product meme image (required)';
-    }
+      const data: InstantLaunchResult = json.data;
 
-    if (screenshotPreviews.length < 2) {
-      errors.screenshots = 'Please upload at least 2 product screenshots (required)';
-    }
+      // Populate review state
+      setProductName(data.productName || 'My Product');
+      setCategory(VALID_CATEGORIES.includes(data.category as any) ? data.category : 'SaaS');
+      setPricing(data.pricing || 'freemium');
+      setProductUrl(data.productUrl || validUrl);
+      setProductDescription(data.productDescription || '');
+      setProductLogoUrl(data.productLogoUrl || '');
+      setSeoDossier(
+        data.seoDossier ||
+          synthesizeSeoDossier({
+            product_name: data.productName,
+            product_description: data.productDescription,
+            category: data.category,
+            pricing: data.pricing,
+            product_url: data.productUrl,
+          })
+      );
+      setMemes(data.memes || []);
+      setSelectedMemeIdx(0);
 
-    if (Object.keys(errors).length > 0) {
-      const errorList = Object.values(errors);
-      errors.submit = `Please fix the following issue(s): ${errorList.join('; ')}`;
-      setFormErrors(errors);
+      // Advance to review step
+      setStep('review');
+    } catch (err: any) {
+      console.error('Instant launch error:', err);
+      setGenerationError(
+        err.message || 'Unable to analyze website. Please check the URL and try again.'
+      );
+      setStep('input');
+    } finally {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      setIsGenerating(false);
+    }
+  };
+
+  /**
+   * Regenerates memes for the current product
+   */
+  const handleRegenerateMemes = async () => {
+    const urlToUse = productUrl || heroUrl;
+    if (!urlToUse) return;
+
+    setIsRegeneratingMemes(true);
+    try {
+      const res = await fetch('/api/ai/instant-launch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: urlToUse }),
+      });
+
+      const json = await res.json();
+      if (json.success && json.data?.memes?.length > 0) {
+        setMemes(json.data.memes);
+        setSelectedMemeIdx(0);
+      }
+    } catch (err) {
+      console.warn('Failed to regenerate memes:', err);
+    } finally {
+      setIsRegeneratingMemes(false);
+    }
+  };
+
+  /**
+   * Custom Meme Upload
+   */
+  const handleCustomMemeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      const customItem: MemePickerItem = {
+        id: `custom-meme-${Date.now()}`,
+        angle: 'Custom Upload',
+        topText: '',
+        bottomText: '',
+        caption: file.name.replace(/\.[^/.]+$/, ''),
+        url: dataUrl,
+        prompt: 'User uploaded custom meme',
+      };
+      setMemes((prev) => [customItem, ...prev]);
+      setSelectedMemeIdx(0);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  /**
+   * Custom Logo Upload
+   */
+  const handleCustomLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setProductLogoUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  /**
+   * Submission Gatekeeper
+   */
+  const handleConfirmAndLaunch = async () => {
+    setSubmitError(null);
+
+    if (!productName.trim() || !productUrl.trim() || !category.trim()) {
+      setSubmitError('Product name, category, and URL are required to launch.');
       return;
     }
 
     if (!user) {
+      try {
+        sessionStorage.setItem(PENDING_AUTH_KEY, 'true');
+      } catch {}
       setIsAuthModalOpen(true);
       return;
     }
@@ -412,104 +368,20 @@ function LaunchForm() {
     await executeSubmission(user);
   };
 
+  /**
+   * Executes the actual launch submission to /api/launch/create
+   */
   const executeSubmission = async (authUser: any) => {
-    let validUrl = productUrl.trim();
-    if (validUrl && !validUrl.startsWith('http://') && !validUrl.startsWith('https://')) {
-      validUrl = `https://${validUrl}`;
-    }
-
     setIsSubmitting(true);
+    setStatusMessage('Preparing your viral launch...');
+    setSubmitError(null);
 
     try {
-      // Step 1: Upload Meme (Required)
-      let memeImageUrl = '';
-      if (memeFile) {
-        setStatusMessage('Compressing product meme...');
-        const compressedMemeBlob = await compressImage(memeFile, 1200, 0.8);
-        const compressedMemeFile = new File([compressedMemeBlob], memeFile.name, {
-          type: 'image/jpeg',
-        });
+      const selectedMeme = memes[selectedMemeIdx] || memes[0];
+      const otherMemes = memes
+        .filter((_, idx) => idx !== selectedMemeIdx)
+        .map((m) => ({ url: m.url, caption: m.caption, angle: m.angle }));
 
-        setStatusMessage('Uploading product meme...');
-        const memeExtension = memeFile.name.split('.').pop() || 'jpg';
-        const memePath = `${authUser.id}/${Date.now()}_meme.${memeExtension}`;
-
-        memeImageUrl = await uploadImageToStorage(compressedMemeFile, 'memes', memePath);
-      } else if (memePreview) {
-        if (memePreview.startsWith('blob:') || memePreview.startsWith('data:')) {
-          setStatusMessage('Processing product meme...');
-          const blob = await fetch(memePreview).then((r) => r.blob());
-          const compressedBlob = await compressImage(blob as any, 1200, 0.8);
-          const file = new File([compressedBlob], 'product_meme.jpg', { type: 'image/jpeg' });
-          const memePath = `${authUser.id}/${Date.now()}_meme.jpg`;
-          memeImageUrl = await uploadImageToStorage(file, 'memes', memePath);
-        } else {
-          memeImageUrl = memePreview;
-        }
-      }
-
-      // Step 2: Upload Product Logo
-      let logoUrl = '';
-      if (productLogoFile) {
-        setStatusMessage('Compressing product logo...');
-        const compressedLogoBlob = await compressImage(productLogoFile, 400, 0.8);
-        const compressedLogoFile = new File([compressedLogoBlob], productLogoFile.name, {
-          type: 'image/jpeg',
-        });
-
-        setStatusMessage('Uploading product logo...');
-        const logoExtension = productLogoFile.name.split('.').pop() || 'jpg';
-        const logoPath = `${authUser.id}/${Date.now()}_logo.${logoExtension}`;
-
-        logoUrl = await uploadImageToStorage(compressedLogoFile, 'memes', logoPath);
-      } else if (productLogoPreview) {
-        if (productLogoPreview.startsWith('blob:')) {
-          setStatusMessage('Processing product logo...');
-          const blob = await fetch(productLogoPreview).then((r) => r.blob());
-          const compressedBlob = await compressImage(blob as any, 400, 0.8);
-          const file = new File([compressedBlob], 'product_logo.jpg', { type: 'image/jpeg' });
-          const logoPath = `${authUser.id}/${Date.now()}_logo.jpg`;
-          logoUrl = await uploadImageToStorage(file, 'memes', logoPath);
-        } else {
-          logoUrl = productLogoPreview;
-        }
-      }
-
-      // Step 3: Upload Screenshots
-      const uploadedScreenshotUrls: string[] = [];
-      for (let i = 0; i < screenshotPreviews.length; i++) {
-        const file = screenshotFiles[i];
-        const preview = screenshotPreviews[i];
-
-        if (file) {
-          setStatusMessage(`Compressing screenshot ${i + 1} of ${screenshotPreviews.length}...`);
-          const compressedBlob = await compressImage(file, 1200, 0.8);
-          const compressedFile = new File([compressedBlob], file.name, {
-            type: 'image/jpeg',
-          });
-
-          setStatusMessage(`Uploading screenshot ${i + 1}...`);
-          const fileExtension = file.name.split('.').pop() || 'jpg';
-          const screenshotPath = `${authUser.id}/${Date.now()}_screenshot_${i}.${fileExtension}`;
-
-          const screenshotUrl = await uploadImageToStorage(compressedFile, 'screenshots', screenshotPath);
-          uploadedScreenshotUrls.push(screenshotUrl);
-        } else if (preview) {
-          if (preview.startsWith('blob:')) {
-            setStatusMessage(`Uploading screenshot ${i + 1}...`);
-            const blob = await fetch(preview).then((r) => r.blob());
-            const compressedBlob = await compressImage(blob as any, 1200, 0.8);
-            const blobFile = new File([compressedBlob], `screenshot_${i}.jpg`, { type: 'image/jpeg' });
-            const screenshotPath = `${authUser.id}/${Date.now()}_screenshot_${i}.jpg`;
-            const screenshotUrl = await uploadImageToStorage(blobFile, 'screenshots', screenshotPath);
-            uploadedScreenshotUrls.push(screenshotUrl);
-          } else {
-            uploadedScreenshotUrls.push(preview);
-          }
-        }
-      }
-
-      // Prepare SEO dossier and alternate memes
       const dossierToSave =
         seoDossier ||
         synthesizeSeoDossier({
@@ -517,56 +389,56 @@ function LaunchForm() {
           product_description: productDescription.trim(),
           category: category.trim(),
           pricing,
-          product_url: validUrl,
+          product_url: productUrl.trim(),
         });
 
-      const alternateMemesToSave = generatedMemes
-        .filter((_, idx) => idx !== selectedMemeIdx)
-        .map((m) => ({ url: m.url, caption: m.caption, angle: m.angle }));
+      setStatusMessage('🤖 Autonomous AI Reviewing & Verifying Product Quality...');
 
-      // Step 4: Submit launch via /api/launch/create with autonomous AI evaluation
-      setStatusMessage('🤖 AI Reviewing & Verifying Product Quality...');
-      const createRes = await fetch('/api/launch/create', {
+      const response = await fetch('/api/launch/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: authUser.id,
-          memeImageUrl,
+          memeImageUrl: selectedMeme?.url || '',
           productName: productName.trim(),
-          productUrl: validUrl,
+          productUrl: productUrl.trim(),
           pricing,
           category: category.trim(),
           productDescription: productDescription.trim(),
-          productLogoUrl: logoUrl,
-          screenshotUrls: uploadedScreenshotUrls,
+          productLogoUrl: productLogoUrl || '',
+          screenshotUrls: [],
           seoDossier: dossierToSave,
-          alternateMemes: alternateMemesToSave,
+          alternateMemes: otherMemes,
         }),
       });
 
-      const createJson = await createRes.json();
-      if (!createRes.ok || !createJson.success) {
-        throw new Error(createJson.error || 'Failed to create product launch.');
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to submit launch. Please try again.');
       }
 
-      // Clean up saved drafts
+      // Clear draft session storage
       if (typeof window !== 'undefined') {
-        sessionStorage.removeItem('memelaunch_form_draft');
-        sessionStorage.removeItem('pendingLaunchAfterAuth');
+        sessionStorage.removeItem(SESSION_STORAGE_KEY);
+        sessionStorage.removeItem(PENDING_AUTH_KEY);
       }
 
-      const updatedPts = await getUserPoints(authUser.id);
-      setUserPoints(updatedPts);
+      // Update points balance
+      try {
+        const updatedPts = await getUserPoints(authUser.id);
+        setUserPoints(updatedPts);
+      } catch {}
 
-      const createdLaunch = createJson.launch || {
-        id: createJson.launchId,
+      const createdLaunch = result.launch || {
+        id: result.launchId,
         product_name: productName.trim(),
-        product_url: validUrl,
-        meme_image_url: memeImageUrl,
+        product_url: productUrl.trim(),
+        meme_image_url: selectedMeme?.url || '',
       };
 
-      const approved = createJson.is_approved === true;
-      const aiEval = createJson.ai_evaluation;
+      const approved = result.is_approved === true;
+      const aiEval = result.ai_evaluation;
 
       setIsAiApproved(approved);
       setAiEvaluationData(aiEval || null);
@@ -575,21 +447,30 @@ function LaunchForm() {
 
       if (approved) {
         setIsBoostModalOpen(true);
-        setSuccessMessage(aiEval?.reason || 'Product passed automated AI review and is published live on the community feed.');
+        setSuccessMessage(
+          aiEval?.reason ||
+            'Product passed automated AI review and is published live on the community feed!'
+        );
       } else {
-        setSuccessMessage(aiEval?.reason || 'Submission did not meet automated quality/safety guidelines and was saved as unapproved.');
+        setSuccessMessage(
+          aiEval?.reason ||
+            'Submission did not meet automated quality/safety guidelines and was saved as unapproved.'
+        );
       }
-
     } catch (err: any) {
-      console.error('Launch error:', err);
-      setFormErrors({ submit: err.message || 'An unexpected error occurred during submission.' });
+      console.error('Launch submission error:', err);
+      setSubmitError(err.message || 'An unexpected error occurred during submission.');
+    } finally {
       setIsSubmitting(false);
+      setStatusMessage('');
     }
   };
 
+  const selectedMeme = memes[selectedMemeIdx] || memes[0];
+
   if (authLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 space-y-4">
+      <div className="flex flex-col items-center justify-center py-24 space-y-4">
         <Loader2 className="h-10 w-10 text-lime-400 animate-spin" />
         <p className="text-zinc-400 font-mono text-sm">Loading launch environment...</p>
       </div>
@@ -597,70 +478,81 @@ function LaunchForm() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
-      {/* Header */}
-      <div className="border-b border-zinc-800/80 pb-4">
-        <h1 className="font-impact text-3xl md:text-5xl uppercase tracking-tight text-zinc-50">
-          LAUNCH <span className="text-lime-400">YOUR PRODUCT</span>
-        </h1>
-        <p className="text-zinc-400 text-sm mt-1">
-          Submit your product details and meme to launch to the community feed.
-        </p>
-      </div>
+    <div className="space-y-8 animate-in fade-in duration-300 max-w-7xl mx-auto px-2 sm:px-4 pb-20">
+      {/* Hidden file inputs */}
+      <input
+        ref={customMemeInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleCustomMemeUpload}
+        className="hidden"
+      />
+      <input
+        ref={customLogoInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleCustomLogoUpload}
+        className="hidden"
+      />
 
+      {/* Success View */}
       {successMessage ? (
-        <div className={`flex flex-col items-center justify-center p-8 sm:p-12 border rounded-3xl text-center space-y-5 max-w-xl mx-auto shadow-2xl ${
-          isAiApproved
-            ? 'bg-zinc-900/40 border-lime-400/30'
-            : 'bg-zinc-900/50 border-amber-500/40'
-        }`}>
+        <div
+          className={`flex flex-col items-center justify-center p-8 sm:p-14 border rounded-3xl text-center space-y-6 max-w-2xl mx-auto shadow-2xl ${
+            isAiApproved ? 'bg-zinc-900/40 border-lime-400/30' : 'bg-zinc-900/50 border-amber-500/40'
+          }`}
+        >
           {isAiApproved ? (
-            <div className="h-16 w-16 bg-lime-400/10 border border-lime-400/30 rounded-full flex items-center justify-center text-lime-400 animate-bounce">
-              <CheckCircle2 className="h-8 w-8" />
+            <div className="h-20 w-20 bg-lime-400/10 border-2 border-lime-400/40 rounded-full flex items-center justify-center text-lime-400 animate-bounce">
+              <CheckCircle2 className="h-10 w-10" />
             </div>
           ) : (
-            <div className="h-16 w-16 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center text-amber-400">
-              <AlertCircle className="h-8 w-8" />
+            <div className="h-20 w-20 bg-amber-500/10 border-2 border-amber-500/40 rounded-full flex items-center justify-center text-amber-400">
+              <AlertCircle className="h-10 w-10" />
             </div>
           )}
 
-          <div className="space-y-2">
-            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold uppercase ${
-              isAiApproved
-                ? 'bg-lime-400/20 text-lime-300 border border-lime-400/40'
-                : 'bg-amber-400/20 text-amber-300 border border-amber-400/40'
-            }`}>
+          <div className="space-y-3">
+            <div
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider ${
+                isAiApproved
+                  ? 'bg-lime-400/20 text-lime-300 border border-lime-400/40'
+                  : 'bg-amber-400/20 text-amber-300 border border-amber-400/40'
+              }`}
+            >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>{isAiApproved ? 'Autonomous AI Approved & Live' : 'AI Review: Not Approved'}</span>
+              <span>{isAiApproved ? 'Autonomous AI Approved & Live' : 'AI Review: Revision Needed'}</span>
             </div>
-            <h2 className="text-2xl font-extrabold text-zinc-100 tracking-tight">
-              {isAiApproved ? 'Mission Accomplished!' : 'Submission Needs Revision'}
+            <h2 className="text-3xl font-black text-zinc-100 tracking-tight">
+              {isAiApproved ? 'Launch Published Successfully! 🚀' : 'Submission Needs Revision'}
             </h2>
-            <p className="text-zinc-300 text-sm leading-relaxed max-w-md mx-auto">
+            <p className="text-zinc-300 text-sm leading-relaxed max-w-lg mx-auto">
               {successMessage}
             </p>
             {aiEvaluationData?.feedback && (
-              <p className="text-zinc-400 text-xs font-mono bg-zinc-950 p-3 rounded-xl border border-zinc-800 text-left max-w-md mx-auto">
-                💡 <strong className="text-zinc-300">AI Feedback:</strong> {aiEvaluationData.feedback}
+              <p className="text-zinc-400 text-xs font-mono bg-zinc-950 p-4 rounded-xl border border-zinc-800 text-left max-w-md mx-auto">
+                💡 <strong className="text-zinc-200">AI Feedback:</strong>{' '}
+                {aiEvaluationData.feedback}
               </p>
             )}
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
             {isAiApproved ? (
               <>
                 <Link
                   href={`/products/${encodeURIComponent(productName.trim())}`}
-                  className="px-5 py-2.5 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md"
+                  className="px-6 py-3 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-[0_0_20px_rgba(163,230,53,0.3)] hover:scale-102 flex items-center gap-2"
                 >
-                  View Product in Arena
+                  <span>View Product Live</span>
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
                 <button
                   type="button"
                   onClick={() => setIsBoostModalOpen(true)}
-                  className="px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-lime-400 font-mono text-xs font-bold uppercase tracking-wider rounded-xl border border-zinc-800 transition-colors cursor-pointer"
+                  className="px-6 py-3 bg-zinc-900 hover:bg-zinc-800 text-lime-400 font-mono text-xs font-bold uppercase tracking-wider rounded-xl border border-zinc-700 transition-colors cursor-pointer"
                 >
-                  Boost Points
+                  Boost Upvotes
                 </button>
               </>
             ) : (
@@ -671,126 +563,293 @@ function LaunchForm() {
                   setIsAiApproved(null);
                   setAiEvaluationData(null);
                 }}
-                className="px-5 py-2.5 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md cursor-pointer"
+                className="px-6 py-3 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md cursor-pointer"
               >
                 Edit Product & Resubmit
               </button>
             )}
           </div>
         </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Validation Error Banner */}
-          {formErrors.submit && (
-            <div id="launch-error-banner" className="p-4 bg-rose-950/60 border-2 border-rose-600 rounded-2xl flex gap-3 text-rose-300 text-sm shadow-2xl animate-in fade-in">
-              <AlertCircle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p className="font-bold text-rose-200">Unable to Submit Launch</p>
-                <p className="text-xs leading-relaxed">{formErrors.submit}</p>
-              </div>
+      ) : step === 'input' || step === 'generating' ? (
+        /* STEP 1: HERO URL INPUT & GENERATING CHECKLIST */
+        <div className="max-w-3xl mx-auto space-y-8 pt-8 sm:pt-14 text-center">
+          {/* Hero Header */}
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-lime-400/10 border border-lime-400/30 text-lime-400 text-xs font-mono font-bold tracking-wide">
+              <Zap className="w-3.5 h-3.5" />
+              <span>ZERO-FRICTION INSTANT LAUNCH</span>
             </div>
-          )}
+            <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight uppercase">
+              Launch In <span className="text-lime-400">Seconds</span>, Not Hours
+            </h1>
+            <p className="text-zinc-400 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+              Enter your product URL. DeepSeek extracts your brand, synthesizes your in-depth SEO
+              dossier, and crafts 3 viral memes ready for the feed.
+            </p>
+          </div>
 
-          {/* AI Autofill Banner */}
-          <div className="p-4 rounded-2xl bg-gradient-to-r from-lime-950/40 via-zinc-900 to-lime-950/20 border border-lime-500/30 backdrop-blur-md relative overflow-hidden shadow-xl">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+          {/* Hero URL Input Form */}
+          <div className="p-3 sm:p-4 rounded-3xl bg-zinc-900/60 border border-zinc-800 shadow-2xl backdrop-blur-xl space-y-4">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleGenerate();
+              }}
+              className="flex flex-col sm:flex-row items-center gap-3"
+            >
+              <div className="relative flex-1 w-full">
+                <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
                 <input
                   type="url"
+                  required
+                  disabled={isGenerating}
                   placeholder="https://yourproduct.com"
-                  value={autofillUrl}
-                  onChange={(e) => setAutofillUrl(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAutofill();
-                    }
-                  }}
-                  className="w-full pl-9 pr-4 py-2.5 bg-zinc-950/80 border border-zinc-800 rounded-xl text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-lime-400 focus:ring-1 focus:ring-lime-400 transition"
+                  value={heroUrl}
+                  onChange={(e) => setHeroUrl(e.target.value)}
+                  className="w-full pl-12 pr-4 py-4 bg-zinc-950/90 border border-zinc-800 rounded-2xl text-base text-white placeholder:text-zinc-600 focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/20 transition-all font-mono"
                 />
               </div>
               <button
-                type="button"
-                onClick={() => handleAutofill()}
-                disabled={isAutofilling}
-                className="px-5 py-2.5 bg-lime-400 hover:bg-lime-300 text-black font-semibold rounded-xl text-sm transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-lime-400/10 shrink-0"
+                type="submit"
+                disabled={isGenerating}
+                className="w-full sm:w-auto px-8 py-4 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-black rounded-2xl text-sm uppercase tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_25px_rgba(163,230,53,0.3)] hover:shadow-[0_0_35px_rgba(163,230,53,0.45)] hover:scale-102 active:scale-98 flex items-center justify-center gap-2 shrink-0 cursor-pointer"
               >
-                {isAutofilling ? (
+                {isGenerating ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>{autofillStep === 1 ? 'Reading Page...' : 'AI Analyzing...'}</span>
+                    <Loader2 className="w-4 h-4 animate-spin stroke-[2.5]" />
+                    <span>Analyzing...</span>
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4" />
-                    <span>Autofill with AI</span>
+                    <span>Generate Launch 🚀</span>
                   </>
                 )}
               </button>
+            </form>
+
+            {/* Quick try suggestions */}
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-xs text-zinc-500 font-mono">
+              <span className="text-zinc-600">Quick test:</span>
+              {['linear.app', 'resend.com', 'supabase.com'].map((demo) => (
+                <button
+                  key={demo}
+                  type="button"
+                  onClick={() => {
+                    const full = `https://${demo}`;
+                    setHeroUrl(full);
+                    handleGenerate(full);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+                >
+                  {demo}
+                </button>
+              ))}
             </div>
-
-            {autofillError && (
-              <p className="mt-3 text-xs text-red-400 flex items-center gap-1.5 font-medium">
-                <AlertCircle className="w-3.5 h-3.5" />
-                {autofillError}
-              </p>
-            )}
-
-            {autofillSuccess && (
-              <p className="mt-3 text-xs text-lime-400 flex items-center gap-1.5 font-medium">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                Product details autofilled! Upload your meme below to complete your launch.
-              </p>
-            )}
           </div>
 
+          {/* Generation Error Alert */}
+          {generationError && (
+            <div className="p-4 bg-rose-950/60 border border-rose-800/80 rounded-2xl flex items-center justify-between text-rose-300 text-xs sm:text-sm shadow-xl text-left animate-in fade-in">
+              <div className="flex items-center gap-2.5">
+                <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+                <span>{generationError}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleGenerate()}
+                className="px-3 py-1.5 bg-rose-900/60 hover:bg-rose-800/80 text-rose-200 rounded-lg font-mono text-xs transition-colors shrink-0"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* Step 1 Animated Multi-Step Progress Checklist during Generation */}
+          {step === 'generating' && (
+            <div className="p-6 sm:p-8 rounded-3xl bg-zinc-950/90 border border-lime-500/30 shadow-[0_0_50px_rgba(163,230,53,0.1)] backdrop-blur-xl text-left space-y-6 animate-in fade-in duration-300">
+              <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-lime-400"></span>
+                  </div>
+                  <h3 className="text-base font-extrabold text-white tracking-tight">
+                    Generating Launch Package...
+                  </h3>
+                </div>
+                <span className="text-xs font-mono text-lime-400 font-bold bg-lime-400/10 px-2.5 py-1 rounded-full border border-lime-400/20">
+                  Step {generationProgress} of 3
+                </span>
+              </div>
+
+              {/* Multi-step progress list */}
+              <div className="space-y-4">
+                {/* 1. Website scraping */}
+                <div
+                  className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between ${
+                    generationProgress > 1
+                      ? 'bg-zinc-900/40 border-lime-500/30 text-zinc-300'
+                      : generationProgress === 1
+                      ? 'bg-lime-400/10 border-lime-400/40 text-lime-300 shadow-sm'
+                      : 'bg-zinc-900/20 border-zinc-800/50 text-zinc-500'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {generationProgress > 1 ? (
+                      <CheckCircle2 className="w-5 h-5 text-lime-400 shrink-0" />
+                    ) : (
+                      <Loader2 className="w-5 h-5 text-lime-400 animate-spin shrink-0" />
+                    )}
+                    <span className="text-sm font-semibold">
+                      1. Reading website &amp; extracting brand assets...
+                    </span>
+                  </div>
+                  <span className="text-xs font-mono text-zinc-500 hidden sm:inline">
+                    {generationProgress > 1 ? 'Extracted' : 'In Progress'}
+                  </span>
+                </div>
+
+                {/* 2. DeepSeek reasoning & dossier */}
+                <div
+                  className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between ${
+                    generationProgress > 2
+                      ? 'bg-zinc-900/40 border-cyan-500/30 text-zinc-300'
+                      : generationProgress === 2
+                      ? 'bg-cyan-400/10 border-cyan-400/40 text-cyan-300 shadow-sm'
+                      : 'bg-zinc-900/20 border-zinc-800/50 text-zinc-500'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {generationProgress > 2 ? (
+                      <CheckCircle2 className="w-5 h-5 text-cyan-400 shrink-0" />
+                    ) : generationProgress === 2 ? (
+                      <Loader2 className="w-5 h-5 text-cyan-400 animate-spin shrink-0" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border border-zinc-700 flex items-center justify-center text-[10px] text-zinc-600 font-mono">
+                        2
+                      </div>
+                    )}
+                    <span className="text-sm font-semibold">
+                      2. Synthesizing in-depth product dossier with DeepSeek...
+                    </span>
+                  </div>
+                  <span className="text-xs font-mono text-zinc-500 hidden sm:inline">
+                    {generationProgress > 2
+                      ? 'Complete'
+                      : generationProgress === 2
+                      ? 'Reasoning'
+                      : 'Pending'}
+                  </span>
+                </div>
+
+                {/* 3. 3 Memes crafting */}
+                <div
+                  className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between ${
+                    generationProgress === 3
+                      ? 'bg-amber-400/10 border-amber-400/40 text-amber-300 shadow-sm'
+                      : 'bg-zinc-900/20 border-zinc-800/50 text-zinc-500'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {generationProgress === 3 ? (
+                      <Loader2 className="w-5 h-5 text-amber-400 animate-spin shrink-0" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border border-zinc-700 flex items-center justify-center text-[10px] text-zinc-600 font-mono">
+                        3
+                      </div>
+                    )}
+                    <span className="text-sm font-semibold">
+                      3. Crafting 3 hilarious viral memes...
+                    </span>
+                  </div>
+                  <span className="text-xs font-mono text-zinc-500 hidden sm:inline">
+                    {generationProgress === 3 ? 'Compositing' : 'Pending'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* STEP 2: SIMPLIFIED LAUNCHPAD DASHBOARD */
+        <div className="space-y-8 animate-in fade-in duration-300">
+          {/* Top Bar Navigation & Quick Reset */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800/80 pb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-lime-400/20 text-lime-400 border border-lime-400/30 text-xs font-mono font-bold">
+                  Step 2 of 2
+                </span>
+                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase">
+                  Launchpad Dashboard
+                </h1>
+              </div>
+              <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+                Review your AI-generated meme and dossier below. Edit anything or launch immediately.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setStep('input')}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-xs font-mono text-zinc-300 hover:text-white transition-all self-start sm:self-auto cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Change Product URL</span>
+            </button>
+          </div>
+
+          {/* TOP SECTION: 3-MEME SELECTOR */}
+          <div className="rounded-3xl bg-zinc-900/30 border border-zinc-800/80 p-4 sm:p-6 shadow-xl backdrop-blur-sm">
+            <MemePicker3
+              memes={memes}
+              selectedMemeIdx={selectedMemeIdx}
+              onSelect={setSelectedMemeIdx}
+              onRegenerate={handleRegenerateMemes}
+              isRegenerating={isRegeneratingMemes}
+              onUploadCustomClick={() => customMemeInputRef.current?.click()}
+            />
+          </div>
+
+          {/* 2-COLUMN LAYOUT BELOW */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* LEFT COLUMN: LIVE PRODUCT CARD PREVIEW (5 Cols - Sticky) */}
+            {/* LEFT COLUMN (STICKY): LIVE FEED PREVIEW CARD (5 Cols) */}
             <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-24">
               <div className="flex items-center justify-between px-1">
-                <span className="text-xs font-mono text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                <span className="text-xs font-mono text-zinc-400 uppercase tracking-wider flex items-center gap-2 font-bold">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-lime-400"></span>
                   </span>
-                  Live Feed Card Preview
+                  Live Feed Preview
                 </span>
-                <span className="text-[10px] font-mono text-zinc-500 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded-full">
-                  Feed Appearance
+                <span className="text-[10px] font-mono text-lime-400 bg-lime-400/10 border border-lime-400/30 px-2 py-0.5 rounded-full font-bold">
+                  Card Appearance
                 </span>
               </div>
 
-              {/* Feed Card Mockup Container */}
+              {/* Feed Card Mockup */}
               <div className="bg-zinc-950 border border-zinc-800/90 rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 hover:border-zinc-700">
-                {/* Image Header Preview (1:1 Square matching Feed Card MemeCard standard) */}
+                {/* 1:1 Square Image Container */}
                 <div className="relative aspect-square bg-zinc-900 overflow-hidden border-b border-zinc-800/80 group flex items-center justify-center">
-                  {memePreview ? (
+                  {selectedMeme?.url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={memePreview}
-                      alt="Product Meme Preview"
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  ) : screenshotPreviews[0] ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={screenshotPreviews[0]}
-                      alt="Product Screenshot Preview"
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  ) : productLogoPreview ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={productLogoPreview}
-                      alt="Product Logo Preview"
-                      className="w-24 h-24 object-contain rounded-2xl p-2 bg-zinc-950 border border-zinc-800 shadow-lg"
+                      src={selectedMeme.url}
+                      alt={selectedMeme.caption || 'Product Meme'}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-103"
                     />
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-zinc-900">
+                    <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-zinc-950">
                       <Sparkles className="w-8 h-8 text-zinc-700 mb-2 animate-pulse" />
-                      <p className="text-xs font-mono text-zinc-500">Meme Cover Preview</p>
-                      <p className="text-[11px] text-zinc-600 mt-1">Upload product meme to preview</p>
+                      <p className="text-xs font-mono text-zinc-500">Meme Preview</p>
+                    </div>
+                  )}
+
+                  {/* Angle badge floating on meme */}
+                  {selectedMeme?.angle && (
+                    <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/75 border border-zinc-700 backdrop-blur-md text-[10px] font-mono font-bold text-zinc-200">
+                      {selectedMeme.angle}
                     </div>
                   )}
                 </div>
@@ -799,12 +858,15 @@ function LaunchForm() {
                 <div className="p-5 space-y-4">
                   {/* Header Row: Logo, Name, Category & Price */}
                   <div className="flex items-start gap-3">
-                    {productLogoPreview ? (
+                    {productLogoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={productLogoPreview}
+                        src={productLogoUrl}
                         alt="Product Logo"
                         className="h-10 w-10 rounded-xl object-cover border border-zinc-800 bg-zinc-900 shrink-0 shadow-md"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
                       />
                     ) : (
                       <div className="h-10 w-10 rounded-xl border border-dashed border-zinc-800 bg-zinc-900 flex items-center justify-center text-zinc-600 font-mono text-[10px] uppercase font-bold shrink-0">
@@ -817,36 +879,43 @@ function LaunchForm() {
                         <h3 className="font-extrabold text-base text-zinc-100 truncate">
                           {productName || 'Product Name'}
                         </h3>
-                        <span className={`px-2.5 py-0.5 rounded-full border text-[10px] font-mono uppercase font-bold tracking-wider shrink-0 ${
-                          pricing === 'free'
-                            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
-                            : pricing === 'freemium'
-                            ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-400'
-                            : 'border-purple-500/30 bg-purple-500/10 text-purple-400'
-                        }`}>
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full border text-[10px] font-mono uppercase font-bold tracking-wider shrink-0 ${
+                            pricing === 'free'
+                              ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+                              : pricing === 'freemium'
+                              ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-400'
+                              : 'border-purple-500/30 bg-purple-500/10 text-purple-400'
+                          }`}
+                        >
                           {pricing === 'free' ? 'Free' : pricing === 'freemium' ? 'Freemium' : 'Paid'}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="inline-flex items-center gap-1 text-xs text-zinc-400 font-mono">
                           <Tag className="h-3 w-3 text-lime-400" />
-                          <span>{category || 'Uncategorized'}</span>
+                          <span>{category || 'SaaS'}</span>
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Description Preview */}
-                  <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
-                    {productDescription || 'Your product description will appear here on the community launch feed...'}
+                  {/* Hook / Tagline */}
+                  <p className="text-xs text-zinc-300 font-medium leading-relaxed italic border-l-2 border-lime-400/50 pl-2.5">
+                    &ldquo;{seoDossier?.tagline || productDescription || 'The modern standard for builders.'}&rdquo;
                   </p>
 
-                  {/* Product URL & Website Link Mockup */}
+                  {/* Description Preview */}
+                  <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
+                    {productDescription}
+                  </p>
+
+                  {/* Product URL Link Mockup */}
                   {productUrl && (
                     <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400 pt-1">
                       <span className="truncate max-w-[200px] text-zinc-500">{productUrl}</span>
-                      <span className="text-lime-400 font-bold hover:underline flex items-center gap-1">
-                        Visit Site <ArrowRight className="w-3 h-3" />
+                      <span className="text-lime-400 font-bold flex items-center gap-1">
+                        Visit Site <ExternalLink className="w-3 h-3" />
                       </span>
                     </div>
                   )}
@@ -866,159 +935,83 @@ function LaunchForm() {
                 </div>
               </div>
 
-              {/* Status Message Overlay when uploading */}
+              {/* Status Message Overlay when submitting */}
               {isSubmitting && statusMessage && (
                 <div className="p-4 bg-lime-950/30 border border-lime-500/30 rounded-2xl flex items-center gap-3 text-lime-400 text-sm font-mono shadow-xl animate-pulse">
-                  <Loader2 className="h-4 w-4 animate-spin text-lime-400" />
+                  <Loader2 className="h-4 w-4 animate-spin text-lime-400 shrink-0" />
                   <span>{statusMessage}</span>
                 </div>
               )}
             </div>
 
-            {/* RIGHT COLUMN: PRODUCT SPECIFICATIONS & FORM (7 Cols) */}
-            <div className="lg:col-span-7 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-6 md:p-8 space-y-8 shadow-2xl backdrop-blur-sm">
-
-              {/* Product Specifications Section */}
-              <div className="space-y-6">
-                <div className="border-b border-zinc-800 pb-3 flex items-center justify-between">
-                  <h2 className="text-lg font-extrabold flex items-center gap-2 text-zinc-100">
-                    <Tag className="h-5 w-5 text-lime-400" />
-                    <span>Product Details</span>
-                  </h2>
-                  <span className="text-[11px] font-mono text-zinc-500">Public Product Info</span>
+            {/* RIGHT COLUMN: QUICK PRODUCT EDIT & DOSSIER & LAUNCH CTA (7 Cols) */}
+            <div className="lg:col-span-7 space-y-6">
+              {/* Quick Details Edit Card */}
+              <div className="bg-zinc-950/80 border border-zinc-800/90 rounded-2xl p-5 sm:p-6 space-y-5 backdrop-blur-sm">
+                <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-lime-400/10 border border-lime-400/30 text-lime-400">
+                      <Tag className="w-4 h-4" />
+                    </div>
+                    <h3 className="text-base font-extrabold text-zinc-100">Quick Product Info</h3>
+                  </div>
+                  <span className="text-[11px] font-mono text-zinc-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded-full">
+                    Pre-filled by AI
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Product Name */}
-                  <div className="space-y-1.5" id="err-productName">
-                    <label htmlFor="productName" className="block text-xs font-mono uppercase tracking-wider text-zinc-300">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-mono uppercase tracking-wider text-zinc-300 font-bold">
                       Product Name
                     </label>
                     <input
-                      id="productName"
                       type="text"
                       required
-                      placeholder="e.g. MemeLaunch"
                       value={productName}
                       onChange={(e) => setProductName(e.target.value)}
-                      className={`w-full px-4 py-2.5 bg-zinc-950 border ${formErrors.productName ? 'border-rose-500/60' : 'border-zinc-800/80'} rounded-xl text-sm focus:outline-none focus:border-lime-400 text-zinc-100 placeholder-zinc-600 transition-colors`}
+                      placeholder="e.g. MemeLaunch"
+                      className="w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-700/80 rounded-xl text-sm focus:outline-none focus:border-lime-400 text-zinc-100 font-medium"
                     />
-                    {formErrors.productName && (
-                      <p className="text-xs text-rose-400 mt-1 flex items-center gap-1 font-mono">
-                        <AlertCircle className="h-3.5 w-3.5" />
-                        {formErrors.productName}
-                      </p>
-                    )}
                   </div>
 
                   {/* Category Dropdown */}
-                  <div className="space-y-1.5" id="err-category">
-                    <label htmlFor="category" className="block text-xs font-mono uppercase tracking-wider text-zinc-300">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-mono uppercase tracking-wider text-zinc-300 font-bold">
                       Category
                     </label>
                     <div className="relative">
                       <select
-                        id="category"
-                        required
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                        className={`w-full px-4 py-2.5 bg-zinc-950 border ${formErrors.category ? 'border-rose-500/60' : 'border-zinc-800/80'} rounded-xl text-sm focus:outline-none focus:border-lime-400 text-zinc-100 transition-colors cursor-pointer appearance-none`}
+                        className="w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-700/80 rounded-xl text-sm focus:outline-none focus:border-lime-400 text-zinc-100 font-medium cursor-pointer appearance-none"
                       >
-                        <option value="" disabled className="text-zinc-600">Select a category</option>
-                        {CATEGORIES.map((cat) => (
+                        {VALID_CATEGORIES.map((cat) => (
                           <option key={cat} value={cat} className="bg-zinc-950 text-zinc-100">
                             {cat}
                           </option>
                         ))}
                       </select>
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-500">
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-zinc-400">
                         <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                           <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
                         </svg>
                       </div>
                     </div>
-                    {formErrors.category && (
-                      <p className="text-xs text-rose-400 mt-1 flex items-center gap-1 font-mono">
-                        <AlertCircle className="h-3.5 w-3.5" />
-                        {formErrors.category}
-                      </p>
-                    )}
                   </div>
                 </div>
 
-                {/* Product URL */}
-                <div className="space-y-1.5" id="err-productUrl">
-                  <label htmlFor="productUrl" className="block text-xs font-mono uppercase tracking-wider text-zinc-300">
-                    Product Link (URL)
-                  </label>
-                  <div className="relative">
-                    <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-                    <input
-                      id="productUrl"
-                      type="url"
-                      required
-                      placeholder="https://yourproduct.com"
-                      value={productUrl}
-                      onChange={(e) => setProductUrl(e.target.value)}
-                      className={`w-full pl-10 pr-4 py-2.5 bg-zinc-950 border ${formErrors.productUrl ? 'border-rose-500/60' : 'border-zinc-800/80'} rounded-xl text-sm focus:outline-none focus:border-lime-400 text-zinc-100 placeholder-zinc-600 transition-colors`}
-                    />
-                  </div>
-                  {formErrors.productUrl && (
-                    <p className="text-xs text-rose-400 mt-1 flex items-center gap-1 font-mono">
-                      <AlertCircle className="h-3.5 w-3.5" />
-                      {formErrors.productUrl}
-                    </p>
-                  )}
-                </div>
-
-                {/* Product Description */}
-                <div className="space-y-1.5" id="err-productDescription">
-                  <div className="flex items-center justify-between">
-                    <label htmlFor="productDescription" className="block text-xs font-mono uppercase tracking-wider text-zinc-300">
-                      Product Description
-                    </label>
-                    <span className={`text-[11px] font-mono ${productDescription.length > 500 ? 'text-rose-400' : 'text-zinc-500'}`}>
-                      {productDescription.length}/500 chars
-                    </span>
-                  </div>
-                  <textarea
-                    id="productDescription"
-                    rows={3}
-                    maxLength={500}
-                    required
-                    placeholder="Tell us what your product does. Keep it punchy, clear, and direct."
-                    value={productDescription}
-                    onChange={(e) => {
-                      setProductDescription(e.target.value);
-                      if (formErrors.productDescription) {
-                        setFormErrors((prev) => {
-                          const copy = { ...prev };
-                          delete copy.productDescription;
-                          return copy;
-                        });
-                      }
-                    }}
-                    className={`w-full px-4 py-2.5 bg-zinc-950 border ${formErrors.productDescription ? 'border-rose-500/60' : 'border-zinc-800/80'} rounded-xl text-sm focus:outline-none focus:border-lime-400 text-zinc-100 placeholder-zinc-600 transition-colors resize-none`}
-                  />
-                  {formErrors.productDescription && (
-                    <p className="text-xs text-rose-400 mt-1 flex items-center gap-1 font-mono">
-                      <AlertCircle className="h-3.5 w-3.5" />
-                      {formErrors.productDescription}
-                    </p>
-                  )}
-                </div>
-
-                {/* Pricing Selector */}
+                {/* Pricing Selector Buttons */}
                 <div className="space-y-2">
-                  <label className="block text-xs font-mono uppercase tracking-wider text-zinc-300">
+                  <label className="block text-xs font-mono uppercase tracking-wider text-zinc-300 font-bold">
                     Pricing Model
                   </label>
-                  
                   <div className="grid grid-cols-3 gap-3">
                     {[
                       { id: 'free', label: 'Free' },
                       { id: 'freemium', label: 'Freemium' },
-                      { id: 'paid', label: 'Paid Only' }
+                      { id: 'paid', label: 'Paid' },
                     ].map((item) => {
                       const isSelected = pricing === item.id;
                       return (
@@ -1026,294 +1019,113 @@ function LaunchForm() {
                           key={item.id}
                           type="button"
                           onClick={() => setPricing(item.id as any)}
-                          className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all gap-1 cursor-pointer ${
-                            isSelected 
-                              ? 'bg-lime-400/10 border-lime-400 text-lime-400 font-bold shadow-[0_0_15px_rgba(163,230,53,0.15)]' 
-                              : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700'
+                          className={`flex items-center justify-center p-2.5 rounded-xl border text-xs font-mono font-bold transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-lime-400/15 border-lime-400 text-lime-300 shadow-[0_0_15px_rgba(163,230,53,0.15)]'
+                              : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
                           }`}
                         >
-                          <DollarSign className="h-4 w-4 stroke-[2]" />
-                          <span className="text-xs font-mono">{item.label}</span>
+                          <DollarSign className="w-3.5 h-3.5 mr-1" />
+                          <span>{item.label}</span>
                         </button>
                       );
                     })}
                   </div>
                 </div>
 
-                {/* In-Depth SEO Dossier Customizer */}
-                <SeoDossierEditor
-                  dossier={
-                    seoDossier ||
-                    synthesizeSeoDossier({
-                      product_name: productName,
-                      product_description: productDescription,
-                      category,
-                      pricing,
-                      product_url: productUrl,
-                    })
-                  }
-                  onChange={setSeoDossier}
-                  productName={productName}
-                />
-
-              </div>
-
-              {/* Product Logo Upload (Directly Above Screenshots) */}
-              <div className="space-y-4 pt-4 border-t border-zinc-800/80" id="err-productLogo">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-extrabold flex items-center gap-2 text-zinc-100">
-                    <Upload className="h-5 w-5 text-lime-400" />
-                    <span>Product Logo <span className="text-lime-400">*</span></span>
-                  </h2>
-                  <span className="text-xs font-mono text-zinc-500">1:1 Square Logo</span>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div 
-                    onClick={() => logoInputRef.current?.click()}
-                    className={`flex-1 border-2 border-dashed ${formErrors.productLogo ? 'border-rose-500/50 bg-rose-950/5' : 'border-zinc-800 hover:border-lime-400/50 bg-zinc-950'} rounded-2xl p-4 text-center cursor-pointer transition-all hover:bg-zinc-900/40 group`}
-                  >
-                    <input
-                      ref={logoInputRef}
-                      type="file"
-                      id="logo-upload"
-                      accept="image/*"
-                      onChange={handleLogoChange}
-                      className="hidden"
-                    />
-                    <Upload className="h-5 w-5 text-zinc-500 group-hover:text-lime-400 mx-auto mb-1 stroke-[1.5] transition-colors" />
-                    <p className="text-xs font-semibold text-zinc-300">
-                      {productLogoFile
-                        ? productLogoFile.name
-                        : productLogoPreview
-                        ? 'Logo extracted from website (Click to replace)'
-                        : 'Upload logo image (1:1 square recommended)'}
-                    </p>
+                {/* Product Description */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-mono uppercase tracking-wider text-zinc-300 font-bold">
+                      Elevator Pitch / Description
+                    </label>
+                    <span className="text-[10px] font-mono text-zinc-500">
+                      {productDescription.length}/500 chars
+                    </span>
                   </div>
-                  {productLogoPreview && (
-                    <div className="relative h-16 w-16 rounded-2xl overflow-hidden border border-zinc-800 shrink-0 bg-zinc-950 shadow-md">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <textarea
+                    rows={2}
+                    maxLength={500}
+                    value={productDescription}
+                    onChange={(e) => setProductDescription(e.target.value)}
+                    placeholder="Short punchy elevator pitch..."
+                    className="w-full px-3.5 py-2 bg-zinc-900 border border-zinc-700/80 rounded-xl text-xs sm:text-sm text-zinc-200 focus:outline-none focus:border-lime-400 resize-none leading-relaxed"
+                  />
+                </div>
+
+                {/* Logo Quick Preview & Replace */}
+                <div className="flex items-center justify-between pt-2 border-t border-zinc-800/60">
+                  <div className="flex items-center gap-3">
+                    {productLogoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={productLogoPreview}
-                        alt="Logo preview"
-                        className="h-full w-full object-cover"
+                        src={productLogoUrl}
+                        alt="Logo"
+                        className="w-8 h-8 rounded-lg object-cover border border-zinc-700 bg-zinc-900"
                       />
-                    </div>
-                  )}
-                </div>
-                {formErrors.productLogo && (
-                  <p className="text-xs text-rose-400 mt-1 flex items-center gap-1 font-mono">
-                    <AlertCircle className="h-3.5 w-3.5" />
-                    {formErrors.productLogo}
-                  </p>
-                )}
-              </div>
-
-              {/* Product Screenshots Section (2-3 required) */}
-              <div className="space-y-4 pt-4 border-t border-zinc-800/80">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-extrabold flex items-center gap-2 text-zinc-100">
-                    <Upload className="h-5 w-5 text-lime-400" />
-                    <span>Product Screenshots <span className="text-lime-400">*</span></span>
-                  </h2>
-                  <span className="text-xs font-mono text-zinc-500">
-                    {`${screenshotPreviews.length}/3 uploaded (2 required)`}
-                  </span>
-                </div>
-
-                {/* Dropzone & Previews */}
-                <div className="space-y-4" id="err-screenshots">
-                  {screenshotPreviews.length < 3 && (
-                    <div 
-                      onClick={() => screenshotInputRef.current?.click()}
-                      className={`border-2 border-dashed ${formErrors.screenshots ? 'border-rose-500/50 bg-rose-950/5' : 'border-zinc-800 hover:border-lime-400/50 bg-zinc-950'} rounded-2xl p-6 text-center cursor-pointer transition-all hover:bg-zinc-900/40 group`}
-                    >
-                      <input
-                        ref={screenshotInputRef}
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handleScreenshotChange}
-                        className="hidden"
-                      />
-                      <Upload className="h-6 w-6 text-zinc-500 group-hover:text-lime-400 mx-auto mb-2 stroke-[1.5] transition-colors" />
-                      <p className="text-sm font-semibold text-zinc-300">
-                        Upload product screenshots
-                      </p>
-                      <p className="text-xs text-zinc-500 mt-1 font-mono">
-                        Upload 2 or 3 app screenshots to showcase your product features.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Previews grid */}
-                  {screenshotPreviews.length > 0 && (
-                    <div className="grid grid-cols-3 gap-3">
-                      {screenshotPreviews.map((preview, index) => (
-                        <div key={index} className="group relative aspect-[16/10] bg-zinc-950 rounded-xl overflow-hidden border border-zinc-800 shadow">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={preview}
-                            alt={`Screenshot ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeScreenshot(index)}
-                            className="absolute top-1.5 right-1.5 p-1 bg-zinc-950/80 hover:bg-rose-950/90 text-zinc-400 hover:text-rose-400 rounded-md border border-zinc-800 hover:border-rose-800/50 opacity-0 group-hover:opacity-100 transition-all shadow"
-                            title="Delete screenshot"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                          <div className="absolute bottom-1 left-2 bg-zinc-950/80 px-1.5 py-0.5 rounded font-mono text-[9px] text-zinc-400 border border-zinc-800">
-                            #{index + 1}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {formErrors.screenshots && (
-                    <p className="text-xs text-rose-400 mt-1 flex items-center gap-1 font-mono">
-                      <AlertCircle className="h-3.5 w-3.5" />
-                      {formErrors.screenshots}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Upload Meme Section (Required) */}
-              <div className="space-y-4 pt-4 border-t border-zinc-800/80" id="err-meme">
-                <MemeIdeogramGenerator
-                  productName={productName}
-                  productDescription={productDescription}
-                  productUrl={productUrl}
-                  category={category}
-                  onSelectMeme={(meme) => {
-                    setMemeFile(null);
-                    setMemePreview(meme.url);
-                    if (formErrors.meme) {
-                      setFormErrors((prev) => {
-                        const copy = { ...prev };
-                        delete copy.meme;
-                        return copy;
-                      });
-                    }
-                  }}
-                  selectedMemeUrl={memePreview}
-                  generatedMemes={generatedMemes}
-                  setGeneratedMemes={setGeneratedMemes}
-                  selectedMemeIdx={selectedMemeIdx}
-                  setSelectedMemeIdx={setSelectedMemeIdx}
-                  onUploadCustomClick={() => {
-                    setShowManualMemeUpload(true);
-                    setTimeout(() => memeInputRef.current?.click(), 100);
-                  }}
-                />
-
-                {/* Optional Manual File Upload Dropzone */}
-                {(showManualMemeUpload || generatedMemes.length === 0) && (
-                  <div className="space-y-3 pt-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono text-zinc-400">
-                        Or upload custom meme image from your device:
-                      </span>
-                      {showManualMemeUpload && generatedMemes.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setShowManualMemeUpload(false)}
-                          className="text-[11px] font-mono text-zinc-500 hover:text-zinc-300 underline cursor-pointer"
-                        >
-                          Hide manual upload
-                        </button>
-                      )}
-                    </div>
-
-                    <div 
-                      onClick={() => memeInputRef.current?.click()}
-                      className={`border-2 border-dashed ${formErrors.meme ? 'border-rose-500/50 bg-rose-950/5' : 'border-zinc-800 hover:border-lime-400/50 bg-zinc-950'} rounded-2xl p-5 text-center cursor-pointer transition-all hover:bg-zinc-900/40 group`}
-                    >
-                      <input
-                        ref={memeInputRef}
-                        type="file"
-                        id="meme-upload"
-                        accept="image/*"
-                        onChange={(e) => {
-                          handleMemeChange(e);
-                          setSelectedMemeIdx(-1);
-                        }}
-                        className="hidden"
-                      />
-                      <Upload className="h-5 w-5 text-zinc-500 group-hover:text-lime-400 mx-auto mb-1.5 stroke-[1.5] transition-colors" />
-                      <p className="text-xs font-semibold text-zinc-300">
-                        {memeFile ? memeFile.name : 'Upload custom meme image'}
-                      </p>
-                      <p className="text-[11px] text-zinc-500 font-mono mt-0.5">
-                        PNG, JPG, or WEBP up to 5MB
-                      </p>
-                    </div>
-
-                    {memeFile && memePreview && (
-                      <div className="relative aspect-square bg-zinc-950 rounded-2xl overflow-hidden border border-zinc-800 shadow-md group max-w-sm mx-auto">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={memePreview}
-                          alt="Custom meme preview"
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleClearMeme}
-                          className="absolute top-2 right-2 p-1.5 bg-zinc-950/80 hover:bg-rose-950 text-zinc-400 hover:text-rose-400 rounded-lg border border-zinc-800 hover:border-rose-800/50 transition-all opacity-0 group-hover:opacity-100 shadow"
-                          title="Remove meme"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                    ) : (
+                      <div className="w-8 h-8 rounded-lg border border-dashed border-zinc-700 bg-zinc-900 flex items-center justify-center text-[10px] text-zinc-500 font-mono">
+                        Logo
                       </div>
                     )}
+                    <span className="text-xs font-mono text-zinc-400">Brand Logo</span>
                   </div>
-                )}
 
-                {formErrors.meme && (
-                  <p className="text-xs text-rose-400 mt-1 flex items-center gap-1 font-mono">
-                    <AlertCircle className="h-3.5 w-3.5" />
-                    {formErrors.meme}
-                  </p>
-                )}
+                  <button
+                    type="button"
+                    onClick={() => customLogoInputRef.current?.click()}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-xs font-mono text-zinc-300 border border-zinc-700/80 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <Upload className="w-3 h-3" />
+                    <span>Change Logo</span>
+                  </button>
+                </div>
               </div>
 
-              {/* Action Bar Error Notice */}
-              {formErrors.submit && (
-                <div className="p-3 bg-rose-950/50 border border-rose-600/60 rounded-xl text-xs text-rose-300 flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
-                  <span>{formErrors.submit}</span>
+              {/* In-Depth SEO Dossier Component */}
+              {seoDossier && (
+                <InDepthDossierPreview
+                  dossier={seoDossier}
+                  productName={productName}
+                  onChange={setSeoDossier}
+                />
+              )}
+
+              {/* Submit Error Notification */}
+              {submitError && (
+                <div className="p-4 bg-rose-950/70 border border-rose-700 rounded-2xl flex items-center gap-3 text-rose-300 text-xs sm:text-sm shadow-xl animate-in fade-in">
+                  <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+                  <span>{submitError}</span>
                 </div>
               )}
 
-              {/* Launch CTA Action Bar */}
-              <div className="pt-6 border-t border-zinc-800/80 flex items-center justify-end gap-4">
+              {/* ONE BIG GLOWING LAUNCH BUTTON */}
+              <div className="pt-2">
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleConfirmAndLaunch}
                   disabled={isSubmitting}
-                  className="px-6 py-3 font-extrabold uppercase text-xs tracking-wider rounded-xl transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-lime-400 hover:bg-lime-300 text-zinc-950 shadow-[0_0_25px_rgba(163,230,53,0.2)] hover:shadow-[0_0_40px_rgba(163,230,53,0.35)]"
+                  className="w-full py-4 sm:py-5 px-8 rounded-2xl font-black text-base sm:text-lg uppercase tracking-wider text-zinc-950 bg-lime-400 hover:bg-lime-300 active:scale-98 transition-all duration-200 shadow-[0_0_35px_rgba(163,230,53,0.35)] hover:shadow-[0_0_50px_rgba(163,230,53,0.5)] flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer group"
                 >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin stroke-[2.5]" />
-                        <span>{statusMessage || 'Publishing Launch...'}</span>
-                      </>
-                    ) : (
+                  {isSubmitting ? (
                     <>
-                      <span>Launch Product</span>
-                      <ArrowRight className="h-4 w-4 stroke-[2.5]" />
+                      <Loader2 className="w-5 h-5 animate-spin stroke-[2.5]" />
+                      <span>{statusMessage || 'Publishing Launch...'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Confirm &amp; Launch Now 🚀</span>
+                      <ArrowRight className="w-5 h-5 stroke-[2.5] group-hover:translate-x-1 transition-transform" />
                     </>
                   )}
                 </button>
+                <p className="text-center text-[11px] font-mono text-zinc-500 mt-2.5">
+                  Instant launch to community feed • Autonomous AI Quality Verified • 0 screenshots required
+                </p>
               </div>
-
             </div>
           </div>
-        </form>
+        </div>
       )}
 
       {/* Earn Points Modal Popup */}
