@@ -38,6 +38,7 @@ export interface InstantLaunchResult {
 export interface GenerateInstantLaunchOptions {
   vibe?: string;
   skipReplicate?: boolean;
+  skipImageGen?: boolean;
   timeoutMs?: number;
 }
 
@@ -621,7 +622,8 @@ ${cleanBodyText || 'Minimal text available. Infer product purpose from URL and t
   let finalMemes: InstantLaunchMeme[] = [];
   const replicateToken = process.env.REPLICATE_API_TOKEN;
 
-  if (replicateToken && !options.skipReplicate) {
+  const shouldSkipImages = Boolean(options.skipReplicate || options.skipImageGen);
+  if (replicateToken && !shouldSkipImages) {
     try {
       // Attempt Replicate Ideogram rendering with a 35s overall timeout
       const replicatePromise = generate3IdeogramMemes(memeConcepts);
