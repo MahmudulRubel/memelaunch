@@ -147,7 +147,7 @@ async function testFullExtractionAndGeneration() {
   });
   console.log(`- Target Audience (${data.seoDossier?.targetAudience?.length}):`);
   data.seoDossier?.targetAudience?.slice(0, 2).forEach((ta, i) => {
-    console.log(`    ${i + 1}. Persona: ${ta.persona} | Why: ${ta.whyTheyLoveIt}`);
+    console.log(`    ${i + 1}. Role: ${ta.role} | Benefit: ${ta.benefit}`);
   });
   console.log(`- FAQs (${data.seoDossier?.faqs?.length}):`);
   data.seoDossier?.faqs?.slice(0, 2).forEach((faq, i) => {

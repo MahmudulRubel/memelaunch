@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateInstantLaunchData } from '@/lib/instant-launch';
+import { generateInstantLaunchData, normalizeUrl } from '@/lib/instant-launch';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -26,6 +26,15 @@ export async function POST(req: NextRequest) {
     if (!url || typeof url !== 'string' || !url.trim()) {
       return NextResponse.json(
         { success: false, error: 'Product URL is required' },
+        { status: 400 }
+      );
+    }
+
+    try {
+      normalizeUrl(url);
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'Invalid product URL. Please provide a valid website address.' },
         { status: 400 }
       );
     }

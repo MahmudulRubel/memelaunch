@@ -72,7 +72,15 @@ export function normalizeUrl(rawUrl: string): string {
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     url = `https://${url}`;
   }
-  return url;
+  try {
+    const parsed = new URL(url);
+    if (!parsed.protocol.startsWith('http')) {
+      throw new Error('Only HTTP and HTTPS URLs are supported');
+    }
+    return url;
+  } catch {
+    throw new Error(`Invalid URL: ${rawUrl}`);
+  }
 }
 
 /**
@@ -158,10 +166,10 @@ export async function scrapeWebsiteContent(url: string) {
     (hostname ? `https://www.google.com/s2/favicons?domain=${hostname}&sz=128` : '');
 
   const cleanBodyText = html
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
-    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
-    .replace(/<svg\b[^<]*(?:(?!<\/svg>)<[^<]*)*<\/svg>/gi, ' ')
-    .replace(/<noscript\b[^<]*(?:(?!<\/noscript>)<[^<]*)*<\/noscript>/gi, ' ')
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<svg\b[^>]*>[\s\S]*?<\/svg>/gi, ' ')
+    .replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, ' ')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
