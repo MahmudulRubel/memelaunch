@@ -9,7 +9,7 @@
 
   --font-sans: var(--font-sans), var(--font-outfit), system-ui, sans-serif;
   --font-mono: var(--font-mono), monospace;
-  --font-impact: "Impact", "Anton", "Arial Black", sans-serif;
+  --font-impact: var(--font-anton), "Impact", "Arial Black", sans-serif;
 
   --radius-card: 1.0rem;
   --radius-modal: 2.0rem;
