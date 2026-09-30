@@ -6,13 +6,13 @@
  * 1. Fast, resilient website scraping (HTML metadata, favicon, clean body text)
  * 2. Unified single-turn DeepSeek AI reasoning for product identity,
  *    full in-depth SEO dossier, and 3 contrasting viral meme concepts.
- * 3. High-res meme image generation via Replicate (Ideogram) with instant
- *    SVG Impact-typography compositor fallback.
+ * 3. High-res visual meme generation via Replicate (FLUX Schnell) with instant
+ *    SVG Impact-typography compositor for burning DeepSeek's text.
  */
 
 import { synthesizeSeoDossier, isValidSeoDossier, type SeoDossier } from './seo-dossier.ts';
 import { generateMemeSvgComposite } from './meme-compositor.ts';
-import { generate3IdeogramMemes, type MemeConcept } from './replicate.ts';
+import { generate3FluxMemes, type MemeConcept } from './replicate.ts';
 
 export interface InstantLaunchMeme {
   id: string;
@@ -22,6 +22,7 @@ export interface InstantLaunchMeme {
   caption: string;
   prompt: string;
   url: string;
+  baseImageUrl?: string;
 }
 
 export interface InstantLaunchResult {
@@ -58,9 +59,9 @@ export const VALID_CATEGORIES = [
 ] as const;
 
 export const MEME_ANGLES = [
-  'The Relatable Struggle',
-  'The 10x Superpower',
-  'The Savage Comparison',
+  'The Relatable Panic',
+  'Expectation vs Reality',
+  'The Savior Turn',
 ] as const;
 
 /**
@@ -188,16 +189,15 @@ export async function scrapeWebsiteContent(url: string) {
 }
 
 /**
- * Creates an ultra-fast, visually striking SVG meme fallback with Impact typography
+ * Creates the clean 1024x1024 base SVG graphic (background, cyberpunk grid, angle pill, illustration)
+ * without text overlays, ready for client/server Impact compositing.
  */
-export function createFallbackSvgMeme(params: {
+export function createFallbackSvgBase(params: {
   angle: string;
-  topText: string;
-  bottomText: string;
   productName: string;
   index: number;
 }): string {
-  const { angle, topText, bottomText, productName, index } = params;
+  const { angle, productName, index } = params;
 
   // Curated color themes and aesthetic gradients matching the 3 meme angles
   let bgGradient = '';
@@ -311,13 +311,24 @@ export function createFallbackSvgMeme(params: {
     <text x="512" y="830" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="bold" fill="#71717a" letter-spacing="2">MEMELAUNCH • VERIFIED LAUNCH</text>
   </svg>`;
 
-  const baseSvgDataUri = `data:image/svg+xml;base64,${Buffer.from(baseSvg).toString('base64')}`;
+  return `data:image/svg+xml;base64,${Buffer.from(baseSvg).toString('base64')}`;
+}
 
-  // Composite the classic Impact typography onto the SVG
+/**
+ * Creates an ultra-fast, visually striking SVG meme with Impact typography
+ */
+export function createFallbackSvgMeme(params: {
+  angle: string;
+  topText: string;
+  bottomText: string;
+  productName: string;
+  index: number;
+}): string {
+  const baseSvgDataUri = createFallbackSvgBase(params);
   return generateMemeSvgComposite({
     imageUrl: baseSvgDataUri,
-    topText,
-    bottomText,
+    topText: params.topText,
+    bottomText: params.bottomText,
   });
 }
 
@@ -350,40 +361,46 @@ function createFallbackInstantData(params: {
   const rawMemes = [
     {
       id: 'meme-angle-1',
-      angle: 'The Relatable Struggle',
-      topText: `DOING IT MANUALLY: 40 HOURS`,
-      bottomText: `USING ${productName.toUpperCase()}: 3 MINUTES`,
-      caption: `Doing it manually for 40 hours vs using ${productName} in 3 minutes`,
-      prompt: `A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: "DOING IT MANUALLY: 40 HOURS". In the center: A funny exhausted programmer crying at a chaotic desk buried in burning servers and error popups. At the bottom, bold uppercase neon lime typography with black outline reads: "USING ${productName.toUpperCase()}: 3 MINUTES". Clean graphic meme composition, vibrant contrast, studio lighting.`,
+      angle: 'The Relatable Panic',
+      topText: `PUSHING TO PROD AT 4:59 PM`,
+      bottomText: `PRAYING TO THE SERVER GODS`,
+      caption: `The universal Friday afternoon developer experience`,
+      prompt: `A hilarious expressive developer sweating in comical terror while hovering a shaking finger over a keyboard, wide-eyed funny face, dramatic server room lighting, clean visual scene, no text, no letters`,
     },
     {
       id: 'meme-angle-2',
-      angle: 'The 10x Superpower',
-      topText: `ME DISCOVERING ${productName.toUpperCase()}`,
-      bottomText: `SHIPPING 10X FASTER WITH ZERO BUGS`,
-      caption: `How it feels shipping in 5 minutes with ${productName}`,
-      prompt: `A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: "ME DISCOVERING ${productName.toUpperCase()}". In the center: A cool programmer wearing sunglasses sipping iced coffee while floating in zero gravity with rocket thrusters. At the bottom, bold uppercase neon lime typography with black outline reads: "SHIPPING 10X FASTER WITH ZERO BUGS". Clean graphic meme composition, vibrant contrast, studio lighting.`,
+      angle: 'Expectation vs Reality',
+      topText: `MY CODE HAS ZERO BUGS`,
+      bottomText: `SAID NO DEVELOPER EVER`,
+      caption: `Delusional optimism right before running the automated test suite`,
+      prompt: `An overly smug programmer grinning triumphantly with crossed arms right before their laptop starts comically smoking, visual irony, studio lighting, no text, no letters`,
     },
     {
       id: 'meme-angle-3',
-      angle: 'The Savage Comparison',
-      topText: `LEGACY TOOLS: $99/MO & SLOW`,
-      bottomText: `${productName.toUpperCase()}: INSTANT & FREE`,
-      caption: `Legacy tools charging $99/month vs ${productName} just working`,
-      prompt: `A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: "LEGACY TOOLS: $99/MO & SLOW". In the center: A split scene with a sad rusty dinosaur on the left and a supersonic glowing hovercraft on the right. At the bottom, bold uppercase neon lime typography with black outline reads: "${productName.toUpperCase()}: INSTANT & FREE". Clean graphic meme composition, vibrant contrast, studio lighting.`,
+      angle: 'The Savior Turn',
+      topText: `SPENT 3 DAYS ON BOILERPLATE`,
+      bottomText: `THEN ${productName.toUpperCase()} FIXED IT IN 5S`,
+      caption: `How it feels shipping with ${productName} instead of fighting manual setup`,
+      prompt: `A triumphant, extremely relaxed programmer floating in zero gravity sipping iced coffee while glowing robotic arms handle the servers, god-mode energy, vivid studio lighting, clean visual scene, no text, no letters`,
     },
   ];
 
-  const memes: InstantLaunchMeme[] = rawMemes.map((m, idx) => ({
-    ...m,
-    url: createFallbackSvgMeme({
+  const memes: InstantLaunchMeme[] = rawMemes.map((m, idx) => {
+    const baseSvgDataUri = createFallbackSvgBase({
       angle: m.angle,
-      topText: m.topText,
-      bottomText: m.bottomText,
       productName,
       index: idx,
-    }),
-  }));
+    });
+    return {
+      ...m,
+      url: generateMemeSvgComposite({
+        imageUrl: baseSvgDataUri,
+        topText: m.topText,
+        bottomText: m.bottomText,
+      }),
+      baseImageUrl: baseSvgDataUri,
+    };
+  });
 
   return {
     productName,
@@ -463,27 +480,27 @@ Return ONLY a valid JSON object matching this exact schema:
   "memeConcepts": [
     {
       "id": "meme-angle-1",
-      "angle": "The Relatable Struggle",
-      "topText": "string (PUNCHY SETUP IN ALL CAPS, under 30 chars)",
-      "bottomText": "string (PUNCHY PUNCHLINE IN ALL CAPS, under 30 chars)",
+      "angle": "The Relatable Panic",
+      "topText": "string (ALL CAPS setup line, under 30 chars, e.g. WHEN YOU PUSH TO PROD)",
+      "bottomText": "string (ALL CAPS punchline, under 30 chars, e.g. AND THE WHOLE SITE CRASHES)",
       "caption": "string (hilarious, shareable social caption)",
-      "prompt": "string (detailed Ideogram 4-part prompt for 1:1 square meme poster)"
+      "prompt": "string (pure visual scene description for FLUX: terrified developer sweating in comical panic, laptop smoking, cinematic lighting, NO TEXT, NO WORDS, NO TYPOGRAPHY)"
     },
     {
       "id": "meme-angle-2",
-      "angle": "The 10x Superpower",
-      "topText": "string (PUNCHY SETUP IN ALL CAPS, under 30 chars)",
-      "bottomText": "string (PUNCHY PUNCHLINE IN ALL CAPS, under 30 chars)",
+      "angle": "Expectation vs Reality",
+      "topText": "string (ALL CAPS setup line, under 30 chars, e.g. IT WORKED ON MY MACHINE)",
+      "bottomText": "string (ALL CAPS punchline, under 30 chars, e.g. PROD HAS LEFT THE CHAT)",
       "caption": "string (hilarious, shareable social caption)",
-      "prompt": "string (detailed Ideogram 4-part prompt for 1:1 square meme poster)"
+      "prompt": "string (pure visual scene description for FLUX: smug developer grinning right before chaos unfolds, funny facial expression, studio lighting, NO TEXT, NO WORDS, NO TYPOGRAPHY)"
     },
     {
       "id": "meme-angle-3",
-      "angle": "The Savage Comparison",
-      "topText": "string (PUNCHY SETUP IN ALL CAPS, under 30 chars)",
-      "bottomText": "string (PUNCHY PUNCHLINE IN ALL CAPS, under 30 chars)",
+      "angle": "The Savior Turn",
+      "topText": "string (ALL CAPS setup line, under 30 chars, e.g. SPENT 3 DAYS ON SETUP)",
+      "bottomText": "string (ALL CAPS punchline, under 30 chars, e.g. SAVED IN 5 SECONDS)",
       "caption": "string (hilarious, shareable social caption)",
-      "prompt": "string (detailed Ideogram 4-part prompt for 1:1 square meme poster)"
+      "prompt": "string (pure visual scene description for FLUX: triumphant programmer wearing sunglasses sipping coffee with a glowing rocket pack, god-mode energy, NO TEXT, NO WORDS, NO TYPOGRAPHY)"
     }
   ]
 }
@@ -492,8 +509,10 @@ Ensure:
 - 3 to 4 distinct features.
 - 3 distinct targetAudience personas.
 - Exactly 4 informative FAQs.
-- Exactly 3 memeConcepts matching: 'The Relatable Struggle', 'The 10x Superpower', 'The Savage Comparison'.
-- All topText and bottomText must be short, punchy, and in UPPERCASE.`;
+- Exactly 3 memeConcepts matching: 'The Relatable Panic', 'Expectation vs Reality', 'The Savior Turn'.
+- All topText and bottomText MUST be authentic, hilarious 2-part internet memes in ALL CAPS (under 30 chars).
+- NEVER write boring B2B corporate ad slogans like 'DOING IT MANUALLY: 40 HOURS' or 'USING TOOL: 3 MINUTES'.
+- All meme prompt fields must be pure visual scene descriptions for FLUX with ZERO text, zero words, and zero typography.`;
 
       const userPrompt = `Target Website URL: ${validUrl}
 Meta Title: ${metaTitle || 'N/A'}
@@ -613,7 +632,7 @@ ${cleanBodyText || 'Minimal text available. Infer product purpose from URL and t
     const caption = found?.caption || `${topText} — ${bottomText}`;
     const prompt =
       found?.prompt ||
-      `A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: "${topText}". In the center: A comedic expressive tech scene with cinematic studio lighting matching angle ${angleName}. At the bottom, bold uppercase neon lime typography with black outline reads: "${bottomText}". Clean graphic meme composition, vibrant contrast.`;
+      `A hilarious expressive tech character scene, comical face, modern tech environment, cinematic studio lighting, clean visual composition, no text`;
 
     return {
       id: `meme-angle-${idx + 1}`,
@@ -626,15 +645,15 @@ ${cleanBodyText || 'Minimal text available. Infer product purpose from URL and t
     };
   });
 
-  // Step 5: Render Memes into Image URLs (Replicate Ideogram with SVG Compositor Fallback)
+  // Step 5: Render Memes into Image URLs (Replicate FLUX for visuals, DeepSeek + SVG Compositor for text)
   let finalMemes: InstantLaunchMeme[] = [];
   const replicateToken = process.env.REPLICATE_API_TOKEN;
 
   const shouldSkipImages = Boolean(options.skipReplicate || options.skipImageGen);
   if (replicateToken && !shouldSkipImages) {
     try {
-      // Attempt Replicate Ideogram rendering with a 35s overall timeout
-      const replicatePromise = generate3IdeogramMemes(memeConcepts);
+      // Attempt Replicate FLUX Schnell rendering with a 35s overall timeout
+      const replicatePromise = generate3FluxMemes(memeConcepts);
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Replicate timed out after 35s')), 35000)
       );
@@ -643,12 +662,19 @@ ${cleanBodyText || 'Minimal text available. Infer product purpose from URL and t
       if (Array.isArray(generated) && generated.length > 0) {
         finalMemes = memeConcepts.map((concept, i) => {
           const gen = generated.find((g) => g.id === concept.id) || generated[i];
-          const imgUrl = gen?.url || createFallbackSvgMeme({
-            angle: concept.angle,
+          const baseImg =
+            gen?.cleanImageUrl ||
+            gen?.baseImageUrl ||
+            gen?.url ||
+            createFallbackSvgBase({
+              angle: concept.angle,
+              productName: finalName,
+              index: i,
+            });
+          const imgUrl = generateMemeSvgComposite({
+            imageUrl: baseImg,
             topText: concept.topText || '',
             bottomText: concept.bottomText || '',
-            productName: finalName,
-            index: i,
           });
 
           return {
@@ -659,31 +685,38 @@ ${cleanBodyText || 'Minimal text available. Infer product purpose from URL and t
             caption: concept.caption,
             prompt: concept.prompt,
             url: imgUrl,
+            baseImageUrl: baseImg,
           };
         });
       }
     } catch (replicateErr: any) {
-      console.warn('[Replicate] Meme rendering fallback to SVG compositor:', replicateErr?.message || replicateErr);
+      console.warn('[Replicate] FLUX meme rendering fallback to SVG compositor:', replicateErr?.message || replicateErr);
     }
   }
 
   // If Replicate was skipped, failed, or timed out, use SVG Impact Compositor
   if (finalMemes.length === 0) {
-    finalMemes = memeConcepts.map((concept, idx) => ({
-      id: concept.id,
-      angle: concept.angle,
-      topText: concept.topText || '',
-      bottomText: concept.bottomText || '',
-      caption: concept.caption,
-      prompt: concept.prompt,
-      url: createFallbackSvgMeme({
+    finalMemes = memeConcepts.map((concept, idx) => {
+      const baseSvgDataUri = createFallbackSvgBase({
+        angle: concept.angle,
+        productName: finalName,
+        index: idx,
+      });
+      return {
+        id: concept.id,
         angle: concept.angle,
         topText: concept.topText || '',
         bottomText: concept.bottomText || '',
-        productName: finalName,
-        index: idx,
-      }),
-    }));
+        caption: concept.caption,
+        prompt: concept.prompt,
+        url: generateMemeSvgComposite({
+          imageUrl: baseSvgDataUri,
+          topText: concept.topText || '',
+          bottomText: concept.bottomText || '',
+        }),
+        baseImageUrl: baseSvgDataUri,
+      };
+    });
   }
 
   // Return complete unified InstantLaunchResult

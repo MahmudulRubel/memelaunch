@@ -1,8 +1,8 @@
 /**
  * DeepSeek Creative Director & Viral Meme Prompting Engine
- * Specially engineered for Replicate prunaai/p-image-ideogram
- * Synthesizes 3 world-class viral tech meme posters with 100% accurate,
- * bold, punchy typography rendered natively inside the image every time.
+ * Engineered for clean separation of concerns:
+ * - DeepSeek generates the witty, hilarious tech meme texts (topText, bottomText, caption)
+ * - DeepSeek writes pure visual scene prompts for FLUX (zero text, pure cinematic comedic imagery)
  */
 
 export type MemeStyleVibe = 'cyberpunk' | 'pixar3d' | 'vintage_comic' | 'dark_satire' | 'auto';
@@ -82,50 +82,55 @@ export async function generate3DeepSeekMemeConcepts(params: {
   if (apiKey) {
     try {
       const systemPrompt = `You are the world's greatest tech meme creative director for MemeLaunch.
-Your mission is to analyze a tech product and create 3 VIRAL, HILARIOUS, LAUGH-OUT-LOUD MEME POSTERS designed specifically for the Ideogram model (prunaai/p-image-ideogram).
+Your mission is to analyze a tech product and create 3 VIRAL, HILARIOUS, LAUGH-OUT-LOUD MEME POSTERS.
 
-Ideogram Formula for 100% Perfect Text and World-Class Viral Imagery:
-Every prompt MUST follow this exact 4-part structure:
-"A hilarious viral tech meme poster in 1:1 square aspect ratio.
-At the top, bold uppercase typography in white with black outline reads: \"[PUNCHY TOP TEXT]\"
-In the center: [Extremely funny, expressive character scene or visual metaphor depicting the situation, with dynamic lighting and hilarious facial expressions matching the vibe: ${vibeInfo.promptStyleCue}].
-At the bottom, bold uppercase neon lime typography with black outline reads: \"[PUNCHY BOTTOM TEXT]\"
-Clean graphic meme composition, vibrant contrast, studio lighting."
+CRITICAL MEME COPYWRITING RULES (AUTHENTIC MEME vs BORING CORPORATE AD):
+- NEVER write boring B2B corporate ad slogans like "DOING IT MANUALLY: 40 HOURS" or "USING ${name.toUpperCase()}: 3 MINUTES". That sounds like a boring LinkedIn ad!
+- REAL INTERNET MEMES use relatable situations, genuine developer agony, self-deprecating irony, and comedic punchlines.
+- Every meme MUST follow the classic TWO-PART MEME STRUCTURE:
+  1. TOP TEXT (Setup line): The relatable situation or premise in ALL CAPS (under 30 chars).
+     Examples: "WHEN YOU PUSH TO PROD", "ME FIXING ONE TINY BUG", "MY CODE WORKS ON MY MACHINE", "TRYING TO EXIT VIM".
+  2. BOTTOM TEXT (Punchline): The hilarious turn or twist in ALL CAPS (under 30 chars).
+     Examples: "42 CI PIPELINES TURN RED", "17 NEW BUGS SPAWN", "AND THE SERVER EXPLODES", "SAVED BY ${name.toUpperCase()} AT 3 AM".
+  3. CAPTION: A funny, relatable social caption explaining the meme joke.
 
-Viral Meme Rules:
-1. TOP TEXT: Short, witty setup in ALL CAPS (punchy, under 32 chars, e.g. "CONFIGURING FIREBASE FOR HOURS", "DEPLOYING TO PROD AT 5PM", "ME FIXING ONE BUG").
-2. BOTTOM TEXT: Hilarious punchline highlighting ${name} in ALL CAPS (punchy, under 32 chars, e.g. "${name.toUpperCase()}: INSTANT POSTGRES", "${name.toUpperCase()} CAUGHT IT BEFORE MY BOSS", "10X SUPERPOWERS WITH ${name.toUpperCase()}").
-3. Create 3 COMPLETELY CONTRASTING comedic angles:
-   - Angle 1: "The Relatable Struggle" (The agony/chaos of doing it without ${name})
-   - Angle 2: "The 10x Superpower" (The god-mode feeling of shipping with ${name})
-   - Angle 3: "The Savage Comparison" (Mocking bloated legacy tools or status quo)
+FLUX IMAGE GENERATION RULES (PURE VISUAL SCENE ONLY):
+- prompt: Write a PURE visual scene description for the FLUX image generator.
+- Focus on hilarious, exaggerated facial expressions (wide-eyed terror, smug confidence, comical disbelief), comedic visual metaphors, cinematic studio lighting.
+- STYLE: ${vibeInfo.promptStyleCue}
+- ABSOLUTE RULE FOR FLUX: DO NOT INCLUDE ANY TEXT, LETTERS, WORDS, OR TYPOGRAPHY IN THE FLUX PROMPT. FLUX draws only the visual scene; text is composited separately.
+
+3 DISTINCT COMEDIC ANGLES:
+- Angle 1: "The Relatable Panic" (The visceral agony of production incidents, broken builds, missing semicolons, endless debugging).
+- Angle 2: "Expectation vs Reality" (Delusional developer confidence vs brutal reality hitting).
+- Angle 3: "The Savior Turn" (The god-mode feeling when ${name} eliminates the pain in seconds).
 
 Return ONLY a valid JSON object matching this exact schema:
 {
   "concepts": [
     {
       "id": "meme-angle-1",
-      "angle": "The Relatable Struggle",
-      "topText": "...",
-      "bottomText": "...",
-      "caption": "...",
-      "prompt": "A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: \"...\". In the center: ... At the bottom, bold uppercase neon lime typography with black outline reads: \"...\". Clean graphic meme composition, vibrant contrast, studio lighting."
+      "angle": "The Relatable Panic",
+      "topText": "string (ALL CAPS setup line, under 30 chars, e.g. WHEN YOU MERGE TO MAIN)",
+      "bottomText": "string (ALL CAPS punchline, under 30 chars, e.g. AND THE WHOLE SITE CRASHES)",
+      "caption": "string (funny social caption)",
+      "prompt": "string (pure visual scene for FLUX: terrified developer sweating in comedic panic, laptop smoking, cinematic lighting, NO text, NO words)"
     },
     {
       "id": "meme-angle-2",
-      "angle": "The 10x Superpower",
-      "topText": "...",
-      "bottomText": "...",
-      "caption": "...",
-      "prompt": "A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: \"...\". In the center: ... At the bottom, bold uppercase neon lime typography with black outline reads: \"...\". Clean graphic meme composition, vibrant contrast, studio lighting."
+      "angle": "Expectation vs Reality",
+      "topText": "string (ALL CAPS setup line, under 30 chars, e.g. IT WORKED ON MY MACHINE)",
+      "bottomText": "string (ALL CAPS punchline, under 30 chars, e.g. PROD HAS LEFT THE CHAT)",
+      "caption": "string (funny social caption)",
+      "prompt": "string (pure visual scene for FLUX: smug developer grinning right before chaos unfolds, funny facial expression, studio lighting, NO text, NO words)"
     },
     {
       "id": "meme-angle-3",
-      "angle": "The Savage Comparison",
-      "topText": "...",
-      "bottomText": "...",
-      "caption": "...",
-      "prompt": "A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: \"...\". In the center: ... At the bottom, bold uppercase neon lime typography with black outline reads: \"...\". Clean graphic meme composition, vibrant contrast, studio lighting."
+      "angle": "The Savior Turn",
+      "topText": "string (ALL CAPS setup line, under 30 chars, e.g. SPENT 3 DAYS ON SETUP)",
+      "bottomText": "string (ALL CAPS punchline, under 30 chars, e.g. ${name.toUpperCase()} SHIPPED IT IN 5 SECONDS)",
+      "caption": "string (funny social caption)",
+      "prompt": "string (pure visual scene for FLUX: triumphant programmer wearing sunglasses sipping coffee with a glowing rocket pack, god-mode energy, NO text, NO words)"
     }
   ]
 }`;
@@ -160,12 +165,12 @@ Product Description: ${desc}`;
           const rawConcepts = parsed.concepts || parsed.memes;
           if (Array.isArray(rawConcepts) && rawConcepts.length >= 3) {
             return rawConcepts.slice(0, 3).map((c: any, i: number) => {
-              const fallbackAngle = i === 0 ? 'The Relatable Struggle' : i === 1 ? 'The 10x Superpower' : 'The Savage Comparison';
+              const fallbackAngle = i === 0 ? 'The Relatable Panic' : i === 1 ? 'Expectation vs Reality' : 'The Savior Turn';
               const angle = c.angle || fallbackAngle;
-              const topText = (c.topText || `Manual work without ${name}`).toUpperCase().trim();
-              const bottomText = (c.bottomText || `10x Superpower with ${name}`).toUpperCase().trim();
+              const topText = (c.topText || `WHEN YOU TEST IN PROD`).toUpperCase().trim();
+              const bottomText = (c.bottomText || `AND IT ACTUALLY WORKS WITH ${name}`).toUpperCase().trim();
               const caption = c.caption || `${topText} — ${bottomText}`;
-              const prompt = c.prompt || `A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: "${topText}". In the center: An exhausted developer looking shocked as a futuristic portal opens. At the bottom, bold uppercase neon lime typography with black outline reads: "${bottomText}". Clean graphic meme composition, vibrant contrast, studio lighting.`;
+              const prompt = c.prompt || `A hilarious expressive tech character scene, comical face, modern tech environment, cinematic studio lighting, clean visual composition, no text`;
               return {
                 id: c.id || `meme-angle-${i + 1}`,
                 angle,
@@ -186,33 +191,33 @@ Product Description: ${desc}`;
     }
   }
 
-  // Resilient heuristic fallback customized to product details & selected vibe
+  // Resilient authentic tech meme fallbacks customized to product details & selected vibe
   return [
     {
       id: 'meme-angle-1',
-      angle: 'The Relatable Struggle',
-      topText: `DOING IT MANUALLY: 40 HOURS`,
-      bottomText: `USING ${name.toUpperCase()}: 3 MINUTES`,
-      caption: `Doing it manually for 40 hours — Using ${name} in 3 minutes`,
-      prompt: `A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: "DOING IT MANUALLY: 40 HOURS". In the center: A funny exhausted programmer crying at a chaotic desk buried in burning servers and error popups. At the bottom, bold uppercase neon lime typography with black outline reads: "USING ${name.toUpperCase()}: 3 MINUTES". Clean graphic meme composition, vibrant contrast, hilarious facial expressions, studio lighting.`,
+      angle: 'The Relatable Panic',
+      topText: `PUSHING TO PROD AT 4:59 PM`,
+      bottomText: `PRAYING TO THE SERVER GODS`,
+      caption: `The universal Friday afternoon developer experience`,
+      prompt: `A hilarious expressive developer sweating in comical terror while hovering a shaking finger over a keyboard, wide-eyed funny face, dramatic server room lighting, clean visual scene, no text, no letters`,
       vibe: selectedVibe,
     },
     {
       id: 'meme-angle-2',
-      angle: 'The 10x Superpower',
-      topText: `ME DISCOVERING ${name.toUpperCase()}`,
-      bottomText: `SHIPPING 10X FASTER WITH ZERO BUGS`,
-      caption: `How it feels shipping in 5 minutes with ${name}`,
-      prompt: `A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: "ME DISCOVERING ${name.toUpperCase()}". In the center: A cool programmer wearing sunglasses sipping iced coffee while floating in zero gravity with rocket thrusters. At the bottom, bold uppercase neon lime typography with black outline reads: "SHIPPING 10X FASTER WITH ZERO BUGS". Clean graphic meme composition, vibrant contrast, studio lighting.`,
+      angle: 'Expectation vs Reality',
+      topText: `MY CODE HAS ZERO BUGS`,
+      bottomText: `SAID NO DEVELOPER EVER`,
+      caption: `Delusional optimism right before running the automated test suite`,
+      prompt: `An overly smug programmer grinning triumphantly with crossed arms right before their laptop starts comically smoking, visual irony, studio lighting, no text, no letters`,
       vibe: selectedVibe,
     },
     {
       id: 'meme-angle-3',
-      angle: 'The Savage Comparison',
-      topText: `LEGACY TOOLS: $99/MO & SLOW`,
-      bottomText: `${name.toUpperCase()}: INSTANT & FREE`,
-      caption: `Legacy tools charging $99/month vs ${name} just working`,
-      prompt: `A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: "LEGACY TOOLS: $99/MO & SLOW". In the center: A split scene with a sad rusty dinosaur on the left and a supersonic glowing hovercraft on the right. At the bottom, bold uppercase neon lime typography with black outline reads: "${name.toUpperCase()}: INSTANT & FREE". Clean graphic meme composition, vibrant contrast, studio lighting.`,
+      angle: 'The Savior Turn',
+      topText: `SPENT 3 DAYS ON BOILERPLATE`,
+      bottomText: `THEN ${name.toUpperCase()} FIXED IT IN 5S`,
+      caption: `How it feels shipping with ${name} instead of fighting manual setup`,
+      prompt: `A triumphant, extremely relaxed programmer floating in zero gravity sipping iced coffee while glowing robotic arms handle the servers, god-mode energy, vivid studio lighting, clean visual scene, no text, no letters`,
       vibe: selectedVibe,
     },
   ];
