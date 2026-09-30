@@ -10,6 +10,7 @@ import { LaunchBoostModal } from '@/components/points/launch-boost-modal';
 import { AuthModal } from '@/components/auth/auth-modal';
 import { MemePicker3, type MemePickerItem } from '@/components/launch/meme-picker-3';
 import { InDepthDossierPreview } from '@/components/launch/in-depth-dossier-preview';
+import { generateMemeSvgComposite } from '@/lib/meme-compositor';
 import {
   VALID_CATEGORIES,
   type InstantLaunchMeme,
@@ -324,6 +325,7 @@ function LaunchPageContent() {
         bottomText: '',
         caption: file.name.replace(/\.[^/.]+$/, ''),
         url: dataUrl,
+        baseImageUrl: dataUrl,
         prompt: 'User uploaded custom meme',
       };
       setMemes((prev) => [customItem, ...prev]);
@@ -378,9 +380,28 @@ function LaunchPageContent() {
 
     try {
       const selectedMeme = memes[selectedMemeIdx] || memes[0];
+      const baseImg = selectedMeme?.baseImageUrl || selectedMeme?.url || '';
+      const finalMemeUrl = baseImg
+        ? generateMemeSvgComposite({
+            imageUrl: baseImg,
+            topText: selectedMeme?.topText || '',
+            bottomText: selectedMeme?.bottomText || '',
+          })
+        : selectedMeme?.url || '';
+
       const otherMemes = memes
         .filter((_, idx) => idx !== selectedMemeIdx)
-        .map((m) => ({ url: m.url, caption: m.caption, angle: m.angle }));
+        .map((m) => {
+          const bImg = m.baseImageUrl || m.url;
+          const compUrl = bImg
+            ? generateMemeSvgComposite({
+                imageUrl: bImg,
+                topText: m.topText || '',
+                bottomText: m.bottomText || '',
+              })
+            : m.url;
+          return { url: compUrl, caption: m.caption, angle: m.angle };
+        });
 
       const dossierToSave =
         seoDossier ||
@@ -399,7 +420,7 @@ function LaunchPageContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: authUser.id,
-          memeImageUrl: selectedMeme?.url || '',
+          memeImageUrl: finalMemeUrl,
           productName: productName.trim(),
           productUrl: productUrl.trim(),
           pricing,
@@ -408,7 +429,7 @@ function LaunchPageContent() {
           productLogoUrl: productLogoUrl || '',
           screenshotUrls: [],
           seoDossier: dossierToSave,
-          alternateMemes: otherMemes,
+          alternateMemes: [],
         }),
       });
 
@@ -583,7 +604,7 @@ function LaunchPageContent() {
               Launch In <span className="text-lime-400">Seconds</span>, Not Hours
             </h1>
             <p className="text-zinc-400 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
-              Enter your product URL. DeepSeek extracts your brand, synthesizes your in-depth SEO
+              Enter your product URL. Our AI extracts your brand, synthesizes your in-depth SEO
               dossier, and crafts 3 viral memes ready for the feed.
             </p>
           </div>
@@ -626,25 +647,6 @@ function LaunchPageContent() {
                 )}
               </button>
             </form>
-
-            {/* Quick try suggestions */}
-            <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-xs text-zinc-500 font-mono">
-              <span className="text-zinc-600">Quick test:</span>
-              {['linear.app', 'resend.com', 'supabase.com'].map((demo) => (
-                <button
-                  key={demo}
-                  type="button"
-                  onClick={() => {
-                    const full = `https://${demo}`;
-                    setHeroUrl(full);
-                    handleGenerate(full);
-                  }}
-                  className="px-2.5 py-1 rounded-lg bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-                >
-                  {demo}
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Generation Error Alert */}
@@ -709,7 +711,7 @@ function LaunchPageContent() {
                   </span>
                 </div>
 
-                {/* 2. DeepSeek reasoning & dossier */}
+                {/* 2. AI reasoning & dossier */}
                 <div
                   className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between ${
                     generationProgress > 2
@@ -730,7 +732,7 @@ function LaunchPageContent() {
                       </div>
                     )}
                     <span className="text-sm font-semibold">
-                      2. Synthesizing in-depth product dossier with DeepSeek...
+                      2. Synthesizing in-depth product dossier...
                     </span>
                   </div>
                   <span className="text-xs font-mono text-zinc-500 hidden sm:inline">
@@ -808,7 +810,28 @@ function LaunchPageContent() {
               onRegenerate={handleRegenerateMemes}
               isRegenerating={isRegeneratingMemes}
               onUploadCustomClick={() => customMemeInputRef.current?.click()}
+              onMemeTextEdit={(index, field, value) => {
+                setMemes((prev) =>
+                  prev.map((m, i) => {
+                    if (i !== index) return m;
+                    const updated = { ...m, [field]: value };
+                    const baseImg = updated.baseImageUrl || updated.url;
+                    const newUrl = baseImg
+                      ? generateMemeSvgComposite({
+                          imageUrl: baseImg,
+                          topText: field === 'topText' ? value : updated.topText || '',
+                          bottomText: field === 'bottomText' ? value : updated.bottomText || '',
+                        })
+                      : updated.url;
+                    return {
+                      ...updated,
+                      url: newUrl,
+                    };
+                  })
+                );
+              }}
             />
+
           </div>
 
           {/* 2-COLUMN LAYOUT BELOW */}
@@ -835,7 +858,7 @@ function LaunchPageContent() {
                   {selectedMeme?.url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={selectedMeme.url}
+                      src={selectedMeme.baseImageUrl || selectedMeme.url}
                       alt={selectedMeme.caption || 'Product Meme'}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-103"
                     />
@@ -846,9 +869,39 @@ function LaunchPageContent() {
                     </div>
                   )}
 
+                  {/* Live Impact Overlay on Live Feed Preview */}
+                  {Boolean(selectedMeme?.baseImageUrl) && selectedMeme?.topText && (
+                    <div className="absolute top-3 inset-x-2 pointer-events-none text-center z-10">
+                      <p
+                        className="font-impact uppercase tracking-wider leading-tight text-white px-2 select-none"
+                        style={{
+                          fontSize: 'clamp(14px, 4vw, 22px)',
+                          textShadow:
+                            '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, -3px 0 0 #000, 3px 0 0 #000, 0 -3px 0 #000, 0 3px 0 #000, 0 4px 8px rgba(0,0,0,0.95)',
+                        }}
+                      >
+                        {selectedMeme.topText}
+                      </p>
+                    </div>
+                  )}
+                  {Boolean(selectedMeme?.baseImageUrl) && selectedMeme?.bottomText && (
+                    <div className="absolute bottom-3 inset-x-2 pointer-events-none text-center z-10">
+                      <p
+                        className="font-impact uppercase tracking-wider leading-tight text-white px-2 select-none"
+                        style={{
+                          fontSize: 'clamp(14px, 4vw, 22px)',
+                          textShadow:
+                            '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, -3px 0 0 #000, 3px 0 0 #000, 0 -3px 0 #000, 0 3px 0 #000, 0 4px 8px rgba(0,0,0,0.95)',
+                        }}
+                      >
+                        {selectedMeme.bottomText}
+                      </p>
+                    </div>
+                  )}
+
                   {/* Angle badge floating on meme */}
                   {selectedMeme?.angle && (
-                    <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/75 border border-zinc-700 backdrop-blur-md text-[10px] font-mono font-bold text-zinc-200">
+                    <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/75 border border-zinc-700 backdrop-blur-md text-[10px] font-mono font-bold text-zinc-200 z-20">
                       {selectedMeme.angle}
                     </div>
                   )}

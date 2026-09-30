@@ -25,6 +25,7 @@ export interface MemePickerItem {
   caption: string;
   url: string;
   prompt?: string;
+  baseImageUrl?: string;
 }
 
 export interface MemePicker3Props {
@@ -34,6 +35,7 @@ export interface MemePicker3Props {
   onRegenerate?: () => void;
   isRegenerating?: boolean;
   onUploadCustomClick?: () => void;
+  onMemeTextEdit?: (index: number, field: 'topText' | 'bottomText', value: string) => void;
   className?: string;
 }
 
@@ -79,6 +81,7 @@ export function MemePicker3({
   onRegenerate,
   isRegenerating = false,
   onUploadCustomClick,
+  onMemeTextEdit,
   className = '',
 }: MemePicker3Props) {
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
@@ -246,7 +249,7 @@ export function MemePicker3({
                     <>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={meme.url}
+                        src={meme.baseImageUrl || meme.url}
                         alt={meme.caption || `Launch Meme #${idx + 1}`}
                         onError={(e) => {
                           const currentTarget = e.currentTarget;
@@ -263,6 +266,36 @@ export function MemePicker3({
                         className="w-full h-full object-contain group-hover/img:scale-102 transition-transform duration-300"
                         loading="lazy"
                       />
+
+                      {/* Live Impact Meme Text Overlay (renders dynamically when baseImageUrl is used) */}
+                      {Boolean(meme.baseImageUrl) && meme.topText && (
+                        <div className="absolute top-3 inset-x-2 pointer-events-none text-center z-10">
+                          <p
+                            className="font-impact uppercase tracking-wider leading-tight text-white px-2 select-none"
+                            style={{
+                              fontSize: 'clamp(14px, 4vw, 22px)',
+                              textShadow:
+                                '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, -3px 0 0 #000, 3px 0 0 #000, 0 -3px 0 #000, 0 3px 0 #000, 0 4px 8px rgba(0,0,0,0.95)',
+                            }}
+                          >
+                            {meme.topText}
+                          </p>
+                        </div>
+                      )}
+                      {Boolean(meme.baseImageUrl) && meme.bottomText && (
+                        <div className="absolute bottom-3 inset-x-2 pointer-events-none text-center z-10">
+                          <p
+                            className="font-impact uppercase tracking-wider leading-tight text-white px-2 select-none"
+                            style={{
+                              fontSize: 'clamp(14px, 4vw, 22px)',
+                              textShadow:
+                                '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, -3px 0 0 #000, 3px 0 0 #000, 0 -3px 0 #000, 0 3px 0 #000, 0 4px 8px rgba(0,0,0,0.95)',
+                            }}
+                          >
+                            {meme.bottomText}
+                          </p>
+                        </div>
+                      )}
 
                       {/* Zoom Lightbox Trigger Overlay */}
                       <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/35 transition-all flex flex-col justify-between p-3 pointer-events-none">
@@ -300,22 +333,56 @@ export function MemePicker3({
 
                 {/* Caption and Punchline Footer */}
                 <div className="p-3.5 bg-zinc-950/90 border-t border-zinc-800/80 flex-1 flex flex-col justify-between space-y-2.5">
-                  {(meme.topText || meme.bottomText) && (
-                    <div className="space-y-1 rounded-lg bg-zinc-900/60 p-2.5 border border-zinc-800/60">
-                      {meme.topText && (
-                        <p className="text-[11px] font-mono text-zinc-300 uppercase tracking-tight line-clamp-1">
-                          <span className="text-zinc-500 font-bold mr-1.5">SETUP:</span>
-                          &ldquo;{meme.topText}&rdquo;
-                        </p>
-                      )}
-                      {meme.bottomText && (
-                        <p className="text-[11px] font-mono text-lime-300 uppercase tracking-tight line-clamp-1 font-semibold">
-                          <span className="text-lime-500/70 font-bold mr-1.5">PUNCH:</span>
-                          &ldquo;{meme.bottomText}&rdquo;
-                        </p>
+                  <div className="space-y-2">
+                    {/* Top Text / Setup */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider font-bold">Top Text</label>
+                        {isSelected && <span className="text-[9px] font-mono text-lime-400 font-semibold">Editable</span>}
+                      </div>
+                      {isSelected && onMemeTextEdit ? (
+                        <input
+                          type="text"
+                          value={meme.topText || ''}
+                          onChange={(e) => { e.stopPropagation(); onMemeTextEdit(idx, 'topText', e.target.value); }}
+                          onClick={(e) => e.stopPropagation()}
+                          placeholder="SETUP LINE (e.g. DEPLOYING ON FRIDAY)"
+                          className="w-full px-2.5 py-1.5 bg-zinc-900 border border-lime-400/50 rounded-lg text-[11px] font-mono text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-lime-400 uppercase tracking-tight"
+                        />
+                      ) : (
+                        meme.topText ? (
+                          <p className="text-[11px] font-mono text-zinc-300 uppercase tracking-tight line-clamp-1">
+                            <span className="text-zinc-500 font-bold mr-1.5">SETUP:</span>
+                            &ldquo;{meme.topText}&rdquo;
+                          </p>
+                        ) : null
                       )}
                     </div>
-                  )}
+                    {/* Bottom Text / Punchline */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider font-bold">Bottom Text</label>
+                        {isSelected && <span className="text-[9px] font-mono text-lime-400 font-semibold">Editable</span>}
+                      </div>
+                      {isSelected && onMemeTextEdit ? (
+                        <input
+                          type="text"
+                          value={meme.bottomText || ''}
+                          onChange={(e) => { e.stopPropagation(); onMemeTextEdit(idx, 'bottomText', e.target.value); }}
+                          onClick={(e) => e.stopPropagation()}
+                          placeholder="PUNCHLINE (e.g. SAVED BY MEMELAUNCH)"
+                          className="w-full px-2.5 py-1.5 bg-zinc-900 border border-lime-400/50 rounded-lg text-[11px] font-mono text-lime-300 placeholder-zinc-600 focus:outline-none focus:border-lime-400 uppercase tracking-tight"
+                        />
+                      ) : (
+                        meme.bottomText ? (
+                          <p className="text-[11px] font-mono text-lime-300 uppercase tracking-tight line-clamp-1 font-semibold">
+                            <span className="text-lime-500/70 font-bold mr-1.5">PUNCH:</span>
+                            &ldquo;{meme.bottomText}&rdquo;
+                          </p>
+                        ) : null
+                      )}
+                    </div>
+                  </div>
 
                   {meme.caption && (
                     <p className="text-xs text-zinc-300 leading-relaxed line-clamp-2 italic">
@@ -369,10 +436,41 @@ export function MemePicker3({
             <div className="relative aspect-square w-full bg-zinc-900 overflow-hidden flex items-center justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={activeLightboxMeme.url}
+                src={activeLightboxMeme.baseImageUrl || activeLightboxMeme.url}
                 alt={activeLightboxMeme.caption || `Full size meme ${lightboxIdx + 1}`}
                 className="w-full h-full object-contain select-none"
               />
+
+              {/* Live Impact Overlay in Lightbox if baseImageUrl is present */}
+              {/* Live Impact Meme Text Overlay in Lightbox */}
+              {Boolean(activeLightboxMeme.baseImageUrl) && activeLightboxMeme.topText && (
+                <div className="absolute top-4 inset-x-4 pointer-events-none text-center z-10">
+                  <p
+                    className="font-impact uppercase tracking-wider leading-tight text-white px-4 select-none"
+                    style={{
+                      fontSize: 'clamp(20px, 4.5vw, 36px)',
+                      textShadow:
+                        '-3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000, -4px 0 0 #000, 4px 0 0 #000, 0 -4px 0 #000, 0 4px 0 #000, 0 5px 10px rgba(0,0,0,0.95)',
+                    }}
+                  >
+                    {activeLightboxMeme.topText}
+                  </p>
+                </div>
+              )}
+              {Boolean(activeLightboxMeme.baseImageUrl) && activeLightboxMeme.bottomText && (
+                <div className="absolute bottom-4 inset-x-4 pointer-events-none text-center z-10">
+                  <p
+                    className="font-impact uppercase tracking-wider leading-tight text-white px-4 select-none"
+                    style={{
+                      fontSize: 'clamp(20px, 4.5vw, 36px)',
+                      textShadow:
+                        '-3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000, -4px 0 0 #000, 4px 0 0 #000, 0 -4px 0 #000, 0 4px 0 #000, 0 5px 10px rgba(0,0,0,0.95)',
+                    }}
+                  >
+                    {activeLightboxMeme.bottomText}
+                  </p>
+                </div>
+              )}
 
               {/* Prev Button */}
               {memes.length > 1 && (
