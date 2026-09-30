@@ -20,7 +20,7 @@ const getLaunchData = cache(async (rawProductName: string) => {
     // 1. Primary lookup: Case-insensitive search on product_name
     const { data: nameMatch, error: nameErr } = await insforgeAdmin.database
       .from('launches')
-      .select('id, product_name, product_description, product_url, category, pricing, meme_image_url, product_logo_url')
+      .select('id, product_name, product_description, product_url, category, pricing, meme_image_url, product_logo_url, seo_dossier')
       .ilike('product_name', decodedName)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -39,7 +39,7 @@ const getLaunchData = cache(async (rawProductName: string) => {
     if (isUuid) {
       const { data: idMatch } = await insforge.database
         .from('launches')
-        .select('id, product_name, product_description, product_url, category, pricing, meme_image_url, product_logo_url')
+        .select('id, product_name, product_description, product_url, category, pricing, meme_image_url, product_logo_url, seo_dossier')
         .eq('id', decodedName)
         .maybeSingle();
 

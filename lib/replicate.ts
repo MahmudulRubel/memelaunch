@@ -1,6 +1,7 @@
 /**
- * Replicate API Client for prunaai/p-image-ideogram
- * High-performance text-to-image model optimized for typography and meme graphics
+ * Replicate API Client for black-forest-labs/flux-schnell
+ * High-performance text-to-image model that generates pure visual scenes
+ * with ZERO text, allowing DeepSeek to handle the funny meme text dynamically.
  */
 
 export interface MemeConcept {
@@ -17,6 +18,7 @@ export interface GeneratedMeme {
   id: string;
   url: string;
   cleanImageUrl?: string;
+  baseImageUrl?: string;
   topText?: string;
   bottomText?: string;
   caption: string;
@@ -25,17 +27,45 @@ export interface GeneratedMeme {
   vibe?: string;
 }
 
-const REPLICATE_API_URL = 'https://api.replicate.com/v1/models/prunaai/p-image-ideogram/predictions';
+const FLUX_API_URL = 'https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions';
 
 /**
- * Generate a single image using Replicate prunaai/p-image-ideogram
+ * Sanitizes and cleans prompts for FLUX.
+ * FLUX must generate ONLY the visual scene, characters, and comedy without any text,
+ * words, typography, or watermarks.
+ */
+export function sanitizeFluxPrompt(rawPrompt: string): string {
+  if (!rawPrompt) return '';
+
+  let cleaned = rawPrompt
+    // Remove Ideogram-style typography prefixes and quotes
+    .replace(/At the top,?\s*bold uppercase typography[^.]*\.?/gi, '')
+    .replace(/At the bottom,?\s*bold uppercase [^.]*\.?/gi, '')
+    .replace(/In the center:?/gi, '')
+    .replace(/Clean graphic meme composition[^.]*\.?/gi, '')
+    // Remove any quotes containing text to prevent Flux from trying to write text
+    .replace(/"[^"]*"/g, '')
+    .replace(/'[^']*'/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // If prompt became too short or empty, provide a solid default tech meme scene
+  if (cleaned.length < 15) {
+    cleaned = 'A hilarious expressive tech comedic scene with exaggerated facial expressions, modern tech office environment, dramatic cinematic lighting';
+  }
+
+  // Enforce zero text rules for FLUX
+  return `${cleaned}, pure visual scene, comedic tech meme photo, expressive faces, high detail, studio lighting, no text, no words, no letters, no typography, no watermark`;
+}
+
+/**
+ * Generate a single visual image using Replicate black-forest-labs/flux-schnell
  * with automatic 429 rate limit backoff and polling.
  */
-export async function generateIdeogramImage(
+export async function generateFluxImage(
   prompt: string,
   options: {
     aspectRatio?: '1:1' | '16:9' | '9:16' | '4:3' | '3:4';
-    promptUpsampling?: boolean;
     timeoutMs?: number;
     maxRetries?: number;
   } = {}
@@ -49,17 +79,18 @@ export async function generateIdeogramImage(
 
   const {
     aspectRatio = '1:1',
-    promptUpsampling = false,
     timeoutMs = 60000,
     maxRetries = 3,
   } = options;
+
+  const sanitizedPrompt = sanitizeFluxPrompt(prompt);
 
   let attempt = 0;
   while (attempt <= maxRetries) {
     attempt++;
 
     // Step 1: Create prediction with Prefer: wait for fast synchronous return
-    const createRes = await fetch(REPLICATE_API_URL, {
+    const createRes = await fetch(FLUX_API_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -68,12 +99,12 @@ export async function generateIdeogramImage(
       },
       body: JSON.stringify({
         input: {
-          prompt,
+          prompt: sanitizedPrompt,
           aspect_ratio: aspectRatio,
-          thinking: 'high',
           output_format: 'jpg',
-          output_quality: 95,
-          prompt_upsampling: promptUpsampling,
+          output_quality: 90,
+          num_inference_steps: 4,
+          go_fast: true,
         },
       }),
     });
@@ -140,6 +171,11 @@ export async function generateIdeogramImage(
   throw new Error('Replicate maximum retry attempts exceeded.');
 }
 
+/**
+ * Backward-compatible alias for generateFluxImage
+ */
+export const generateIdeogramImage = generateFluxImage;
+
 function extractOutputUrl(output: any): string {
   if (typeof output === 'string') {
     return output;
@@ -154,13 +190,13 @@ function extractOutputUrl(output: any): string {
 }
 
 /**
- * Robust sequential meme generation to respect Replicate burst rate limits
+ * Robust sequential meme visual scene generation using FLUX
  */
-export async function generate3IdeogramMemes(
+export async function generate3FluxMemes(
   concepts: MemeConcept[]
 ): Promise<GeneratedMeme[]> {
   if (!concepts || concepts.length === 0) {
-    throw new Error('No meme concepts provided to generate3IdeogramMemes');
+    throw new Error('No meme concepts provided to generate3FluxMemes');
   }
 
   // Generate memes concurrently with a small stagger to avoid burst rate-limit collisions
@@ -170,15 +206,15 @@ export async function generate3IdeogramMemes(
         await new Promise((resolve) => setTimeout(resolve, index * 350));
       }
 
-      const url = await generateIdeogramImage(concept.prompt, {
+      const cleanImageUrl = await generateFluxImage(concept.prompt, {
         aspectRatio: '1:1',
-        promptUpsampling: false,
       });
 
       return {
         id: concept.id,
-        url,
-        cleanImageUrl: url,
+        url: cleanImageUrl,
+        cleanImageUrl,
+        baseImageUrl: cleanImageUrl,
         topText: concept.topText,
         bottomText: concept.bottomText,
         caption: concept.caption,
@@ -209,3 +245,8 @@ export async function generate3IdeogramMemes(
 
   return succeeded;
 }
+
+/**
+ * Backward-compatible alias for generate3FluxMemes
+ */
+export const generate3IdeogramMemes = generate3FluxMemes;

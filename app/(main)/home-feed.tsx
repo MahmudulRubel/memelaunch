@@ -16,7 +16,9 @@ import {
   Search,
   AlertCircle,
   Rocket,
-  Globe
+  Globe,
+  Flame,
+  Trophy,
 } from 'lucide-react';
 import { parseCaption, getCaptionText } from '@/lib/meme';
 
@@ -248,90 +250,119 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
     </div>
   );
 
+
+  // Ad Slot Component - placeholder for real ad networks (Google AdSense, Carbon Ads, etc.)
+  const AdSlot = ({
+    label,
+    size = 'leaderboard',
+    className = '',
+  }: {
+    label: string;
+    size?: 'leaderboard' | 'rectangle' | 'banner';
+    className?: string;
+  }) => {
+    const sizeClasses = {
+      leaderboard: 'h-20 sm:h-24',
+      rectangle: 'h-48 sm:h-56',
+      banner: 'h-16 sm:h-20',
+    };
+    return (
+      <div
+        className={`relative w-full ${sizeClasses[size]} bg-zinc-900/40 border border-zinc-800/60 rounded-2xl flex items-center justify-center overflow-hidden hover:border-zinc-700/70 transition-all ${className}`}
+        aria-label={`Advertisement - ${label}`}
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-zinc-900/0 via-zinc-900/20 to-zinc-900/0" />
+        <div className="flex flex-col items-center gap-1 opacity-50">
+          <div className="text-[10px] font-mono font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-lime-400/60" />
+            Advertisement
+          </div>
+          <div className="text-[9px] font-mono text-zinc-600 uppercase tracking-wide">
+            {label}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="space-y-10 sm:space-y-12 animate-in fade-in duration-300 relative">
-      {/* Background ambient blurs behind Hero */}
-      <div className="absolute -top-20 left-1/4 w-[500px] h-[500px] bg-lime-400/5 rounded-full blur-[120px] pointer-events-none -z-10" />
-      <div className="absolute -top-10 right-1/4 w-[400px] h-[400px] bg-rose-500/5 rounded-full blur-[100px] pointer-events-none -z-10" />
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300 relative">
+      {/* Ambient Background */}
+      <div className="absolute -top-20 left-1/4 w-[500px] h-[500px] bg-lime-400/4 rounded-full blur-[120px] pointer-events-none -z-10" />
+      <div className="absolute -top-10 right-1/4 w-[400px] h-[400px] bg-rose-500/4 rounded-full blur-[100px] pointer-events-none -z-10" />
 
-      {/* Hero Section - Unique 2-Column Split Layout */}
-      <section className="relative overflow-hidden rounded-3xl border-4 border-black bg-zinc-950 p-4 sm:p-6 md:p-10 shadow-brutal-lg w-full max-w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center w-full min-w-0">
-          
-          {/* Left Column: Headline, Copy, Trust Pills & Launch Form */}
-          <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left space-y-4 w-full min-w-0">
+      {/* --- AD SLOT 1: Top Leaderboard (Above the Fold) --- */}
+      <AdSlot label="Top Leaderboard - 728x90" size="leaderboard" />
 
-            {/* Eyebrow Pill */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-lime-400/10 border border-lime-400/30 rounded-full text-lime-400 text-[11px] sm:text-xs font-black uppercase tracking-wider mb-1 shadow-[0_0_15px_rgba(163,230,53,0.15)]">
-              <span className="w-2 h-2 rounded-full bg-lime-400 animate-ping inline-block" />
-              The shortcut from &ldquo;nobody cares&rdquo; to trending #1 🚀
+      {/* --- HERO SECTION --- */}
+      <section className="relative overflow-hidden rounded-3xl border-2 border-zinc-800 bg-zinc-950 shadow-2xl w-full">
+        {/* Decorative gradient strip at top */}
+        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-lime-400 via-[#ffe600] to-lime-400 opacity-80" />
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center w-full p-6 sm:p-8 md:p-12">
+
+          {/* Left Column */}
+          <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left space-y-5">
+
+            {/* Eyebrow */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-lime-400/10 border border-lime-400/20 rounded-full text-lime-400 text-[11px] sm:text-xs font-black uppercase tracking-wider">
+              <span className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-ping" />
+              The shortcut from &ldquo;nobody cares&rdquo; to trending #1
             </div>
 
-            <h1 className="font-heading text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-zinc-50 leading-tight break-words w-full">
-              BUILD IN PUBLIC.<br className="block" />
-              LAUNCH IN HUMOR.
-            </h1>
+            <div className="space-y-2">
+              <h1 className="font-heading text-3xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight text-zinc-50 leading-[1.05]">
+                Build in Public.<br />
+                <span className="text-[#ffe600]">Launch in Humor.</span>
+              </h1>
+              <p className="text-zinc-400 text-sm sm:text-base max-w-lg leading-relaxed font-medium">
+                Pitch your product with memes, earn community upvotes, and win real customers — all in one viral launch.
+              </p>
+            </div>
 
-            <p className="font-extrabold text-[#ffe600] text-lg sm:text-2xl md:text-3xl max-w-full break-words">
-              Where solo founders become viral legends 🏆
-            </p>
-            
-            <p className="text-zinc-300 text-sm sm:text-base w-full max-w-xl leading-relaxed font-medium">
-              Pitch your product with memes, compete for gold badges, and win real customers.
-            </p>
-
-            {/* Hero URL Box & Quick Launch */}
-            <div className="flex flex-col gap-2.5 w-full max-w-xl mt-2">
+            {/* Launch Form */}
+            <div className="w-full max-w-xl">
               <form onSubmit={handleQuickLaunchSubmit} className="flex flex-col sm:flex-row items-stretch gap-2.5 w-full">
                 <div className="relative flex-1">
-                  <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                  <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
                   <input
                     type="text"
                     value={quickUrl}
                     onChange={(e) => setQuickUrl(e.target.value)}
-                    placeholder="Paste your product URL (e.g. yourapp.com)..."
-                    className="w-full pl-10 pr-4 py-3.5 bg-zinc-900 border-2 border-black rounded-2xl text-xs sm:text-sm font-medium text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-[#ffe600] shadow-brutal-sm transition-all"
+                    placeholder="Paste your product URL to launch..."
+                    className="w-full pl-10 pr-4 py-3.5 bg-zinc-900 border border-zinc-700 rounded-2xl text-sm font-medium text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-lime-400 transition-all"
                   />
                 </div>
                 <button
                   type="submit"
-                  className="px-6 py-3.5 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 font-black text-xs uppercase tracking-wider rounded-2xl border-2 border-black shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                  className="px-6 py-3.5 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 font-black text-xs uppercase tracking-wider rounded-2xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
                 >
                   <Rocket className="h-4 w-4 stroke-[2.5]" />
-                  <span>Launch Free Now 🚀</span>
+                  Launch Free
                 </button>
               </form>
-
-              {/* Trust / Benefit Chips */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-3 gap-y-1 text-[11px] font-bold text-zinc-400 pt-1">
-                <span className="flex items-center gap-1 text-zinc-300">⚡ 100% Free</span>
-                <span>•</span>
-                <span className="flex items-center gap-1 text-zinc-300">🚫 Zero VC Cringe</span>
-                <span>•</span>
-                <span className="flex items-center gap-1 text-zinc-300">🔥 Instant Viral Reach</span>
-                <span>•</span>
-                <span className="flex items-center gap-1 text-zinc-300">👥 Real Paying Customers</span>
-              </div>
             </div>
           </div>
 
-          {/* Right Column: Live Sample Meme Card Spotlight */}
+          {/* Right Column: Featured Meme Card */}
           <div className="lg:col-span-5 flex justify-center lg:justify-end">
             {topFeaturedLaunch ? (
-              <div 
+              <div
                 onClick={() => router.push(`/products/${encodeURIComponent(topFeaturedLaunch.product_name)}`)}
-                className="group relative w-full max-w-sm bg-zinc-950 border-2 border-black rounded-2xl p-3 shadow-brutal hover:rotate-0 transition-transform duration-300 rotate-2 cursor-pointer"
+                className="group relative w-full max-w-[320px] bg-zinc-900 border border-zinc-700 rounded-2xl overflow-hidden cursor-pointer hover:border-zinc-600 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
               >
-                {/* Badge Pinned to top */}
-                <div className="flex items-center justify-between mb-3 border-b-2 border-black pb-2">
-                  <span className="bg-[#ffe600] text-zinc-950 font-black text-xs uppercase px-2.5 py-0.5 rounded-lg border-2 border-black shadow-brutal-sm flex items-center gap-1">
-                    <span>🥇</span> #1 MEME THIS WEEK
+                {/* Badge */}
+                <div className="flex items-center justify-between px-3 py-2.5 bg-zinc-950 border-b border-zinc-800">
+                  <span className="bg-[#ffe600] text-zinc-950 font-black text-[10px] uppercase px-2 py-0.5 rounded-lg flex items-center gap-1">
+                    <Trophy className="h-3 w-3 stroke-[2.5]" /> #1 This Week
                   </span>
-                  <span className="text-lime-400 font-mono text-[10px] font-extrabold uppercase animate-pulse">FEATURED HERO</span>
+                  <span className="text-lime-400 font-mono text-[9px] font-extrabold uppercase animate-pulse flex items-center gap-1">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-lime-400" /> LIVE
+                  </span>
                 </div>
 
-                {/* Meme Visual Box */}
-                <div className="relative aspect-square w-full rounded-xl overflow-hidden border-2 border-black bg-zinc-900">
+                {/* Meme Image */}
+                <div className="relative aspect-square w-full bg-zinc-900 overflow-hidden">
                   {topFeaturedLaunch.meme_image_url && (
                     <SafeImage
                       src={topFeaturedLaunch.meme_image_url}
@@ -339,63 +370,25 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
                       alt={topFeaturedLaunch.product_name}
                       fill
                       priority
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   )}
-
-                  {/* Dynamic Caption Overlay */}
                   {(() => {
                     const captionData = parseCaption(topFeaturedLaunch.caption);
-                    if (captionData.hideOverlay || topFeaturedLaunch.meme_image_url?.endsWith('.svg')) {
-                      return null;
-                    }
-                    const heroTextSize = Math.max(12, Math.min(captionData.size, 22));
-                    const isCustomAbove = typeof captionData.topAbove === 'number' && typeof captionData.leftAbove === 'number';
-                    const isCustomBelow = typeof captionData.topBelow === 'number' && typeof captionData.leftBelow === 'number';
-
+                    if (captionData.hideOverlay || topFeaturedLaunch.meme_image_url?.endsWith('.svg')) return null;
+                    const sz = Math.max(12, Math.min(captionData.size, 20));
                     return (
                       <>
                         {(captionData.position === 'above' || captionData.position === 'both') && captionData.textAbove && (
-                          <div 
-                            className={isCustomAbove ? "absolute z-10 text-center pointer-events-none" : "absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950 via-zinc-950/60 to-transparent p-3 pb-8 flex flex-col justify-start z-10 pointer-events-none"}
-                            style={isCustomAbove ? {
-                              left: `${captionData.leftAbove}%`,
-                              top: `${captionData.topAbove}%`,
-                              transform: 'translate(-50%, -50%)',
-                              width: `${captionData.widthAbove ?? 90}%`,
-                              maxWidth: '100%',
-                            } : undefined}
-                          >
-                            <p 
-                              className="font-impact uppercase tracking-wider text-center line-clamp-2 leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]"
-                              style={{
-                                color: captionData.color,
-                                fontSize: `${heroTextSize}px`,
-                              }}
-                            >
+                          <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950/90 to-transparent p-3 pb-8 z-10 pointer-events-none">
+                            <p className="font-impact uppercase tracking-wider text-center line-clamp-2 leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]" style={{ color: captionData.color, fontSize: `${sz}px` }}>
                               {captionData.textAbove}
                             </p>
                           </div>
                         )}
-
                         {(captionData.position === 'below' || captionData.position === 'both') && captionData.textBelow && (
-                          <div 
-                            className={isCustomBelow ? "absolute z-10 text-center pointer-events-none" : "absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent p-3 pt-8 flex flex-col justify-end z-10 pointer-events-none"}
-                            style={isCustomBelow ? {
-                              left: `${captionData.leftBelow}%`,
-                              top: `${captionData.topBelow}%`,
-                              transform: 'translate(-50%, -50%)',
-                              width: `${captionData.widthBelow ?? 90}%`,
-                              maxWidth: '100%',
-                            } : undefined}
-                          >
-                            <p 
-                              className="font-impact uppercase tracking-wider text-center line-clamp-2 leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]"
-                              style={{
-                                color: captionData.color,
-                                fontSize: `${heroTextSize}px`,
-                              }}
-                            >
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950/90 to-transparent p-3 pt-8 z-10 pointer-events-none">
+                            <p className="font-impact uppercase tracking-wider text-center line-clamp-2 leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]" style={{ color: captionData.color, fontSize: `${sz}px` }}>
                               {captionData.textBelow}
                             </p>
                           </div>
@@ -403,149 +396,107 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
                       </>
                     );
                   })()}
-
-                  <div className="absolute top-2 right-2 text-[9px] font-mono text-zinc-400 font-extrabold tracking-widest uppercase bg-zinc-950/80 px-2 py-0.5 rounded border border-black z-20">
-                    LAUNCHMEME
-                  </div>
                 </div>
 
-                {/* Sample Product Info Bar */}
-                <div className="mt-3 pt-2 border-t-2 border-black flex items-center justify-between">
+                {/* Product Info */}
+                <div className="px-3 py-2.5 flex items-center justify-between bg-zinc-950">
                   <div className="min-w-0 flex-1 pr-2">
                     <h4 className="font-black text-sm text-zinc-100 truncate group-hover:text-[#ffe600] transition-colors">{topFeaturedLaunch.product_name}</h4>
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase">◇ {topFeaturedLaunch.category} • {topFeaturedLaunch.pricing}</p>
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">{topFeaturedLaunch.category}</p>
                   </div>
-                  <div className="flex items-center gap-1 text-xs font-black bg-rose-400 text-zinc-950 border-2 border-black px-2.5 py-1 rounded-lg shadow-brutal-sm">
-                    <span>🔥</span>
-                    <span>{topFeaturedLaunch.reactions?.length || 0}</span>
+                  <div className="flex items-center gap-1 text-xs font-black bg-rose-500 text-white px-2 py-1 rounded-lg">
+                    <Flame className="h-3 w-3 fill-current text-white" /> {topFeaturedLaunch.reactions?.length || 0}
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="relative w-full max-w-sm bg-zinc-950 border-2 border-black rounded-2xl p-3 shadow-brutal hover:rotate-0 transition-transform duration-300 rotate-2">
-                <div className="flex items-center justify-between mb-3 border-b-2 border-black pb-2">
-                  <span className="bg-[#ffe600] text-zinc-950 font-black text-xs uppercase px-2.5 py-0.5 rounded-lg border-2 border-black shadow-brutal-sm flex items-center gap-1">
-                    <span>👑</span> #1 VIRAL CRUSH THIS WEEK
+              <div className="relative w-full max-w-[320px] bg-zinc-900 border border-zinc-700 rounded-2xl overflow-hidden shadow-xl">
+                <div className="flex items-center justify-between px-3 py-2.5 bg-zinc-950 border-b border-zinc-800">
+                  <span className="bg-[#ffe600] text-zinc-950 font-black text-[10px] uppercase px-2 py-0.5 rounded-lg flex items-center gap-1">
+                    <Trophy className="h-3 w-3 stroke-[2.5]" /> #1 Viral Spotlight
                   </span>
-                  <span className="text-zinc-400 font-mono text-[10px] font-extrabold uppercase">SPOTLIGHT</span>
+                  <span className="text-zinc-500 font-mono text-[9px] font-extrabold uppercase">SPOTLIGHT</span>
                 </div>
-                <div className="relative aspect-square w-full rounded-xl overflow-hidden border-2 border-black bg-zinc-900">
-                  <SafeImage 
-                    src="/drake.png"
-                    fallbackSrc="https://i.imgflip.com/1g8my4.jpg" 
-                    fallbackType="meme"
-                    alt="Drake Meme" 
-                    fill
-                    sizes="(max-width: 640px) 100vw, 384px"
-                    priority
-                  />
+                <div className="relative aspect-square w-full bg-zinc-900 overflow-hidden">
+                  <SafeImage src="/drake.png" fallbackSrc="https://i.imgflip.com/1g8my4.jpg" fallbackType="meme" alt="Drake Meme" fill sizes="320px" priority />
                   <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950/90 to-transparent p-3 text-center">
-                    <p className="font-impact text-zinc-100 uppercase text-xs sm:text-sm tracking-wider leading-tight">
-                      SPENDING $5,000 ON ADS THAT NOBODY CLICKS
-                    </p>
+                    <p className="font-impact text-zinc-100 uppercase text-xs tracking-wider leading-tight">SPENDING $5K ON ADS NO ONE CLICKS</p>
                   </div>
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950/90 to-transparent p-3 text-center">
-                    <p className="font-impact text-[#ffe600] uppercase text-xs sm:text-sm tracking-wider leading-tight">
-                      DROPPING ONE FIRE MEME ON LAUNCHMEME & GETTING 10K USERS
-                    </p>
+                    <p className="font-impact text-[#ffe600] uppercase text-xs tracking-wider leading-tight">DROPPING ONE FIRE MEME ON LAUNCHMEME & GETTING 10K USERS</p>
                   </div>
                 </div>
-                <div className="mt-3 pt-2 border-t-2 border-black flex items-center justify-between">
-                  <div>
-                    <h4 className="font-black text-sm text-zinc-100">LaunchDock Pro</h4>
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase">◇ SaaS • FREE TIER</p>
-                  </div>
-                  <div className="flex items-center gap-1 text-xs font-black bg-rose-400 text-zinc-950 border-2 border-black px-2.5 py-1 rounded-lg shadow-brutal-sm">
-                    <span>🔥</span>
-                    <span>342</span>
+                <div className="px-3 py-2.5 flex items-center justify-between bg-zinc-950">
+                  <div><h4 className="font-black text-sm text-zinc-100">LaunchDock Pro</h4><p className="text-[10px] font-bold text-zinc-500 uppercase">SaaS · Free Tier</p></div>
+                  <div className="flex items-center gap-1 text-xs font-black bg-rose-500 text-white px-2 py-1 rounded-lg">
+                    <Flame className="h-3 w-3 fill-current text-white" /> 342
                   </div>
                 </div>
               </div>
             )}
           </div>
-
         </div>
       </section>
 
-      {/* Feed Filter & Search Row (Feed Controls) */}
-      <div className="my-8 sm:my-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6 bg-zinc-950 border-3 border-black p-4 sm:p-6 rounded-3xl shadow-brutal-lg">
+      {/* --- SPONSOR AD GRID: Slots 2, 3, 4 (Above the Fold) --- */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
+        <AdSlot label="Partner Spotlight 1 - 300x100" size="banner" />
+        <AdSlot label="Partner Spotlight 2 - 300x100" size="banner" />
+        <AdSlot label="Partner Spotlight 3 - 300x100" size="banner" />
+      </div>
+
+      {/* --- FEED FILTER ROW --- */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-zinc-950 border border-zinc-800 p-4 sm:p-5 rounded-2xl">
         {/* Tabs */}
-        <div className="flex items-center gap-2.5 sm:gap-3 bg-zinc-900 border-2 border-black p-2 rounded-2xl overflow-x-auto no-scrollbar max-w-full min-w-0">
+        <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 p-1.5 rounded-xl overflow-x-auto no-scrollbar">
           <button
             onClick={() => setActiveTab('trending')}
-            className={`flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 min-h-[46px] rounded-xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all border-2 border-black cursor-pointer shrink-0 whitespace-nowrap ${
-              activeTab === 'trending'
-                ? 'bg-[#ffe600] text-zinc-950 shadow-brutal-sm'
-                : 'bg-transparent text-zinc-300 hover:text-white border-transparent'
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all border border-transparent cursor-pointer shrink-0 whitespace-nowrap ${
+              activeTab === 'trending' ? 'bg-[#ffe600] text-zinc-950 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'text-zinc-400 hover:text-white'
             }`}
           >
-            <TrendingUp className="h-4 w-4" />
-            <span>Trending 🔥</span>
+            <TrendingUp className="h-3.5 w-3.5" /> Trending
           </button>
-
           <button
             onClick={() => setActiveTab('new')}
-            className={`flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 min-h-[46px] rounded-xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all border-2 border-black cursor-pointer shrink-0 whitespace-nowrap ${
-              activeTab === 'new'
-                ? 'bg-[#ffe600] text-zinc-950 shadow-brutal-sm'
-                : 'bg-transparent text-zinc-300 hover:text-white border-transparent'
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all border border-transparent cursor-pointer shrink-0 whitespace-nowrap ${
+              activeTab === 'new' ? 'bg-[#ffe600] text-zinc-950 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'text-zinc-400 hover:text-white'
             }`}
           >
-            <Clock className="h-4 w-4" />
-            <span>Fresh ⚡</span>
+            <Clock className="h-3.5 w-3.5" /> Fresh
           </button>
         </div>
 
-        {/* Search & Category Filter Controls */}
-        <div className="flex flex-col sm:flex-row items-center gap-3.5 sm:gap-4 w-full lg:w-auto">
-          {/* Category Dropdown */}
-          <div className="relative w-full sm:w-52">
+        {/* Search & Category */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+          <div className="relative w-full sm:w-48">
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full h-[46px] px-4 py-2.5 bg-zinc-900 border-2 border-black rounded-2xl text-xs sm:text-sm font-bold uppercase tracking-wider text-zinc-100 focus:outline-none focus:border-[#ffe600] cursor-pointer appearance-none shadow-brutal-sm"
+              className="w-full h-10 px-3.5 py-2 bg-zinc-900 border border-zinc-700 rounded-xl text-xs font-bold uppercase tracking-wider text-zinc-100 focus:outline-none focus:border-[#ffe600] cursor-pointer appearance-none"
             >
-              {[
-                'All Categories',
-                'SaaS',
-                'Developer Tools',
-                'AI & Machine Learning',
-                'Mobile Apps',
-                'Design & Creative',
-                'Marketing & Sales',
-                'Productivity',
-                'Crypto & Web3',
-                'E-Commerce',
-                'Hardware',
-                'Other'
-              ].map((cat) => (
-                <option key={cat} value={cat} className="bg-zinc-950 text-zinc-100">
-                  {cat}
-                </option>
+              {['All Categories','SaaS','Developer Tools','AI & Machine Learning','Mobile Apps','Design & Creative','Marketing & Sales','Productivity','Crypto & Web3','E-Commerce','Hardware','Other'].map((cat) => (
+                <option key={cat} value={cat} className="bg-zinc-950">{cat}</option>
               ))}
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-zinc-400">
-              <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-              </svg>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-400">
+              <svg className="fill-current h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
             </div>
           </div>
-
-          {/* Search bar */}
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search viral products, memes, creators..."
-              className="w-full h-[46px] pl-11 pr-4 py-2.5 bg-zinc-900 border-2 border-black rounded-2xl text-xs sm:text-sm font-bold text-zinc-100 placeholder-zinc-500 shadow-brutal-sm focus:outline-none focus:border-[#ffe600] transition-all"
+              placeholder="Search memes, products..."
+              className="w-full h-10 pl-10 pr-4 bg-zinc-900 border border-zinc-700 rounded-xl text-xs font-medium text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-[#ffe600] transition-all"
             />
           </div>
         </div>
       </div>
 
-      {/* Main feed content */}
+      {/* --- MAIN FEED --- */}
       {isLoading ? (
         renderSkeletons()
       ) : errorMsg ? (
@@ -555,70 +506,55 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
           <p className="text-zinc-400 max-w-sm text-sm">{errorMsg}</p>
         </div>
       ) : filteredAndSortedLaunches.length === 0 ? (
-        /* Empty State */
         <div className="flex flex-col items-center justify-center py-20 px-4 bg-zinc-900/10 border border-zinc-800/40 rounded-3xl text-center space-y-6 max-w-xl mx-auto">
           <div className="h-16 w-16 bg-lime-400/10 border border-lime-400/20 rounded-2xl flex items-center justify-center text-lime-400">
             <Rocket className="h-8 w-8" />
           </div>
-          
           <div className="space-y-2">
             <h3 className="text-2xl font-extrabold text-zinc-100 tracking-tight">
-              {searchQuery ? 'Well, this search came up dry...' : 'Did the founders go back to boring slide decks?'}
+              {searchQuery ? 'No memes found...' : 'Be the first to launch!'}
             </h3>
             <p className="text-zinc-400 text-sm max-w-md">
-              {searchQuery
-                ? `No memes found matching "${searchQuery}". Try a different search or launch your own product right now!`
-                : 'No memes have been launched yet. Be the first absolute legend to drop a viral meme and claim the #1 spot uncontested!'}
+              {searchQuery ? `No memes match "${searchQuery}". Try a different search or launch your own!` : 'No memes have been launched yet. Drop a viral meme and claim the #1 spot!'}
             </p>
           </div>
-
           {!searchQuery && (
-            <Link
-              href={user ? '/launch' : '/login'}
-              className="px-6 py-3.5 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 font-black uppercase text-xs tracking-wider rounded-xl transition-all border-2 border-black shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5"
-            >
-              Claim the Spotlight 🚀
+            <Link href={user ? '/launch' : '/login'} className="px-6 py-3.5 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 font-black uppercase text-xs tracking-wider rounded-xl transition-all border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-0.5 hover:-translate-y-0.5">
+              Claim the Spotlight
             </Link>
           )}
         </div>
       ) : (
-        /* Product Grid (Row-by-Row Ranking) */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-8 items-stretch mt-8 sm:mt-10">
-          {paginatedLaunches.map((launch, index) => (
-            <MemeCard
-              key={launch.id}
-              launch={launch}
-              rank={index + 1}
-              onBoost={(l) => {
-                setBoostLaunch(l);
-                setIsBoostModalOpen(true);
-              }}
-              priority={index < 2}
-            />
-          ))}
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 items-stretch">
+            {paginatedLaunches.map((launch, index) => (
+              <MemeCard
+                key={launch.id}
+                launch={launch}
+                rank={index + 1}
+                onBoost={(l) => { setBoostLaunch(l); setIsBoostModalOpen(true); }}
+                priority={index < 2}
+              />
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Infinite Scroll trigger target */}
+      {/* Infinite scroll trigger */}
       {hasMore && !isLoading && (
         <div ref={observerTarget} className="flex justify-center py-8">
-          <div className="h-8 w-8 border-4 border-lime-400 border-t-transparent rounded-full animate-spin" />
+          <div className="h-7 w-7 border-4 border-lime-400 border-t-transparent rounded-full animate-spin" />
         </div>
       )}
 
-      {/* Boost Launch Points Modal */}
+      {/* Boost Modal */}
       <LaunchBoostModal
         isOpen={isBoostModalOpen}
-        onClose={() => {
-          setIsBoostModalOpen(false);
-          setBoostLaunch(null);
-        }}
+        onClose={() => { setIsBoostModalOpen(false); setBoostLaunch(null); }}
         launch={boostLaunch}
         currentRank={boostLaunch ? (paginatedLaunches.findIndex((l) => l.id === boostLaunch.id) + 1 || 1) : 1}
         currentPoints={boostLaunch ? calculateLaunchPoints(boostLaunch) : 0}
-        onPointsUpdated={() => {
-          fetchLaunches(true);
-        }}
+        onPointsUpdated={() => { fetchLaunches(true); }}
       />
     </div>
   );
