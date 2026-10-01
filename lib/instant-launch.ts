@@ -59,9 +59,9 @@ export const VALID_CATEGORIES = [
 ] as const;
 
 export const MEME_ANGLES = [
-  'The Relatable Panic',
-  'Expectation vs Reality',
-  'The Savior Turn',
+  'The Relatable Struggle',
+  'The 10x Superpower',
+  'The Savage Comparison',
 ] as const;
 
 /**
@@ -361,27 +361,27 @@ function createFallbackInstantData(params: {
   const rawMemes = [
     {
       id: 'meme-angle-1',
-      angle: 'The Relatable Panic',
-      topText: `PUSHING TO PROD AT 4:59 PM`,
-      bottomText: `PRAYING TO THE SERVER GODS`,
-      caption: `The universal Friday afternoon developer experience`,
-      prompt: `A hilarious expressive developer sweating in comical terror while hovering a shaking finger over a keyboard, wide-eyed funny face, dramatic server room lighting, clean visual scene, no text, no letters`,
+      angle: 'The Relatable Struggle',
+      topText: `DOING IT MANUALLY: 40 HOURS`,
+      bottomText: `USING ${productName.toUpperCase()}: 3 MINUTES`,
+      caption: `Doing it manually for 40 hours vs using ${productName} in 3 minutes`,
+      prompt: `A hilarious expressive developer crying in comedic despair at a messy desk with burning servers, comical exaggerated facial expression, cinematic studio lighting, clean visual composition, no text`,
     },
     {
       id: 'meme-angle-2',
-      angle: 'Expectation vs Reality',
-      topText: `MY CODE HAS ZERO BUGS`,
-      bottomText: `SAID NO DEVELOPER EVER`,
-      caption: `Delusional optimism right before running the automated test suite`,
-      prompt: `An overly smug programmer grinning triumphantly with crossed arms right before their laptop starts comically smoking, visual irony, studio lighting, no text, no letters`,
+      angle: 'The 10x Superpower',
+      topText: `ME DISCOVERING ${productName.toUpperCase()}`,
+      bottomText: `SHIPPING 10X FASTER WITH ZERO BUGS`,
+      caption: `How it feels shipping in 5 minutes with ${productName}`,
+      prompt: `A triumphant, extremely confident programmer wearing sleek sunglasses sipping coffee with a glowing rocket thruster, victorious god-mode expression, vivid studio lighting, clean visual composition, no text`,
     },
     {
       id: 'meme-angle-3',
-      angle: 'The Savior Turn',
-      topText: `SPENT 3 DAYS ON BOILERPLATE`,
-      bottomText: `THEN ${productName.toUpperCase()} FIXED IT IN 5S`,
-      caption: `How it feels shipping with ${productName} instead of fighting manual setup`,
-      prompt: `A triumphant, extremely relaxed programmer floating in zero gravity sipping iced coffee while glowing robotic arms handle the servers, god-mode energy, vivid studio lighting, clean visual scene, no text, no letters`,
+      angle: 'The Savage Comparison',
+      topText: `LEGACY TOOLS: $99/MO & SLOW`,
+      bottomText: `${productName.toUpperCase()}: INSTANT & FREE`,
+      caption: `Legacy tools charging $99/month vs ${productName} just working`,
+      prompt: `A comical side-by-side contrast visual metaphor: a clunky rusty mechanical snail next to an ultra-modern glowing neon hovercraft, vivid colors, cinematic lighting, no text`,
     },
   ];
 
@@ -480,27 +480,27 @@ Return ONLY a valid JSON object matching this exact schema:
   "memeConcepts": [
     {
       "id": "meme-angle-1",
-      "angle": "The Relatable Panic",
-      "topText": "string (ALL CAPS setup line, under 30 chars, e.g. WHEN YOU PUSH TO PROD)",
-      "bottomText": "string (ALL CAPS punchline, under 30 chars, e.g. AND THE WHOLE SITE CRASHES)",
+      "angle": "The Relatable Struggle",
+      "topText": "string (PUNCHY SETUP IN ALL CAPS, under 30 chars)",
+      "bottomText": "string (PUNCHY PUNCHLINE IN ALL CAPS, under 30 chars)",
       "caption": "string (hilarious, shareable social caption)",
-      "prompt": "string (pure visual scene description for FLUX: terrified developer sweating in comical panic, laptop smoking, cinematic lighting, NO TEXT, NO WORDS, NO TYPOGRAPHY)"
+      "prompt": "string (pure visual scene description for FLUX: comical developer crying in chaos, expressive face, studio lighting, NO TEXT, NO WORDS, NO TYPOGRAPHY)"
     },
     {
       "id": "meme-angle-2",
-      "angle": "Expectation vs Reality",
-      "topText": "string (ALL CAPS setup line, under 30 chars, e.g. IT WORKED ON MY MACHINE)",
-      "bottomText": "string (ALL CAPS punchline, under 30 chars, e.g. PROD HAS LEFT THE CHAT)",
+      "angle": "The 10x Superpower",
+      "topText": "string (PUNCHY SETUP IN ALL CAPS, under 30 chars)",
+      "bottomText": "string (PUNCHY PUNCHLINE IN ALL CAPS, under 30 chars)",
       "caption": "string (hilarious, shareable social caption)",
-      "prompt": "string (pure visual scene description for FLUX: smug developer grinning right before chaos unfolds, funny facial expression, studio lighting, NO TEXT, NO WORDS, NO TYPOGRAPHY)"
+      "prompt": "string (pure visual scene description for FLUX: triumphant expressive character with sunglasses, god-mode lighting, futuristic gadgets, NO TEXT, NO WORDS, NO TYPOGRAPHY)"
     },
     {
       "id": "meme-angle-3",
-      "angle": "The Savior Turn",
-      "topText": "string (ALL CAPS setup line, under 30 chars, e.g. SPENT 3 DAYS ON SETUP)",
-      "bottomText": "string (ALL CAPS punchline, under 30 chars, e.g. SAVED IN 5 SECONDS)",
+      "angle": "The Savage Comparison",
+      "topText": "string (PUNCHY SETUP IN ALL CAPS, under 30 chars)",
+      "bottomText": "string (PUNCHY PUNCHLINE IN ALL CAPS, under 30 chars)",
       "caption": "string (hilarious, shareable social caption)",
-      "prompt": "string (pure visual scene description for FLUX: triumphant programmer wearing sunglasses sipping coffee with a glowing rocket pack, god-mode energy, NO TEXT, NO WORDS, NO TYPOGRAPHY)"
+      "prompt": "string (pure visual scene description for FLUX: comedic side-by-side contrast visual metaphor, NO TEXT, NO WORDS, NO TYPOGRAPHY)"
     }
   ]
 }
@@ -509,9 +509,8 @@ Ensure:
 - 3 to 4 distinct features.
 - 3 distinct targetAudience personas.
 - Exactly 4 informative FAQs.
-- Exactly 3 memeConcepts matching: 'The Relatable Panic', 'Expectation vs Reality', 'The Savior Turn'.
-- All topText and bottomText MUST be authentic, hilarious 2-part internet memes in ALL CAPS (under 30 chars).
-- NEVER write boring B2B corporate ad slogans like 'DOING IT MANUALLY: 40 HOURS' or 'USING TOOL: 3 MINUTES'.
+- Exactly 3 memeConcepts matching: 'The Relatable Struggle', 'The 10x Superpower', 'The Savage Comparison'.
+- All topText and bottomText must be short, punchy, and in UPPERCASE.
 - All meme prompt fields must be pure visual scene descriptions for FLUX with ZERO text, zero words, and zero typography.`;
 
       const userPrompt = `Target Website URL: ${validUrl}

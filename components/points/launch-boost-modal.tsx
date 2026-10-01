@@ -401,24 +401,24 @@ export function LaunchBoostModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-xl bg-zinc-950 border-4 border-black rounded-3xl p-5 sm:p-7 shadow-brutal-lg max-h-[90vh] overflow-y-auto space-y-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="relative w-full max-w-xl glass-panel-elevated bg-zinc-950/95 border border-white/10 rounded-3xl p-5 sm:p-7 shadow-2xl max-h-[90vh] overflow-y-auto space-y-6">
         <ConfettiCanvas active={confettiActive} />
 
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 bg-zinc-900 border-2 border-black rounded-xl hover:bg-zinc-800 text-zinc-400 hover:text-white transition shadow-brutal-sm"
+          className="absolute top-4 right-4 p-2 bg-zinc-900/80 border border-white/10 rounded-xl hover:bg-zinc-800 text-zinc-400 hover:text-white transition shadow-sm"
         >
           <X className="h-5 w-5" />
         </button>
 
         {/* Celebration Header */}
         <div className="text-center space-y-2 pt-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-lime-400/10 border-2 border-lime-400/30 rounded-full text-lime-400 font-mono text-xs font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-lime-400/10 border border-lime-400/30 rounded-full text-lime-400 font-mono text-xs font-bold uppercase tracking-wider">
             <Rocket className="h-3.5 w-3.5" /> Launch Published Free
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-100 uppercase font-impact">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-100 uppercase">
             Boost <span className="text-lime-400">{prodName}</span> To #1!
           </h2>
           <p className="text-xs sm:text-sm text-zinc-400">
@@ -427,9 +427,9 @@ export function LaunchBoostModal({
         </div>
 
         {/* Gamified Live Rank Card */}
-        <div className="p-4 bg-gradient-to-r from-amber-500/10 via-zinc-900 to-lime-500/10 border-2 border-amber-500/30 rounded-2xl flex items-center justify-between shadow-brutal-sm">
+        <div className="p-4 bg-gradient-to-r from-amber-500/10 via-zinc-900 to-lime-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-between shadow-md">
           <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-xl bg-amber-400 text-black font-black font-impact text-xl flex items-center justify-center border-2 border-black shadow-brutal-sm">
+            <div className="h-11 w-11 rounded-xl bg-amber-400 text-zinc-950 font-black text-xl flex items-center justify-center shadow-md">
               #{currentRank}
             </div>
             <div>
@@ -516,9 +516,9 @@ export function LaunchBoostModal({
           </p>
 
           {/* 1. Embed "Launched on MemeLaunch" Badge (+100 Pts) */}
-          <div className="p-3.5 bg-gradient-to-r from-zinc-900 to-zinc-950 border-2 border-lime-400 rounded-2xl flex items-center justify-between shadow-brutal-sm gap-3">
+          <div className="p-3.5 bg-gradient-to-r from-zinc-900 to-zinc-950 border border-lime-400/40 rounded-2xl flex items-center justify-between shadow-md gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="h-9 w-9 rounded-xl bg-lime-400/10 border border-lime-400/40 text-lime-400 flex items-center justify-center shrink-0">
+              <div className="h-9 w-9 rounded-xl bg-lime-400/10 border border-lime-400/30 text-lime-400 flex items-center justify-center shrink-0">
                 <Code2 className="h-4 w-4" />
               </div>
               <div className="min-w-0">
@@ -528,20 +528,20 @@ export function LaunchBoostModal({
                     +100 Pts
                   </span>
                 </div>
-                <p className="text-[11px] text-zinc-400 truncate">Put badge on {prodName}'s site or GitHub README</p>
+                <p className="text-[11px] text-zinc-400 truncate">Put badge on {prodName}&apos;s site or GitHub README</p>
               </div>
             </div>
 
             <button
               onClick={() => setIsEmbedModalOpen(true)}
-              className="px-3 py-1.5 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-black text-xs uppercase rounded-xl border-2 border-black shadow-brutal-sm hover:-translate-x-0.5 transition shrink-0"
+              className="px-3.5 py-1.5 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-black text-xs uppercase rounded-xl shadow-md hover:-translate-y-0.5 transition shrink-0"
             >
               Get Badge
             </button>
           </div>
 
           {/* 2. Daily Launch Streak & Check-in (+10 to +40 Pts) */}
-          <div className="p-3 sm:p-3.5 rounded-2xl border-2 border-amber-400/40 bg-zinc-900 flex items-center justify-between gap-3 shadow-brutal-sm">
+          <div className="p-3 sm:p-3.5 rounded-2xl border border-amber-400/30 bg-zinc-900/60 flex items-center justify-between gap-3 shadow-md">
             <div className="flex items-center gap-3 min-w-0">
               <div className="h-8 w-8 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-400 flex items-center justify-center shrink-0">
                 <Flame className="h-4 w-4 fill-amber-400" />
@@ -565,7 +565,7 @@ export function LaunchBoostModal({
               <button
                 onClick={() => handleClaimDirectTask(dailyCheckinKey, 10, 'Daily Check-in Streak')}
                 disabled={claimingSpecialKey === dailyCheckinKey}
-                className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 font-black text-xs uppercase rounded-xl border border-black shadow-brutal-sm transition shrink-0"
+                className="px-3.5 py-1.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 font-black text-xs uppercase rounded-xl shadow-md transition shrink-0"
               >
                 Claim +10
               </button>
@@ -573,7 +573,7 @@ export function LaunchBoostModal({
           </div>
 
           {/* 3. Referral / Invite Another Founder (+50 Pts) */}
-          <div className="p-3 sm:p-3.5 rounded-2xl border-2 border-cyan-400/40 bg-zinc-900 flex items-center justify-between gap-3 shadow-brutal-sm">
+          <div className="p-3 sm:p-3.5 rounded-2xl border border-cyan-400/30 bg-zinc-900/60 flex items-center justify-between gap-3 shadow-md">
             <div className="flex items-center gap-3 min-w-0">
               <div className="h-8 w-8 rounded-xl bg-cyan-400/10 border border-cyan-400/30 text-cyan-400 flex items-center justify-center shrink-0">
                 <UserPlus className="h-4 w-4" />
@@ -592,7 +592,7 @@ export function LaunchBoostModal({
             <div className="flex gap-1.5 shrink-0">
               <button
                 onClick={handleCopyReferral}
-                className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-lg border border-zinc-700 transition"
+                className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-lg border border-white/10 transition"
               >
                 {referralCopied ? 'Copied!' : 'Copy Link'}
               </button>
@@ -600,7 +600,7 @@ export function LaunchBoostModal({
                 <button
                   onClick={() => handleClaimDirectTask('referral_invite', 50, 'Founder Referral Bonus')}
                   disabled={claimingSpecialKey === 'referral_invite'}
-                  className="px-2.5 py-1 bg-cyan-400 hover:bg-cyan-300 text-zinc-950 font-black text-xs uppercase rounded-lg border border-black transition"
+                  className="px-2.5 py-1 bg-cyan-400 hover:bg-cyan-300 text-zinc-950 font-black text-xs uppercase rounded-lg transition"
                 >
                   +50 Pts
                 </button>
@@ -619,10 +619,10 @@ export function LaunchBoostModal({
             return (
               <div
                 key={t.key}
-                className={`p-3 sm:p-3.5 rounded-2xl border-2 transition flex items-center justify-between gap-3 ${
+                className={`p-3 sm:p-3.5 rounded-2xl border transition flex items-center justify-between gap-3 ${
                   isCompleted
-                    ? 'bg-zinc-900/40 border-zinc-800/80 opacity-60'
-                    : 'bg-zinc-900 border-black hover:border-lime-400/50 shadow-brutal-sm'
+                    ? 'bg-zinc-900/40 border-white/5 opacity-60'
+                    : 'bg-zinc-900/60 border-white/10 hover:border-lime-400/50 shadow-md'
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
@@ -643,14 +643,14 @@ export function LaunchBoostModal({
                   ) : isOpened ? (
                     <button
                       onClick={() => handleInitiateClaim(t.key, t.points, 'social_boost', t.title)}
-                      className="px-3 py-1.5 bg-lime-400 hover:bg-lime-300 text-black font-bold rounded-xl text-xs transition shadow-brutal-sm flex items-center gap-1"
+                      className="px-3 py-1.5 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold rounded-xl text-xs transition shadow-md flex items-center gap-1"
                     >
                       <Sparkles className="h-3 w-3" /> Verify (+{t.points} pts)
                     </button>
                   ) : (
                     <button
                       onClick={() => handleOpenSocialLink(t.key, t.url)}
-                      className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold rounded-xl text-xs transition border border-zinc-700 flex items-center gap-1"
+                      className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold rounded-xl text-xs transition border border-white/10 flex items-center gap-1"
                     >
                       Share <ExternalLink className="h-3 w-3" />
                     </button>
@@ -666,13 +666,13 @@ export function LaunchBoostModal({
           <Link
             href="/"
             onClick={onClose}
-            className="flex-1 py-3 px-4 bg-lime-400 hover:bg-lime-300 text-black font-extrabold rounded-2xl text-center text-sm transition shadow-brutal uppercase font-impact tracking-wider flex items-center justify-center gap-2"
+            className="flex-1 py-3 px-4 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-black rounded-2xl text-center text-sm transition shadow-lg uppercase tracking-wider flex items-center justify-center gap-2"
           >
             View Leaderboard & Rankings <ArrowRight className="h-4 w-4" />
           </Link>
           <button
             onClick={onClose}
-            className="py-3 px-4 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-bold rounded-2xl text-sm border-2 border-black transition"
+            className="py-3 px-4 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 font-bold rounded-2xl text-sm border border-white/10 transition"
           >
             Done
           </button>

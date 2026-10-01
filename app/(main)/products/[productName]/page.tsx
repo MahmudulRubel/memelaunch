@@ -20,7 +20,7 @@ const getLaunchData = cache(async (rawProductName: string) => {
     // 1. Primary lookup: Case-insensitive search on product_name
     const { data: nameMatch, error: nameErr } = await insforgeAdmin.database
       .from('launches')
-      .select('id, product_name, product_description, product_url, category, pricing, meme_image_url, product_logo_url, seo_dossier')
+      .select('id, user_id, product_name, product_description, product_url, category, pricing, meme_image_url, product_logo_url, caption, created_at, seo_dossier')
       .ilike('product_name', decodedName)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -37,9 +37,9 @@ const getLaunchData = cache(async (rawProductName: string) => {
     // 2. Fallback lookup: Search by UUID if parameter is an ID
     const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(decodedName);
     if (isUuid) {
-      const { data: idMatch } = await insforge.database
+      const { data: idMatch } = await insforgeAdmin.database
         .from('launches')
-        .select('id, product_name, product_description, product_url, category, pricing, meme_image_url, product_logo_url, seo_dossier')
+        .select('id, user_id, product_name, product_description, product_url, category, pricing, meme_image_url, product_logo_url, caption, created_at, seo_dossier')
         .eq('id', decodedName)
         .maybeSingle();
 
@@ -125,7 +125,7 @@ export default async function ProductPage({ params }: PageProps) {
   if (!launch?.id) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center p-8 text-center space-y-6 max-w-lg mx-auto">
-        <div className="h-20 w-20 bg-rose-500/10 border-2 border-rose-500/30 rounded-3xl flex items-center justify-center text-rose-500 shadow-brutal">
+        <div className="h-20 w-20 bg-rose-500/10 border border-rose-500/20 rounded-3xl flex items-center justify-center text-rose-400 shadow-xl backdrop-blur-xl">
           <AlertCircle className="h-10 w-10" />
         </div>
 
@@ -141,15 +141,15 @@ export default async function ProductPage({ params }: PageProps) {
         <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 w-full justify-center">
           <Link
             href="/"
-            className="w-full sm:w-auto px-6 py-3 bg-[#ffe600] text-zinc-950 font-black uppercase text-xs rounded-xl border-2 border-black shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all inline-flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-6 py-3 bg-[#ffe600] text-zinc-950 font-black uppercase text-xs rounded-xl shadow-lg hover:bg-yellow-300 hover:-translate-y-0.5 transition-all inline-flex items-center justify-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" /> Back to Feed
           </Link>
           <Link
             href="/launch"
-            className="w-full sm:w-auto px-6 py-3 bg-zinc-900 border-2 border-black text-zinc-200 hover:text-zinc-950 hover:bg-lime-400 font-black uppercase text-xs rounded-xl shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all inline-flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-6 py-3 bg-zinc-900/80 border border-white/10 text-zinc-200 hover:text-white hover:bg-zinc-800 font-bold uppercase text-xs rounded-xl shadow-md hover:-translate-y-0.5 transition-all inline-flex items-center justify-center gap-2 backdrop-blur-md"
           >
-            <Rocket className="h-4 w-4" /> Launch A Product
+            <Rocket className="h-4 w-4 text-[#ffe600]" /> Launch A Product
           </Link>
         </div>
       </div>
@@ -226,7 +226,7 @@ export default async function ProductPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <ProductView initialLaunchId={launch.id} />
+      <ProductView initialLaunchId={launch.id} initialLaunch={launch as any} />
     </>
   );
 }

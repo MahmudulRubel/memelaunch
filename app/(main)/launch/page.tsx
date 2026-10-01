@@ -871,13 +871,13 @@ function LaunchPageContent() {
 
                   {/* Live Impact Overlay on Live Feed Preview */}
                   {Boolean(selectedMeme?.baseImageUrl) && selectedMeme?.topText && (
-                    <div className="absolute top-3 inset-x-2 pointer-events-none text-center z-10">
+                    <div className="absolute top-2.5 inset-x-2 pointer-events-none text-center z-10">
                       <p
                         className="font-impact uppercase tracking-wider leading-tight text-white px-2 select-none"
                         style={{
-                          fontSize: 'clamp(14px, 4vw, 22px)',
+                          fontSize: 'clamp(12px, 3.5vw, 18px)',
                           textShadow:
-                            '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, -3px 0 0 #000, 3px 0 0 #000, 0 -3px 0 #000, 0 3px 0 #000, 0 4px 8px rgba(0,0,0,0.95)',
+                            '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 3px 6px rgba(0,0,0,0.95)',
                         }}
                       >
                         {selectedMeme.topText}
@@ -885,13 +885,13 @@ function LaunchPageContent() {
                     </div>
                   )}
                   {Boolean(selectedMeme?.baseImageUrl) && selectedMeme?.bottomText && (
-                    <div className="absolute bottom-3 inset-x-2 pointer-events-none text-center z-10">
+                    <div className="absolute bottom-2.5 inset-x-2 pointer-events-none text-center z-10">
                       <p
                         className="font-impact uppercase tracking-wider leading-tight text-white px-2 select-none"
                         style={{
-                          fontSize: 'clamp(14px, 4vw, 22px)',
+                          fontSize: 'clamp(12px, 3.5vw, 18px)',
                           textShadow:
-                            '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, -3px 0 0 #000, 3px 0 0 #000, 0 -3px 0 #000, 0 3px 0 #000, 0 4px 8px rgba(0,0,0,0.95)',
+                            '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 3px 6px rgba(0,0,0,0.95)',
                         }}
                       >
                         {selectedMeme.bottomText}

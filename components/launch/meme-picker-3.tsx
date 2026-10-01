@@ -269,13 +269,13 @@ export function MemePicker3({
 
                       {/* Live Impact Meme Text Overlay (renders dynamically when baseImageUrl is used) */}
                       {Boolean(meme.baseImageUrl) && meme.topText && (
-                        <div className="absolute top-3 inset-x-2 pointer-events-none text-center z-10">
+                        <div className="absolute top-2.5 inset-x-2 pointer-events-none text-center z-10">
                           <p
                             className="font-impact uppercase tracking-wider leading-tight text-white px-2 select-none"
                             style={{
-                              fontSize: 'clamp(14px, 4vw, 22px)',
+                              fontSize: 'clamp(12px, 3.2vw, 19px)',
                               textShadow:
-                                '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, -3px 0 0 #000, 3px 0 0 #000, 0 -3px 0 #000, 0 3px 0 #000, 0 4px 8px rgba(0,0,0,0.95)',
+                                '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 3px 6px rgba(0,0,0,0.95)',
                             }}
                           >
                             {meme.topText}
@@ -283,13 +283,13 @@ export function MemePicker3({
                         </div>
                       )}
                       {Boolean(meme.baseImageUrl) && meme.bottomText && (
-                        <div className="absolute bottom-3 inset-x-2 pointer-events-none text-center z-10">
+                        <div className="absolute bottom-2.5 inset-x-2 pointer-events-none text-center z-10">
                           <p
                             className="font-impact uppercase tracking-wider leading-tight text-white px-2 select-none"
                             style={{
-                              fontSize: 'clamp(14px, 4vw, 22px)',
+                              fontSize: 'clamp(12px, 3.2vw, 19px)',
                               textShadow:
-                                '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, -3px 0 0 #000, 3px 0 0 #000, 0 -3px 0 #000, 0 3px 0 #000, 0 4px 8px rgba(0,0,0,0.95)',
+                                '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 3px 6px rgba(0,0,0,0.95)',
                             }}
                           >
                             {meme.bottomText}
@@ -442,15 +442,14 @@ export function MemePicker3({
               />
 
               {/* Live Impact Overlay in Lightbox if baseImageUrl is present */}
-              {/* Live Impact Meme Text Overlay in Lightbox */}
               {Boolean(activeLightboxMeme.baseImageUrl) && activeLightboxMeme.topText && (
                 <div className="absolute top-4 inset-x-4 pointer-events-none text-center z-10">
                   <p
                     className="font-impact uppercase tracking-wider leading-tight text-white px-4 select-none"
                     style={{
-                      fontSize: 'clamp(20px, 4.5vw, 36px)',
+                      fontSize: 'clamp(18px, 4vw, 32px)',
                       textShadow:
-                        '-3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000, -4px 0 0 #000, 4px 0 0 #000, 0 -4px 0 #000, 0 4px 0 #000, 0 5px 10px rgba(0,0,0,0.95)',
+                        '-3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000, 0 4px 8px rgba(0,0,0,0.95)',
                     }}
                   >
                     {activeLightboxMeme.topText}
@@ -462,9 +461,9 @@ export function MemePicker3({
                   <p
                     className="font-impact uppercase tracking-wider leading-tight text-white px-4 select-none"
                     style={{
-                      fontSize: 'clamp(20px, 4.5vw, 36px)',
+                      fontSize: 'clamp(18px, 4vw, 32px)',
                       textShadow:
-                        '-3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000, -4px 0 0 #000, 4px 0 0 #000, 0 -4px 0 #000, 0 4px 0 #000, 0 5px 10px rgba(0,0,0,0.95)',
+                        '-3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000, 0 4px 8px rgba(0,0,0,0.95)',
                     }}
                   >
                     {activeLightboxMeme.bottomText}

@@ -11,10 +11,7 @@ import {
   Users,
   CheckCircle2,
   ChevronDown,
-  Share2,
-  Download,
   Flame,
-  Laugh,
   Rocket,
   Layers,
   ArrowRight,
@@ -35,7 +32,7 @@ interface SeoDossierViewProps {
   productUrl: string;
   category: string;
   pricing: string;
-  primaryMemeUrl: string;
+  primaryMemeUrl?: string;
 }
 
 export function SeoDossierView({
@@ -44,7 +41,6 @@ export function SeoDossierView({
   productUrl,
   category,
   pricing,
-  primaryMemeUrl,
 }: SeoDossierViewProps) {
   const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(0);
 
@@ -59,14 +55,6 @@ export function SeoDossierView({
       default:
         return <Zap className="w-5 h-5 text-lime-400" />;
     }
-  };
-
-  const handleShareToTwitter = (caption?: string) => {
-    const text = encodeURIComponent(
-      `Check out ${productName} on @launchme_me — launched with this meme!\n\n"${caption || dossier.tagline}"\n\n`
-    );
-    const url = encodeURIComponent(window.location.href);
-    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
   };
 
   const pricingLabel =
@@ -128,7 +116,7 @@ export function SeoDossierView({
     <article className="space-y-14 text-zinc-100">
 
       {/* 1. Tagline & Value Hook */}
-      <section className="bg-gradient-to-br from-zinc-900 via-zinc-950 to-zinc-900 border-2 border-zinc-800 rounded-3xl p-6 sm:p-10 shadow-brutal relative overflow-hidden">
+      <section className="glass-panel border border-white/10 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-80 bg-lime-400/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-400/5 rounded-full blur-3xl pointer-events-none" />
         <div className="max-w-3xl space-y-4 relative z-10">
@@ -155,61 +143,7 @@ export function SeoDossierView({
         </div>
       </section>
 
-      {/* 2. Official Launch Meme */}
-      <section className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-4">
-          <div>
-            <span className="text-xs font-mono uppercase tracking-wider text-lime-400 font-bold flex items-center gap-1.5">
-              <Laugh className="w-4 h-4" /> Official Launch Meme
-            </span>
-            <h3 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-zinc-100 mt-0.5">
-              The Meme That Started It All
-            </h3>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => handleShareToTwitter(dossier.tagline)}
-              className="px-3.5 py-1.5 bg-[#1DA1F2]/10 hover:bg-[#1DA1F2]/20 border border-[#1DA1F2]/40 text-[#1DA1F2] rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <Share2 className="w-3.5 h-3.5" /> Share on X
-            </button>
-            {primaryMemeUrl && (
-              <a
-                href={primaryMemeUrl}
-                target="_blank"
-                rel="noreferrer"
-                download={`${productName}_meme.jpg`}
-                className="px-3.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition-colors"
-              >
-                <Download className="w-3.5 h-3.5" /> Download HD
-              </a>
-            )}
-          </div>
-        </div>
-
-        {primaryMemeUrl && (
-          <div className="bg-zinc-950 border-2 border-zinc-800 rounded-3xl overflow-hidden shadow-2xl group max-w-xl mx-auto">
-            <div className="relative aspect-square bg-zinc-900 overflow-hidden flex items-center justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={primaryMemeUrl}
-                alt={`${productName} official launch meme - ${dossier.tagline}`}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-            </div>
-            <div className="p-5 bg-zinc-900/90 border-t border-zinc-800 flex items-center justify-between gap-4">
-              <p className="text-xs sm:text-sm text-zinc-300 font-medium italic leading-relaxed">
-                &quot;{dossier.tagline}&quot;
-              </p>
-              <span className="px-2.5 py-1 rounded-lg bg-lime-400/10 border border-lime-400/30 text-lime-400 font-mono text-[10px] uppercase font-bold shrink-0">
-                Launch Meme
-              </span>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* 3. Problem vs Solution */}
+      {/* 2. Problem vs Solution */}
       <section className="space-y-5">
         <div className="border-b border-zinc-800 pb-3">
           <span className="text-xs font-mono uppercase tracking-wider text-rose-400 font-bold flex items-center gap-1.5">
@@ -441,7 +375,7 @@ export function SeoDossierView({
               href={productUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-black text-xs uppercase rounded-xl border-2 border-black shadow-brutal transition-all"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md hover:-translate-y-0.5 transition-all"
             >
               See Pricing on {productName} <ExternalLink className="w-3.5 h-3.5" />
             </a>
@@ -591,28 +525,28 @@ export function SeoDossierView({
       </section>
 
       {/* 11. Bottom Visit CTA */}
-      <section className="bg-gradient-to-r from-lime-400 via-[#ffe600] to-lime-400 p-6 sm:p-10 rounded-3xl border-2 border-black shadow-brutal flex flex-col sm:flex-row items-center justify-between gap-6">
-        <div className="text-zinc-950 space-y-2 text-center sm:text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-950/10 text-zinc-900 font-mono text-xs font-black uppercase tracking-wider">
+      <section className="bg-gradient-to-r from-amber-500 via-[#ffe600] to-amber-400 p-6 sm:p-10 rounded-3xl shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
+        <div className="text-zinc-950 space-y-2 text-center sm:text-left relative z-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-950/15 text-zinc-950 font-mono text-xs font-black uppercase tracking-wider">
             <Rocket className="w-3.5 h-3.5" /> Ready to Try It?
           </div>
           <h3 className="text-xl sm:text-3xl font-black uppercase tracking-tight">
             Experience {productName} Live
           </h3>
-          <p className="text-xs sm:text-sm font-bold text-zinc-800 max-w-md">
+          <p className="text-xs sm:text-sm font-bold text-zinc-900 max-w-md leading-relaxed">
             Join the builders who discovered {productName} on MemeLaunch. Click through to the live product and start exploring — it takes less than 2 minutes.
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
+        <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 relative z-10">
           <a
             href={productUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-8 py-4 bg-zinc-950 text-white hover:bg-zinc-900 font-black uppercase text-sm tracking-wider rounded-2xl border-2 border-black shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all inline-flex items-center gap-2"
+            className="px-8 py-4 bg-zinc-950 text-white hover:bg-zinc-900 font-black uppercase text-sm tracking-wider rounded-2xl shadow-xl hover:-translate-y-0.5 transition-all inline-flex items-center gap-2 border border-white/10"
           >
             <span>Visit {productName}</span>
-            <ExternalLink className="w-4 h-4 text-lime-400" />
+            <ExternalLink className="w-4 h-4 text-[#ffe600]" />
           </a>
         </div>
       </section>
