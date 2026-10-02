@@ -19,6 +19,11 @@ export async function POST(request: NextRequest) {
       screenshotUrls,
       seoDossier,
       alternateMemes,
+      launchTier = 'free',
+      isDofollow = false,
+      badgeVerified = false,
+      isPaid = false,
+      whopPaymentId = null,
     } = body;
 
     if (!userId || !productName || !productUrl || !category) {
@@ -104,7 +109,26 @@ export async function POST(request: NextRequest) {
       memeCaption: '',
     });
 
-    const isApproved = aiEvaluation.isApproved;
+    // Tier-based approval and dofollow rules
+    let isApproved = Boolean(aiEvaluation.isApproved);
+    let dofollowStatus = Boolean(isDofollow);
+
+    if (launchTier === 'badge' && badgeVerified) {
+      // Verified badge earns instant approval + dofollow backlink
+      isApproved = true;
+      dofollowStatus = true;
+    } else if (launchTier === 'paid' && isPaid) {
+      // Paid fast-track earns instant approval + dofollow backlink
+      isApproved = true;
+      dofollowStatus = true;
+    } else if (launchTier === 'paid' && !isPaid) {
+      // Pre-created launch pending Whop checkout
+      isApproved = false;
+      dofollowStatus = true;
+    } else {
+      // Free tier defaults to nofollow link
+      dofollowStatus = false;
+    }
 
     // Build final SEO dossier with alternate memes & AI evaluation audit trail
     const finalSeoDossier = seoDossier ? { ...seoDossier } : {};
@@ -112,6 +136,11 @@ export async function POST(request: NextRequest) {
       finalSeoDossier.alternateMemes = alternateMemes;
     }
     finalSeoDossier.ai_evaluation = aiEvaluation;
+    finalSeoDossier.launch_tier = launchTier;
+    finalSeoDossier.is_dofollow = dofollowStatus;
+    finalSeoDossier.badge_verified = Boolean(badgeVerified);
+    finalSeoDossier.is_paid = Boolean(isPaid);
+    finalSeoDossier.whop_payment_id = whopPaymentId;
 
     // Step 2: Insert into launches table using Admin SDK
     const { data: launchData, error: launchError } = await insforgeAdmin.database
@@ -176,12 +205,20 @@ export async function POST(request: NextRequest) {
       revalidatePath(`/products/${encodeURIComponent(productName.trim())}`);
     } catch (rErr) {}
 
+    const whopCheckoutUrl =
+      launchTier === 'paid' && !isPaid
+        ? `https://whop.com/checkout/plan_n03pbhmDAdx0w?metadata[launchId]=${launchId}&metadata[userId]=${userId}&metadata[productName]=${encodeURIComponent(
+            productName.trim()
+          )}`
+        : null;
+
     return NextResponse.json({
       success: true,
       launchId,
       launch: launchData[0],
       is_approved: isApproved,
       ai_evaluation: aiEvaluation,
+      whop_checkout_url: whopCheckoutUrl,
     });
   } catch (err: any) {
     console.error('Launch create API exception:', err);

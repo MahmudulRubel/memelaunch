@@ -349,6 +349,13 @@ export function ProductView({ initialLaunchId, initialLaunch }: ProductViewProps
                     <Trophy className="w-3 h-3 text-amber-400" /> Top 16 Qualifier
                   </span>
                 )}
+
+                {/* Dofollow Backlink Badge */}
+                {((launch as any).seo_dossier?.is_dofollow || (launch as any).seo_dossier?.launch_tier === 'paid' || (launch as any).seo_dossier?.launch_tier === 'badge') && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
+                    <Sparkles className="w-3 h-3 text-emerald-400" /> Dofollow Backlink
+                  </span>
+                )}
               </div>
 
               {/* Description */}
@@ -397,7 +404,13 @@ export function ProductView({ initialLaunchId, initialLaunch }: ProductViewProps
               <a
                 href={launch.product_url}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel={
+                  (launch as any).seo_dossier?.is_dofollow ||
+                  (launch as any).seo_dossier?.launch_tier === 'paid' ||
+                  (launch as any).seo_dossier?.launch_tier === 'badge'
+                    ? 'noopener noreferrer'
+                    : 'nofollow noopener noreferrer'
+                }
                 onClick={() => trackLaunchClick(launch.id)}
                 className="px-6 py-3 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 font-black text-xs uppercase tracking-wider rounded-2xl transition-all shadow-[0_4px_20px_rgba(255,230,0,0.35)] hover:-translate-y-0.5 flex items-center justify-center gap-2"
               >

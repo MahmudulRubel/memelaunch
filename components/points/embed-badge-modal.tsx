@@ -25,6 +25,8 @@ interface EmbedBadgeModalProps {
   productName?: string;
   defaultWebsiteUrl?: string;
   onClaimSuccess?: (newPoints: number) => void;
+  onVerified?: (websiteUrl: string) => void;
+  ctaLabel?: string;
 }
 
 // Inline pure SVG component with exact MemeLaunch brand logo
@@ -144,6 +146,8 @@ export function EmbedBadgeModal({
   productName = 'MyProduct',
   defaultWebsiteUrl = '',
   onClaimSuccess,
+  onVerified,
+  ctaLabel,
 }: EmbedBadgeModalProps) {
   const { user } = useAuth();
   const [theme, setTheme] = useState<'dark' | 'white' | 'gold'>('dark');
@@ -211,6 +215,7 @@ export function EmbedBadgeModal({
         playLevelUpSound();
         setFeedback({ type: 'success', text: data.message || '🎉 Verified! +100 Points Awarded!' });
         if (onClaimSuccess) onClaimSuccess(data.points);
+        if (onVerified) onVerified(websiteUrl.trim());
       } else {
         setFeedback({ type: 'error', text: data.message || 'Verification failed. Badge not found on page.' });
       }

@@ -287,7 +287,13 @@ export function ProductHuntRow({
                 <a
                   href={launch.product_url}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel={
+                    (launch as any).seo_dossier?.is_dofollow ||
+                    (launch as any).seo_dossier?.launch_tier === 'paid' ||
+                    (launch as any).seo_dossier?.launch_tier === 'badge'
+                      ? 'noopener noreferrer'
+                      : 'nofollow noopener noreferrer'
+                  }
                   onClick={(e) => {
                     e.stopPropagation();
                     trackLaunchClick(launch.id);

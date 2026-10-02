@@ -7,6 +7,7 @@ import { useAuth } from '@/components/auth-provider';
 import { getUserPoints } from '@/lib/points';
 import { EarnPointsModal } from '@/components/points/earn-points-modal';
 import { LaunchBoostModal } from '@/components/points/launch-boost-modal';
+import { EmbedBadgeModal } from '@/components/points/embed-badge-modal';
 import { AuthModal } from '@/components/auth/auth-modal';
 import { MemePicker3, type MemePickerItem } from '@/components/launch/meme-picker-3';
 import { InDepthDossierPreview } from '@/components/launch/in-depth-dossier-preview';
@@ -33,6 +34,9 @@ import {
   Zap,
   RotateCcw,
   ExternalLink,
+  ShieldCheck,
+  CreditCard,
+  Crown,
 } from 'lucide-react';
 
 const SESSION_STORAGE_KEY = 'memelaunch_instant_launch_draft';
@@ -98,6 +102,11 @@ function LaunchPageContent() {
     product_url?: string;
     meme_image_url?: string;
   } | null>(null);
+
+  // Launch Tiers & Embed Badge Modal State
+  const [selectedLaunchTier, setSelectedLaunchTier] = useState<'free' | 'badge' | 'paid'>('badge');
+  const [isEmbedBadgeModalOpen, setIsEmbedBadgeModalOpen] = useState(false);
+  const [badgeVerifiedUrl, setBadgeVerifiedUrl] = useState<string | null>(null);
 
   // Points & Auth Modals
   const [userPoints, setUserPoints] = useState<number>(0);
@@ -351,11 +360,19 @@ function LaunchPageContent() {
   /**
    * Submission Gatekeeper
    */
-  const handleConfirmAndLaunch = async () => {
+  const handleConfirmAndLaunch = async (overrideTier?: 'free' | 'badge' | 'paid') => {
     setSubmitError(null);
+
+    const activeTier = overrideTier || selectedLaunchTier;
 
     if (!productName.trim() || !productUrl.trim() || !category.trim()) {
       setSubmitError('Product name, category, and URL are required to launch.');
+      return;
+    }
+
+    if (activeTier === 'badge' && !badgeVerifiedUrl) {
+      // Need badge verification first
+      setIsEmbedBadgeModalOpen(true);
       return;
     }
 
@@ -367,13 +384,16 @@ function LaunchPageContent() {
       return;
     }
 
-    await executeSubmission(user);
+    await executeSubmission(user, activeTier);
   };
 
   /**
    * Executes the actual launch submission to /api/launch/create
    */
-  const executeSubmission = async (authUser: any) => {
+  const executeSubmission = async (
+    authUser: any,
+    tierToUse: 'free' | 'badge' | 'paid' = selectedLaunchTier
+  ) => {
     setIsSubmitting(true);
     setStatusMessage('Preparing your viral launch...');
     setSubmitError(null);
@@ -413,7 +433,11 @@ function LaunchPageContent() {
           product_url: productUrl.trim(),
         });
 
-      setStatusMessage('🤖 Autonomous AI Reviewing & Verifying Product Quality...');
+      setStatusMessage(
+        tierToUse === 'paid'
+          ? '💳 Connecting to Whop Fast-Track Checkout...'
+          : '🤖 Autonomous AI Reviewing & Verifying Product Quality...'
+      );
 
       const response = await fetch('/api/launch/create', {
         method: 'POST',
@@ -430,6 +454,10 @@ function LaunchPageContent() {
           screenshotUrls: [],
           seoDossier: dossierToSave,
           alternateMemes: [],
+          launchTier: tierToUse,
+          isDofollow: tierToUse === 'badge' || tierToUse === 'paid',
+          badgeVerified: tierToUse === 'badge' && Boolean(badgeVerifiedUrl),
+          isPaid: false,
         }),
       });
 
@@ -437,6 +465,16 @@ function LaunchPageContent() {
 
       if (!response.ok || !result.success) {
         throw new Error(result.error || 'Failed to submit launch. Please try again.');
+      }
+
+      // If Paid Tier, redirect user directly to Whop checkout URL
+      if (tierToUse === 'paid' && result.whop_checkout_url) {
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem(SESSION_STORAGE_KEY);
+          sessionStorage.removeItem(PENDING_AUTH_KEY);
+          window.location.href = result.whop_checkout_url;
+        }
+        return;
       }
 
       // Clear draft session storage
@@ -1152,34 +1190,261 @@ function LaunchPageContent() {
                 </div>
               )}
 
-              {/* ONE BIG GLOWING LAUNCH BUTTON */}
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={handleConfirmAndLaunch}
-                  disabled={isSubmitting}
-                  className="w-full py-4 sm:py-5 px-8 rounded-2xl font-black text-base sm:text-lg uppercase tracking-wider text-zinc-950 bg-lime-400 hover:bg-lime-300 active:scale-98 transition-all duration-200 shadow-[0_0_35px_rgba(163,230,53,0.35)] hover:shadow-[0_0_50px_rgba(163,230,53,0.5)] flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer group"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin stroke-[2.5]" />
-                      <span>{statusMessage || 'Publishing Launch...'}</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Confirm &amp; Launch Now 🚀</span>
-                      <ArrowRight className="w-5 h-5 stroke-[2.5] group-hover:translate-x-1 transition-transform" />
-                    </>
-                  )}
-                </button>
-                <p className="text-center text-[11px] font-mono text-zinc-500 mt-2.5">
-                  Instant launch to community feed • Autonomous AI Quality Verified • 0 screenshots required
+              {/* --- 3 LAUNCH OPTIONS TIERS GRID --- */}
+              <div className="space-y-4 pt-4 border-t border-zinc-800">
+                <div className="text-center space-y-1">
+                  <h3 className="text-lg sm:text-xl font-black text-white uppercase tracking-tight flex items-center justify-center gap-2">
+                    <Sparkles className="w-5 h-5 text-lime-400" />
+                    <span>Choose How You Want to Launch</span>
+                  </h3>
+                  <p className="text-xs sm:text-sm text-zinc-400 max-w-xl mx-auto">
+                    Launch free anytime, earn a permanent <strong className="text-lime-400">Dofollow</strong> backlink with our embed badge, or skip the badge with instant $4.99 fast-track.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                  {/* OPTION 1: Standard Free */}
+                  <div
+                    onClick={() => setSelectedLaunchTier('free')}
+                    className={`relative rounded-2xl p-5 border transition-all cursor-pointer flex flex-col justify-between ${
+                      selectedLaunchTier === 'free'
+                        ? 'bg-zinc-900 border-zinc-500 shadow-lg ring-2 ring-zinc-400/20'
+                        : 'bg-zinc-900/50 border-zinc-800 hover:border-zinc-700'
+                    }`}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 font-bold">Standard</span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-300 font-bold">$0 Free</span>
+                      </div>
+                      <div>
+                        <h4 className="text-base font-bold text-white">Community Launch</h4>
+                        <p className="text-xs text-zinc-400 mt-1">
+                          Standard queue submission for community voting.
+                        </p>
+                      </div>
+                      <ul className="space-y-2 text-xs text-zinc-300 pt-2 border-t border-zinc-800/80">
+                        <li className="flex items-center gap-2">
+                          <Check className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                          <span>Community feed listing</span>
+                        </li>
+                        <li className="flex items-center gap-2 text-zinc-400">
+                          <Check className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                          <span>Standard review queue</span>
+                        </li>
+                        <li className="flex items-center gap-2 text-zinc-400">
+                          <span className="w-3.5 h-3.5 text-zinc-600 text-center text-xs shrink-0">•</span>
+                          <span>Nofollow backlink</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedLaunchTier('free');
+                        handleConfirmAndLaunch('free');
+                      }}
+                      className="mt-5 w-full py-2.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {isSubmitting && selectedLaunchTier === 'free' ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <span>Launch Free</span>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* OPTION 2: Free + Embed Badge (RECOMMENDED / MOST POPULAR) */}
+                  <div
+                    onClick={() => {
+                      setSelectedLaunchTier('badge');
+                      if (!badgeVerifiedUrl) {
+                        setIsEmbedBadgeModalOpen(true);
+                      }
+                    }}
+                    className={`relative rounded-2xl p-5 border transition-all cursor-pointer flex flex-col justify-between ${
+                      selectedLaunchTier === 'badge'
+                        ? 'bg-zinc-900 border-lime-400 shadow-[0_0_25px_rgba(163,230,53,0.15)] ring-2 ring-lime-400/40'
+                        : 'bg-zinc-900/50 border-lime-500/30 hover:border-lime-400/60'
+                    }`}
+                  >
+                    {/* Most Popular Pill */}
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-lime-400 text-zinc-950 text-[10px] font-black uppercase tracking-wider px-3 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      <span>Most Popular • 100% Free</span>
+                    </div>
+
+                    <div className="space-y-3 pt-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-mono uppercase tracking-wider text-lime-400 font-bold">Embed Badge</span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-lime-400/10 text-lime-400 border border-lime-400/30 font-bold">$0 Free</span>
+                      </div>
+                      <div>
+                        <h4 className="text-base font-bold text-white flex items-center gap-1.5">
+                          <span>Verified Instant Launch</span>
+                        </h4>
+                        <p className="text-xs text-zinc-300 mt-1">
+                          Embed the MemeLaunch badge on your site to get instant live publish &amp; permanent Dofollow link.
+                        </p>
+                      </div>
+                      <ul className="space-y-2 text-xs text-zinc-200 pt-2 border-t border-zinc-800/80">
+                        <li className="flex items-center gap-2">
+                          <Check className="w-3.5 h-3.5 text-lime-400 shrink-0" />
+                          <span className="font-semibold text-white">Instant live feed publication</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Check className="w-3.5 h-3.5 text-lime-400 shrink-0" />
+                          <span className="font-semibold text-lime-300">Permanent Dofollow backlink</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Check className="w-3.5 h-3.5 text-lime-400 shrink-0" />
+                          <span>Bot auto-verification in seconds</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Check className="w-3.5 h-3.5 text-lime-400 shrink-0" />
+                          <span>+200 bonus ranking points</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="mt-5 space-y-2">
+                      {badgeVerifiedUrl ? (
+                        <div className="flex items-center justify-center gap-1.5 py-1 px-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-mono">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Badge Verified on site!</span>
+                        </div>
+                      ) : null}
+                      <button
+                        type="button"
+                        disabled={isSubmitting}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedLaunchTier('badge');
+                          if (!badgeVerifiedUrl) {
+                            setIsEmbedBadgeModalOpen(true);
+                          } else {
+                            handleConfirmAndLaunch('badge');
+                          }
+                        }}
+                        className="w-full py-2.5 px-4 rounded-xl font-black text-xs uppercase tracking-wider bg-lime-400 hover:bg-lime-300 text-zinc-950 transition-all shadow-[0_0_15px_rgba(163,230,53,0.3)] flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        {isSubmitting && selectedLaunchTier === 'badge' ? (
+                          <Loader2 className="w-4 h-4 animate-spin stroke-[2.5]" />
+                        ) : badgeVerifiedUrl ? (
+                          <>
+                            <span>Publish with Verified Badge 🚀</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShieldCheck className="w-4 h-4" />
+                            <span>Verify Badge &amp; Launch</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* OPTION 3: Instant Fast-Track ($4.99 via Whop) */}
+                  <div
+                    onClick={() => setSelectedLaunchTier('paid')}
+                    className={`relative rounded-2xl p-5 border transition-all cursor-pointer flex flex-col justify-between ${
+                      selectedLaunchTier === 'paid'
+                        ? 'bg-zinc-900 border-[#ffe600] shadow-[0_0_25px_rgba(255,230,0,0.15)] ring-2 ring-[#ffe600]/40'
+                        : 'bg-zinc-900/50 border-amber-500/30 hover:border-[#ffe600]/60'
+                    }`}
+                  >
+                    {/* VIP Pill */}
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#ffe600] text-zinc-950 text-[10px] font-black uppercase tracking-wider px-3 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                      <Crown className="w-3 h-3" />
+                      <span>No Badge Needed</span>
+                    </div>
+
+                    <div className="space-y-3 pt-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-mono uppercase tracking-wider text-[#ffe600] font-bold">Fast-Track VIP</span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#ffe600]/10 text-[#ffe600] border border-[#ffe600]/30 font-bold">$4.99 Once</span>
+                      </div>
+                      <div>
+                        <h4 className="text-base font-bold text-white flex items-center gap-1.5">
+                          <span>Instant Pass ($4.99)</span>
+                        </h4>
+                        <p className="text-xs text-zinc-300 mt-1">
+                          Skip adding any badge. Instant publish with permanent Dofollow backlink &amp; lifetime directory spot.
+                        </p>
+                      </div>
+                      <ul className="space-y-2 text-xs text-zinc-200 pt-2 border-t border-zinc-800/80">
+                        <li className="flex items-center gap-2">
+                          <Check className="w-3.5 h-3.5 text-[#ffe600] shrink-0" />
+                          <span className="font-semibold text-white">Instant live feed publication</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Check className="w-3.5 h-3.5 text-[#ffe600] shrink-0" />
+                          <span className="font-semibold text-yellow-300">Permanent Dofollow backlink</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Check className="w-3.5 h-3.5 text-[#ffe600] shrink-0" />
+                          <span className="text-white">Forever stay in directory</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Check className="w-3.5 h-3.5 text-[#ffe600] shrink-0" />
+                          <span>No website embed required</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedLaunchTier('paid');
+                        handleConfirmAndLaunch('paid');
+                      }}
+                      className="mt-5 w-full py-2.5 px-4 rounded-xl font-black text-xs uppercase tracking-wider bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 transition-all shadow-[0_0_15px_rgba(255,230,0,0.3)] flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {isSubmitting && selectedLaunchTier === 'paid' ? (
+                        <Loader2 className="w-4 h-4 animate-spin stroke-[2.5]" />
+                      ) : (
+                        <>
+                          <CreditCard className="w-4 h-4" />
+                          <span>Pay $4.99 &amp; Launch Instantly</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-center text-[11px] font-mono text-zinc-500 pt-1">
+                  Secure one-time payments processed by Whop • Instant activation • Dofollow backlinks verified 24/7
                 </p>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Embed Badge Modal for Option 2 Verification */}
+      <EmbedBadgeModal
+        isOpen={isEmbedBadgeModalOpen}
+        onClose={() => setIsEmbedBadgeModalOpen(false)}
+        productName={productName}
+        defaultWebsiteUrl={productUrl}
+        onVerified={(verifiedUrl) => {
+          setBadgeVerifiedUrl(verifiedUrl);
+          setIsEmbedBadgeModalOpen(false);
+          // If user was ready to submit, proceed immediately
+          if (user) {
+            executeSubmission(user, 'badge');
+          }
+        }}
+        onClaimSuccess={(newPoints) => {
+          setUserPoints(newPoints);
+        }}
+        ctaLabel="Verify Embed & Complete Launch"
+      />
 
       {/* Earn Points Modal Popup */}
       <EarnPointsModal
