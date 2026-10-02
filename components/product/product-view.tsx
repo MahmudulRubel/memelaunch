@@ -93,23 +93,23 @@ export function ProductView({ initialLaunchId, initialLaunch }: ProductViewProps
       }
       setErrorMsg(null);
       try {
-        if (!launchData) {
-          const { data: primaryLaunch } = await insforge.database
+        if (!launchData && initialLaunchId) {
+          const { data: primaryLaunches } = await insforge.database
             .from('launches')
             .select('*, users(name, avatar)')
             .eq('id', initialLaunchId)
-            .maybeSingle();
+            .limit(1);
 
-          if (primaryLaunch) {
-            launchData = primaryLaunch;
+          if (primaryLaunches && primaryLaunches.length > 0) {
+            launchData = primaryLaunches[0];
           } else {
-            const { data: adminLaunch } = await insforgeAdmin.database
+            const { data: adminLaunches } = await insforgeAdmin.database
               .from('launches')
               .select('*, users(name, avatar)')
               .eq('id', initialLaunchId)
-              .maybeSingle();
-            if (adminLaunch) {
-              launchData = adminLaunch;
+              .limit(1);
+            if (adminLaunches && adminLaunches.length > 0) {
+              launchData = adminLaunches[0];
             }
           }
         }

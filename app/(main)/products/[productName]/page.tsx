@@ -17,34 +17,50 @@ interface PageProps {
 const getLaunchData = cache(async (rawProductName: string) => {
   const decodedName = decodeURIComponent(rawProductName).trim();
   try {
-    // 1. Primary lookup: Case-insensitive search on product_name
-    const { data: nameMatch, error: nameErr } = await insforgeAdmin.database
+    // 1. Primary lookup: Case-insensitive search on product_name with order and limit(1)
+    // NOTE: Do NOT use .maybeSingle() with .limit(1) because PostgREST returns PGRST116 (406 Not Acceptable)
+    // if the underlying table has multiple rows matching the filter.
+    const { data: nameMatches, error: nameErr } = await insforgeAdmin.database
       .from('launches')
-      .select('id, user_id, product_name, product_description, product_url, category, pricing, meme_image_url, product_logo_url, caption, created_at, seo_dossier')
+      .select('*, users(name, avatar)')
       .ilike('product_name', decodedName)
       .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
 
     if (nameErr) {
       console.error('GETLAUNCHDATA PRIMARY ERROR:', nameErr);
     }
 
-    if (nameMatch?.id) {
-      return nameMatch;
+    if (nameMatches && nameMatches.length > 0 && nameMatches[0]?.id) {
+      return nameMatches[0];
     }
 
-    // 2. Fallback lookup: Search by UUID if parameter is an ID
+    // 2. Slug / Cleaned fallback: try replacing dashes with spaces or vice-versa
+    const nameWithSpaces = decodedName.replace(/-/g, ' ');
+    if (nameWithSpaces !== decodedName) {
+      const { data: slugMatches } = await insforgeAdmin.database
+        .from('launches')
+        .select('*, users(name, avatar)')
+        .ilike('product_name', nameWithSpaces)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (slugMatches && slugMatches.length > 0 && slugMatches[0]?.id) {
+        return slugMatches[0];
+      }
+    }
+
+    // 3. Fallback lookup: Search by UUID if parameter is an ID
     const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(decodedName);
     if (isUuid) {
-      const { data: idMatch } = await insforgeAdmin.database
+      const { data: idMatches } = await insforgeAdmin.database
         .from('launches')
-        .select('id, user_id, product_name, product_description, product_url, category, pricing, meme_image_url, product_logo_url, caption, created_at, seo_dossier')
+        .select('*, users(name, avatar)')
         .eq('id', decodedName)
-        .maybeSingle();
+        .limit(1);
 
-      if (idMatch?.id) {
-        return idMatch;
+      if (idMatches && idMatches.length > 0 && idMatches[0]?.id) {
+        return idMatches[0];
       }
     }
   } catch (err) {
