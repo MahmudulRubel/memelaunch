@@ -54,3 +54,6 @@ next-env.d.ts
 .roo
 .trae
 .windsurf
+
+# Scratch / temporary scripts
+/scratch

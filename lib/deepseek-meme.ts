@@ -1,8 +1,8 @@
 /**
  * DeepSeek Creative Director & Viral Meme Prompting Engine
- * Specially engineered for Replicate prunaai/p-image-ideogram
- * Synthesizes 3 world-class viral tech meme posters with 100% accurate,
- * bold, punchy typography rendered natively inside the image every time.
+ * Engineered for clean separation of concerns:
+ * - DeepSeek generates the witty, hilarious tech meme texts (topText, bottomText, caption)
+ * - DeepSeek writes pure visual scene prompts for FLUX (zero text, pure cinematic comedic imagery)
  */
 
 export type MemeStyleVibe = 'cyberpunk' | 'pixar3d' | 'vintage_comic' | 'dark_satire' | 'auto';
@@ -82,23 +82,24 @@ export async function generate3DeepSeekMemeConcepts(params: {
   if (apiKey) {
     try {
       const systemPrompt = `You are the world's greatest tech meme creative director for MemeLaunch.
-Your mission is to analyze a tech product and create 3 VIRAL, HILARIOUS, LAUGH-OUT-LOUD MEME POSTERS designed specifically for the Ideogram model (prunaai/p-image-ideogram).
+Your mission is to analyze a tech product and create 3 VIRAL, HILARIOUS, LAUGH-OUT-LOUD MEME POSTERS.
 
-Ideogram Formula for 100% Perfect Text and World-Class Viral Imagery:
-Every prompt MUST follow this exact 4-part structure:
-"A hilarious viral tech meme poster in 1:1 square aspect ratio.
-At the top, bold uppercase typography in white with black outline reads: \"[PUNCHY TOP TEXT]\"
-In the center: [Extremely funny, expressive character scene or visual metaphor depicting the situation, with dynamic lighting and hilarious facial expressions matching the vibe: ${vibeInfo.promptStyleCue}].
-At the bottom, bold uppercase neon lime typography with black outline reads: \"[PUNCHY BOTTOM TEXT]\"
-Clean graphic meme composition, vibrant contrast, studio lighting."
+CRITICAL PIPELINE ARCHITECTURE:
+1. DEEPSEEK GENERATES THE COMEDY & TEXT:
+   - topText: Punchy setup line in ALL CAPS (under 30 chars, e.g. "DEPLOYING TO PROD AT 5PM", "CONFIGURING KUBERNETES MANUALLY", "ME FIXING ONE BUG").
+   - bottomText: Punchy punchline in ALL CAPS highlighting ${name} (under 30 chars, e.g. "${name.toUpperCase()} SHIPPED IT IN 3 SECONDS", "SAVED BY ${name.toUpperCase()}", "10X SUPERPOWERS UNLOCKED").
+   - caption: Relatable, funny social caption explaining the meme.
 
-Viral Meme Rules:
-1. TOP TEXT: Short, witty setup in ALL CAPS (punchy, under 32 chars, e.g. "CONFIGURING FIREBASE FOR HOURS", "DEPLOYING TO PROD AT 5PM", "ME FIXING ONE BUG").
-2. BOTTOM TEXT: Hilarious punchline highlighting ${name} in ALL CAPS (punchy, under 32 chars, e.g. "${name.toUpperCase()}: INSTANT POSTGRES", "${name.toUpperCase()} CAUGHT IT BEFORE MY BOSS", "10X SUPERPOWERS WITH ${name.toUpperCase()}").
+2. FLUX GENERATES THE VISUAL IMAGE (NO TEXT IN IMAGE):
+   - prompt: You must write a PURE VISUAL SCENE prompt for the FLUX image generator.
+   - Describe the funny visual situation, character's hilarious facial expressions, setting, and lighting.
+   - STYLE: ${vibeInfo.promptStyleCue}
+   - STRICT RULE FOR FLUX: DO NOT INCLUDE ANY TEXT, WORDS, TYPOGRAPHY, OR QUOTES IN THE FLUX PROMPT. FLUX only draws the visual artwork; text will be composited separately.
+
 3. Create 3 COMPLETELY CONTRASTING comedic angles:
-   - Angle 1: "The Relatable Struggle" (The agony/chaos of doing it without ${name})
-   - Angle 2: "The 10x Superpower" (The god-mode feeling of shipping with ${name})
-   - Angle 3: "The Savage Comparison" (Mocking bloated legacy tools or status quo)
+   - Angle 1: "The Relatable Struggle" (The agony/chaos of doing things manually without ${name})
+   - Angle 2: "The 10x Superpower" (The god-mode feeling of shipping effortlessly with ${name})
+   - Angle 3: "The Savage Comparison" (Mocking bloated legacy tools or ancient status quo)
 
 Return ONLY a valid JSON object matching this exact schema:
 {
@@ -106,26 +107,26 @@ Return ONLY a valid JSON object matching this exact schema:
     {
       "id": "meme-angle-1",
       "angle": "The Relatable Struggle",
-      "topText": "...",
-      "bottomText": "...",
-      "caption": "...",
-      "prompt": "A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: \"...\". In the center: ... At the bottom, bold uppercase neon lime typography with black outline reads: \"...\". Clean graphic meme composition, vibrant contrast, studio lighting."
+      "topText": "string (ALL CAPS setup line, under 30 chars)",
+      "bottomText": "string (ALL CAPS punchline, under 30 chars)",
+      "caption": "string (funny social caption)",
+      "prompt": "string (pure visual scene for FLUX: hilarious expressive characters, chaotic scene, studio lighting, NO text, NO words)"
     },
     {
       "id": "meme-angle-2",
       "angle": "The 10x Superpower",
-      "topText": "...",
-      "bottomText": "...",
-      "caption": "...",
-      "prompt": "A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: \"...\". In the center: ... At the bottom, bold uppercase neon lime typography with black outline reads: \"...\". Clean graphic meme composition, vibrant contrast, studio lighting."
+      "topText": "string (ALL CAPS setup line, under 30 chars)",
+      "bottomText": "string (ALL CAPS punchline, under 30 chars)",
+      "caption": "string (funny social caption)",
+      "prompt": "string (pure visual scene for FLUX: triumphant expressive character, god-mode lighting, sleek tech, NO text, NO words)"
     },
     {
       "id": "meme-angle-3",
       "angle": "The Savage Comparison",
-      "topText": "...",
-      "bottomText": "...",
-      "caption": "...",
-      "prompt": "A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: \"...\". In the center: ... At the bottom, bold uppercase neon lime typography with black outline reads: \"...\". Clean graphic meme composition, vibrant contrast, studio lighting."
+      "topText": "string (ALL CAPS setup line, under 30 chars)",
+      "bottomText": "string (ALL CAPS punchline, under 30 chars)",
+      "caption": "string (funny social caption)",
+      "prompt": "string (pure visual scene for FLUX: funny split comparison or contrast visual metaphor, NO text, NO words)"
     }
   ]
 }`;
@@ -165,7 +166,7 @@ Product Description: ${desc}`;
               const topText = (c.topText || `Manual work without ${name}`).toUpperCase().trim();
               const bottomText = (c.bottomText || `10x Superpower with ${name}`).toUpperCase().trim();
               const caption = c.caption || `${topText} — ${bottomText}`;
-              const prompt = c.prompt || `A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: "${topText}". In the center: An exhausted developer looking shocked as a futuristic portal opens. At the bottom, bold uppercase neon lime typography with black outline reads: "${bottomText}". Clean graphic meme composition, vibrant contrast, studio lighting.`;
+              const prompt = c.prompt || `A hilarious expressive tech character scene, comical face, modern tech environment, cinematic studio lighting, clean visual composition, no text`;
               return {
                 id: c.id || `meme-angle-${i + 1}`,
                 angle,
@@ -194,7 +195,7 @@ Product Description: ${desc}`;
       topText: `DOING IT MANUALLY: 40 HOURS`,
       bottomText: `USING ${name.toUpperCase()}: 3 MINUTES`,
       caption: `Doing it manually for 40 hours — Using ${name} in 3 minutes`,
-      prompt: `A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: "DOING IT MANUALLY: 40 HOURS". In the center: A funny exhausted programmer crying at a chaotic desk buried in burning servers and error popups. At the bottom, bold uppercase neon lime typography with black outline reads: "USING ${name.toUpperCase()}: 3 MINUTES". Clean graphic meme composition, vibrant contrast, hilarious facial expressions, studio lighting.`,
+      prompt: `A hilarious expressive developer crying at a chaotic desk with smoking computers, comical panic facial expression, cinematic studio lighting, clean visual scene, no text, no letters`,
       vibe: selectedVibe,
     },
     {
@@ -203,7 +204,7 @@ Product Description: ${desc}`;
       topText: `ME DISCOVERING ${name.toUpperCase()}`,
       bottomText: `SHIPPING 10X FASTER WITH ZERO BUGS`,
       caption: `How it feels shipping in 5 minutes with ${name}`,
-      prompt: `A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: "ME DISCOVERING ${name.toUpperCase()}". In the center: A cool programmer wearing sunglasses sipping iced coffee while floating in zero gravity with rocket thrusters. At the bottom, bold uppercase neon lime typography with black outline reads: "SHIPPING 10X FASTER WITH ZERO BUGS". Clean graphic meme composition, vibrant contrast, studio lighting.`,
+      prompt: `A triumphant, extremely confident programmer wearing sleek sunglasses sipping coffee with a glowing jetpack, god-mode energy, vivid volumetric lighting, clean visual scene, no text, no letters`,
       vibe: selectedVibe,
     },
     {
@@ -212,7 +213,7 @@ Product Description: ${desc}`;
       topText: `LEGACY TOOLS: $99/MO & SLOW`,
       bottomText: `${name.toUpperCase()}: INSTANT & FREE`,
       caption: `Legacy tools charging $99/month vs ${name} just working`,
-      prompt: `A hilarious viral tech meme poster in 1:1 square aspect ratio. At the top, bold uppercase typography in white with black outline reads: "LEGACY TOOLS: $99/MO & SLOW". In the center: A split scene with a sad rusty dinosaur on the left and a supersonic glowing hovercraft on the right. At the bottom, bold uppercase neon lime typography with black outline reads: "${name.toUpperCase()}: INSTANT & FREE". Clean graphic meme composition, vibrant contrast, studio lighting.`,
+      prompt: `A comical side-by-side comparison visual: a slow rusty mechanical snail next to a futuristic glowing hyper-speed hovercraft, expressive cartoonish physics, cinematic lighting, no text, no letters`,
       vibe: selectedVibe,
     },
   ];

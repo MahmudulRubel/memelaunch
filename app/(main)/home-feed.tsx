@@ -6,32 +6,59 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { insforge, insforgeAdmin, resolveStorageUrl, getAvatarGradient } from '@/lib/insforge';
-import { MemeCard, type Launch } from '@/components/feed/meme-card';
+import { type Launch } from '@/components/feed/meme-card';
+import { ProductHuntRow } from '@/components/feed/product-hunt-row';
+import { MemeQuickModal } from '@/components/feed/meme-quick-modal';
 import { SafeImage } from '@/components/safe-image';
 import { calculateLaunchPoints } from '@/lib/points';
 import { LaunchBoostModal } from '@/components/points/launch-boost-modal';
+import { parseCaption, getCaptionText } from '@/lib/meme';
 import {
   Clock,
   TrendingUp,
   Search,
   AlertCircle,
   Rocket,
-  Globe
+  Globe,
+  Flame,
+  Trophy,
+  Sparkles,
+  ChevronRight,
+  X,
+  Zap,
+  CheckCircle2,
+  Star,
 } from 'lucide-react';
-import { parseCaption, getCaptionText } from '@/lib/meme';
 
 interface HomeFeedProps {
   initialLaunches: Launch[];
 }
 
+const CATEGORIES = [
+  'All Categories',
+  'SaaS',
+  'AI & Machine Learning',
+  'Developer Tools',
+  'Mobile Apps',
+  'Design & Creative',
+  'Marketing & Sales',
+  'Productivity',
+  'Crypto & Web3',
+  'E-Commerce',
+  'Hardware',
+  'Other',
+];
+
 export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
   const router = useRouter();
   const { user } = useAuth();
+  
+  // Navigation & Filter state
   const [activeTab, setActiveTab] = useState<'trending' | 'new' | 'qualifiers'>('trending');
   const [selectedCategory, setSelectedCategory] = useState<string>('All Categories');
   const [searchQuery, setSearchQuery] = useState('');
   const [quickUrl, setQuickUrl] = useState('');
-  
+
   // Database state initialized with server-side data
   const [launches, setLaunches] = useState<Launch[]>(initialLaunches || []);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,6 +67,9 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
   // Boost Modal State
   const [boostLaunch, setBoostLaunch] = useState<Launch | null>(null);
   const [isBoostModalOpen, setIsBoostModalOpen] = useState(false);
+
+  // Mobile Meme Modal State
+  const [mobileMemeLaunch, setMobileMemeLaunch] = useState<Launch | null>(null);
 
   // Top featured launch for hero showcase (Rank #1 by Points)
   const topFeaturedLaunch = useMemo(() => {
@@ -66,7 +96,7 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
   };
 
   // Pagination / Infinite scroll state
-  const [visibleCount, setVisibleCount] = useState(9);
+  const [visibleCount, setVisibleCount] = useState(12);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   // Fetch launches function for client-side refresh/actions
@@ -97,7 +127,6 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
       if (error) {
         console.error('Error fetching launches details:', error.message || error);
         
-        // Check if this is an authentication / token error
         const isAuthError = 
           error.message?.toLowerCase().includes('token') || 
           error.message?.toLowerCase().includes('unauthorized') || 
@@ -109,10 +138,8 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
           try {
             await insforge.auth.signOut();
           } catch (e) {
-            // Force clear token locally if signOut fails
             insforge.getHttpClient().setAuthToken(null);
           }
-          // Retry fetching launches as anonymous user
           await fetchLaunches(showSilently, true);
           return;
         }
@@ -148,7 +175,7 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
     }
   };
 
-  // Sync state if initialLaunches changes (e.g. on server revalidation) or fetch client-side if empty
+  // Sync state if initialLaunches changes or fetch if empty
   useEffect(() => {
     if (initialLaunches && initialLaunches.length > 0) {
       setLaunches(initialLaunches);
@@ -159,7 +186,6 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
 
   // Filter & Sort launches
   const filteredAndSortedLaunches = useMemo(() => {
-    // Exclude any unapproved/pending products from the homepage feed
     let result = launches.filter((l) => l.is_approved !== false);
 
     // 1. Apply Category Filter
@@ -174,6 +200,7 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
         (l) =>
           l.product_name.toLowerCase().includes(query) ||
           getCaptionText(l.caption).toLowerCase().includes(query) ||
+          (l.product_description && l.product_description.toLowerCase().includes(query)) ||
           l.category.toLowerCase().includes(query)
       );
     }
@@ -185,11 +212,10 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
       // Top 16 Qualifiers by points
       return [...result].sort((a, b) => calculateLaunchPoints(b) - calculateLaunchPoints(a)).slice(0, 16);
     } else if (activeTab === 'trending') {
-      // Default: Top points gets Rank #1, #2, #3...
+      // Top points gets Rank #1, #2, #3...
       return [...result].sort((a, b) => {
         const aScore = calculateLaunchPoints(a);
         const bScore = calculateLaunchPoints(b);
-        
         if (bScore !== aScore) return bScore - aScore;
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
@@ -210,7 +236,7 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore) {
-          setVisibleCount((prev) => prev + 9);
+          setVisibleCount((prev) => prev + 12);
         }
       },
       { threshold: 0.1 }
@@ -228,364 +254,280 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
     };
   }, [hasMore]);
 
-  // Loading Skeleton
+  // Loading Skeletons
   const renderSkeletons = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-8 items-stretch mt-8 sm:mt-10">
+    <div className="space-y-3 mt-6">
       {Array.from({ length: 6 }).map((_, idx) => (
         <div
           key={idx}
-          className="bg-zinc-900/30 border-2 border-black rounded-2xl sm:rounded-3xl p-5 sm:p-6 space-y-5 animate-pulse shadow-brutal"
+          className="glass-panel rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 animate-pulse"
         >
-          <div className="aspect-square w-full bg-zinc-800/40 rounded-xl" />
-          <div className="h-6 bg-zinc-800/40 rounded-md w-2/3" />
-          <div className="h-4 bg-zinc-800/40 rounded-md w-1/3" />
-          <div className="pt-4 border-t border-zinc-800/40 flex items-center justify-between">
-            <div className="h-8 bg-zinc-800/40 rounded-lg w-1/3" />
-            <div className="h-6 bg-zinc-800/40 rounded-full w-1/4" />
+          <div className="flex items-center gap-4 flex-1">
+            <div className="w-8 h-8 rounded-xl bg-zinc-800/60 shrink-0" />
+            <div className="w-14 h-14 rounded-2xl bg-zinc-800/60 shrink-0" />
+            <div className="space-y-2 flex-1">
+              <div className="h-4 bg-zinc-800/60 rounded w-1/4" />
+              <div className="h-3 bg-zinc-800/40 rounded w-2/3" />
+              <div className="h-3 bg-zinc-800/30 rounded w-1/3" />
+            </div>
           </div>
+          <div className="w-14 h-14 rounded-2xl bg-zinc-800/60 shrink-0" />
         </div>
       ))}
     </div>
   );
 
   return (
-    <div className="space-y-10 sm:space-y-12 animate-in fade-in duration-300 relative">
-      {/* Background ambient blurs behind Hero */}
-      <div className="absolute -top-20 left-1/4 w-[500px] h-[500px] bg-lime-400/5 rounded-full blur-[120px] pointer-events-none -z-10" />
-      <div className="absolute -top-10 right-1/4 w-[400px] h-[400px] bg-rose-500/5 rounded-full blur-[100px] pointer-events-none -z-10" />
+    <div className="space-y-8 sm:space-y-12 animate-in fade-in duration-300 relative">
+      {/* Eye-soothing Ambient Lighting Orbs */}
+      <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-gradient-to-b from-[#ffe600]/[0.05] via-amber-500/[0.04] to-transparent rounded-full blur-[140px] pointer-events-none -z-10" />
+      <div className="absolute top-[45%] left-1/3 w-[550px] h-[550px] bg-purple-500/[0.025] rounded-full blur-[160px] pointer-events-none -z-10" />
 
-      {/* Hero Section - Unique 2-Column Split Layout */}
-      <section className="relative overflow-hidden rounded-3xl border-4 border-black bg-zinc-950 p-4 sm:p-6 md:p-10 shadow-brutal-lg w-full max-w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center w-full min-w-0">
+      {/* --- INSPIRATIONAL ABOVE-THE-FOLD HERO SECTION --- */}
+      <section className="relative overflow-hidden rounded-3xl glass-panel border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.6)] w-full py-16 sm:py-20 md:py-24 px-6 sm:px-10 text-center">
+        
+        {/* Subtle Square Grid Background Texture (as in reference image) */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_70%_65%_at_50%_45%,#000_70%,transparent_100%)] pointer-events-none" />
+
+        {/* Ambient Top Specular Accent Line */}
+        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-lime-400 via-[#ffe600] to-orange-400 opacity-90" />
+
+        <div className="relative z-10 max-w-4xl mx-auto flex flex-col items-center space-y-7">
           
-          {/* Left Column: Headline, Copy, Trust Pills & Launch Form */}
-          <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left space-y-4 w-full min-w-0">
+          {/* Main 3-Verb Headline */}
+          <h1 className="font-heading text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-zinc-100 leading-[1.06]">
+            Launch. <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ffe600] via-amber-300 to-orange-400 drop-shadow-[0_0_35px_rgba(255,230,0,0.3)]">Go Viral.</span> Win Users.
+          </h1>
 
-            {/* Eyebrow Pill */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-lime-400/10 border border-lime-400/30 rounded-full text-lime-400 text-[11px] sm:text-xs font-black uppercase tracking-wider mb-1 shadow-[0_0_15px_rgba(163,230,53,0.15)]">
-              <span className="w-2 h-2 rounded-full bg-lime-400 animate-ping inline-block" />
-              The shortcut from &ldquo;nobody cares&rdquo; to trending #1 🚀
-            </div>
+          {/* Sub-headline / Seductive Value Proposition */}
+          <p className="text-zinc-400 text-base sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed font-normal">
+            Stop launching to crickets. Turn your software into irresistible sensations with community-powered memes, instant homepage visibility, and real paying customers.
+          </p>
 
-            <h1 className="font-heading text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-zinc-50 leading-tight break-words w-full">
-              BUILD IN PUBLIC.<br className="block" />
-              LAUNCH IN HUMOR.
-            </h1>
-
-            <p className="font-extrabold text-[#ffe600] text-lg sm:text-2xl md:text-3xl max-w-full break-words">
-              Where solo founders become viral legends 🏆
-            </p>
-            
-            <p className="text-zinc-300 text-sm sm:text-base w-full max-w-xl leading-relaxed font-medium">
-              Pitch your product with memes, compete for gold badges, and win real customers.
-            </p>
-
-            {/* Hero URL Box & Quick Launch */}
-            <div className="flex flex-col gap-2.5 w-full max-w-xl mt-2">
-              <form onSubmit={handleQuickLaunchSubmit} className="flex flex-col sm:flex-row items-stretch gap-2.5 w-full">
-                <div className="relative flex-1">
-                  <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-                  <input
-                    type="text"
-                    value={quickUrl}
-                    onChange={(e) => setQuickUrl(e.target.value)}
-                    placeholder="Paste your product URL (e.g. yourapp.com)..."
-                    className="w-full pl-10 pr-4 py-3.5 bg-zinc-900 border-2 border-black rounded-2xl text-xs sm:text-sm font-medium text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-[#ffe600] shadow-brutal-sm transition-all"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="px-6 py-3.5 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 font-black text-xs uppercase tracking-wider rounded-2xl border-2 border-black shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+          {/* Social Proof Strip: Overlapping Maker Avatars + 5 Stars + Count */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
+            <div className="flex items-center -space-x-2.5">
+              {[
+                { name: 'Sarah', src: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=96&h=96&fit=crop&crop=faces' },
+                { name: 'Alex', src: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=faces' },
+                { name: 'Elena', src: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop&crop=faces' },
+                { name: 'Marcus', src: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=96&h=96&fit=crop&crop=faces' },
+                { name: 'David', src: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=96&h=96&fit=crop&crop=faces' },
+                { name: 'Chloe', src: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=96&h=96&fit=crop&crop=faces' },
+              ].map((maker, i) => (
+                <div
+                  key={i}
+                  className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden border-2 border-zinc-950 ring-1 ring-amber-400/50 shadow-md"
                 >
-                  <Rocket className="h-4 w-4 stroke-[2.5]" />
-                  <span>Launch Free Now 🚀</span>
-                </button>
-              </form>
+                  <SafeImage
+                    src={maker.src}
+                    fallbackType="avatar"
+                    alt={maker.name}
+                    width={36}
+                    height={36}
+                    className="object-cover"
+                  />
+                </div>
+              ))}
+            </div>
 
-              {/* Trust / Benefit Chips */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-3 gap-y-1 text-[11px] font-bold text-zinc-400 pt-1">
-                <span className="flex items-center gap-1 text-zinc-300">⚡ 100% Free</span>
-                <span>•</span>
-                <span className="flex items-center gap-1 text-zinc-300">🚫 Zero VC Cringe</span>
-                <span>•</span>
-                <span className="flex items-center gap-1 text-zinc-300">🔥 Instant Viral Reach</span>
-                <span>•</span>
-                <span className="flex items-center gap-1 text-zinc-300">👥 Real Paying Customers</span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-0.5 text-amber-400">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                ))}
               </div>
+              <span className="text-xs sm:text-sm font-semibold text-zinc-300">
+                Join 12,000+ viral makers & founders
+              </span>
             </div>
           </div>
 
-          {/* Right Column: Live Sample Meme Card Spotlight */}
-          <div className="lg:col-span-5 flex justify-center lg:justify-end">
-            {topFeaturedLaunch ? (
-              <div 
-                onClick={() => router.push(`/products/${encodeURIComponent(topFeaturedLaunch.product_name)}`)}
-                className="group relative w-full max-w-sm bg-zinc-950 border-2 border-black rounded-2xl p-3 shadow-brutal hover:rotate-0 transition-transform duration-300 rotate-2 cursor-pointer"
+          {/* High-Converting CTA & Quick Launch */}
+          <div className="w-full max-w-lg pt-2 space-y-3.5">
+            <form onSubmit={handleQuickLaunchSubmit} className="flex flex-col sm:flex-row items-stretch gap-2.5 w-full">
+              <div className="relative flex-1">
+                <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                <input
+                  type="text"
+                  value={quickUrl}
+                  onChange={(e) => setQuickUrl(e.target.value)}
+                  placeholder="Paste your product URL to launch..."
+                  className="w-full pl-10 pr-4 py-3.5 bg-zinc-950/80 backdrop-blur-md border border-zinc-700/80 rounded-2xl text-sm font-medium text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-[#ffe600] focus:ring-1 focus:ring-[#ffe600]/50 transition-all shadow-inner"
+                />
+              </div>
+              <button
+                type="submit"
+                className="px-7 py-3.5 bg-gradient-to-r from-amber-500 via-[#ffe600] to-amber-400 hover:from-amber-400 hover:to-yellow-300 text-zinc-950 font-black text-xs uppercase tracking-wider rounded-2xl transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer shadow-[0_4px_24px_rgba(255,230,0,0.35)] hover:-translate-y-0.5 active:translate-y-0"
               >
-                {/* Badge Pinned to top */}
-                <div className="flex items-center justify-between mb-3 border-b-2 border-black pb-2">
-                  <span className="bg-[#ffe600] text-zinc-950 font-black text-xs uppercase px-2.5 py-0.5 rounded-lg border-2 border-black shadow-brutal-sm flex items-center gap-1">
-                    <span>🥇</span> #1 MEME THIS WEEK
-                  </span>
-                  <span className="text-lime-400 font-mono text-[10px] font-extrabold uppercase animate-pulse">FEATURED HERO</span>
-                </div>
+                <Rocket className="h-4 w-4 stroke-[2.5]" />
+                Get Started Free
+              </button>
+            </form>
 
-                {/* Meme Visual Box */}
-                <div className="relative aspect-square w-full rounded-xl overflow-hidden border-2 border-black bg-zinc-900">
-                  {topFeaturedLaunch.meme_image_url && (
-                    <SafeImage
-                      src={topFeaturedLaunch.meme_image_url}
-                      fallbackType="meme"
-                      alt={topFeaturedLaunch.product_name}
-                      fill
-                      priority
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  )}
-
-                  {/* Dynamic Caption Overlay */}
-                  {(() => {
-                    const captionData = parseCaption(topFeaturedLaunch.caption);
-                    if (captionData.hideOverlay || topFeaturedLaunch.meme_image_url?.endsWith('.svg')) {
-                      return null;
-                    }
-                    const heroTextSize = Math.max(12, Math.min(captionData.size, 22));
-                    const isCustomAbove = typeof captionData.topAbove === 'number' && typeof captionData.leftAbove === 'number';
-                    const isCustomBelow = typeof captionData.topBelow === 'number' && typeof captionData.leftBelow === 'number';
-
-                    return (
-                      <>
-                        {(captionData.position === 'above' || captionData.position === 'both') && captionData.textAbove && (
-                          <div 
-                            className={isCustomAbove ? "absolute z-10 text-center pointer-events-none" : "absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950 via-zinc-950/60 to-transparent p-3 pb-8 flex flex-col justify-start z-10 pointer-events-none"}
-                            style={isCustomAbove ? {
-                              left: `${captionData.leftAbove}%`,
-                              top: `${captionData.topAbove}%`,
-                              transform: 'translate(-50%, -50%)',
-                              width: `${captionData.widthAbove ?? 90}%`,
-                              maxWidth: '100%',
-                            } : undefined}
-                          >
-                            <p 
-                              className="font-impact uppercase tracking-wider text-center line-clamp-2 leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]"
-                              style={{
-                                color: captionData.color,
-                                fontSize: `${heroTextSize}px`,
-                              }}
-                            >
-                              {captionData.textAbove}
-                            </p>
-                          </div>
-                        )}
-
-                        {(captionData.position === 'below' || captionData.position === 'both') && captionData.textBelow && (
-                          <div 
-                            className={isCustomBelow ? "absolute z-10 text-center pointer-events-none" : "absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent p-3 pt-8 flex flex-col justify-end z-10 pointer-events-none"}
-                            style={isCustomBelow ? {
-                              left: `${captionData.leftBelow}%`,
-                              top: `${captionData.topBelow}%`,
-                              transform: 'translate(-50%, -50%)',
-                              width: `${captionData.widthBelow ?? 90}%`,
-                              maxWidth: '100%',
-                            } : undefined}
-                          >
-                            <p 
-                              className="font-impact uppercase tracking-wider text-center line-clamp-2 leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]"
-                              style={{
-                                color: captionData.color,
-                                fontSize: `${heroTextSize}px`,
-                              }}
-                            >
-                              {captionData.textBelow}
-                            </p>
-                          </div>
-                        )}
-                      </>
-                    );
-                  })()}
-
-                  <div className="absolute top-2 right-2 text-[9px] font-mono text-zinc-400 font-extrabold tracking-widest uppercase bg-zinc-950/80 px-2 py-0.5 rounded border border-black z-20">
-                    LAUNCHMEME
-                  </div>
-                </div>
-
-                {/* Sample Product Info Bar */}
-                <div className="mt-3 pt-2 border-t-2 border-black flex items-center justify-between">
-                  <div className="min-w-0 flex-1 pr-2">
-                    <h4 className="font-black text-sm text-zinc-100 truncate group-hover:text-[#ffe600] transition-colors">{topFeaturedLaunch.product_name}</h4>
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase">◇ {topFeaturedLaunch.category} • {topFeaturedLaunch.pricing}</p>
-                  </div>
-                  <div className="flex items-center gap-1 text-xs font-black bg-rose-400 text-zinc-950 border-2 border-black px-2.5 py-1 rounded-lg shadow-brutal-sm">
-                    <span>🔥</span>
-                    <span>{topFeaturedLaunch.reactions?.length || 0}</span>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="relative w-full max-w-sm bg-zinc-950 border-2 border-black rounded-2xl p-3 shadow-brutal hover:rotate-0 transition-transform duration-300 rotate-2">
-                <div className="flex items-center justify-between mb-3 border-b-2 border-black pb-2">
-                  <span className="bg-[#ffe600] text-zinc-950 font-black text-xs uppercase px-2.5 py-0.5 rounded-lg border-2 border-black shadow-brutal-sm flex items-center gap-1">
-                    <span>👑</span> #1 VIRAL CRUSH THIS WEEK
-                  </span>
-                  <span className="text-zinc-400 font-mono text-[10px] font-extrabold uppercase">SPOTLIGHT</span>
-                </div>
-                <div className="relative aspect-square w-full rounded-xl overflow-hidden border-2 border-black bg-zinc-900">
-                  <SafeImage 
-                    src="/drake.png"
-                    fallbackSrc="https://i.imgflip.com/1g8my4.jpg" 
-                    fallbackType="meme"
-                    alt="Drake Meme" 
-                    fill
-                    sizes="(max-width: 640px) 100vw, 384px"
-                    priority
-                  />
-                  <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-zinc-950/90 to-transparent p-3 text-center">
-                    <p className="font-impact text-zinc-100 uppercase text-xs sm:text-sm tracking-wider leading-tight">
-                      SPENDING $5,000 ON ADS THAT NOBODY CLICKS
-                    </p>
-                  </div>
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950/90 to-transparent p-3 text-center">
-                    <p className="font-impact text-[#ffe600] uppercase text-xs sm:text-sm tracking-wider leading-tight">
-                      DROPPING ONE FIRE MEME ON LAUNCHMEME & GETTING 10K USERS
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-3 pt-2 border-t-2 border-black flex items-center justify-between">
-                  <div>
-                    <h4 className="font-black text-sm text-zinc-100">LaunchDock Pro</h4>
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase">◇ SaaS • FREE TIER</p>
-                  </div>
-                  <div className="flex items-center gap-1 text-xs font-black bg-rose-400 text-zinc-950 border-2 border-black px-2.5 py-1 rounded-lg shadow-brutal-sm">
-                    <span>🔥</span>
-                    <span>342</span>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Micro Value Highlights */}
+            <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-zinc-500">
+              <span className="inline-flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-lime-400" />
+                <span>100% Free</span>
+              </span>
+              <span>•</span>
+              <span className="inline-flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#ffe600]" />
+                <span>Instant AI Memes</span>
+              </span>
+              <span>•</span>
+              <span className="inline-flex items-center gap-1.5">
+                <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                <span>Weekly Top 16 Championship</span>
+              </span>
+            </div>
           </div>
-
         </div>
       </section>
 
-      {/* Feed Filter & Search Row (Feed Controls) */}
-      <div className="my-8 sm:my-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6 bg-zinc-950 border-3 border-black p-4 sm:p-6 rounded-3xl shadow-brutal-lg">
-        {/* Tabs */}
-        <div className="flex items-center gap-2.5 sm:gap-3 bg-zinc-900 border-2 border-black p-2 rounded-2xl overflow-x-auto no-scrollbar max-w-full min-w-0">
-          <button
-            onClick={() => setActiveTab('trending')}
-            className={`flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 min-h-[46px] rounded-xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all border-2 border-black cursor-pointer shrink-0 whitespace-nowrap ${
-              activeTab === 'trending'
-                ? 'bg-[#ffe600] text-zinc-950 shadow-brutal-sm'
-                : 'bg-transparent text-zinc-300 hover:text-white border-transparent'
-            }`}
-          >
-            <TrendingUp className="h-4 w-4" />
-            <span>Trending 🔥</span>
-          </button>
+      {/* --- COMMAND & FILTER BAR --- */}
+      <div className="glass-panel rounded-2xl p-4 sm:p-5 space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          
+          {/* Left: Tab Switcher (Trending / Fresh / Qualifiers) */}
+          <div className="flex items-center gap-1.5 p-1 bg-zinc-950/60 rounded-xl border border-white/10 overflow-x-auto no-scrollbar shrink-0">
+            <button
+              onClick={() => setActiveTab('trending')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                activeTab === 'trending'
+                  ? 'bg-[#ffe600] text-zinc-950 shadow-[0_2px_10px_rgba(255,230,0,0.3)]'
+                  : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/5'
+              }`}
+            >
+              <TrendingUp className="h-3.5 w-3.5" />
+              <span>Trending</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('new')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                activeTab === 'new'
+                  ? 'bg-[#ffe600] text-zinc-950 shadow-[0_2px_10px_rgba(255,230,0,0.3)]'
+                  : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/5'
+              }`}
+            >
+              <Clock className="h-3.5 w-3.5" />
+              <span>Fresh</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('qualifiers')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                activeTab === 'qualifiers'
+                  ? 'bg-[#ffe600] text-zinc-950 shadow-[0_2px_10px_rgba(255,230,0,0.3)]'
+                  : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/5'
+              }`}
+            >
+              <Trophy className="h-3.5 w-3.5" />
+              <span>Top 16</span>
+            </button>
+          </div>
 
-          <button
-            onClick={() => setActiveTab('new')}
-            className={`flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 min-h-[46px] rounded-xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all border-2 border-black cursor-pointer shrink-0 whitespace-nowrap ${
-              activeTab === 'new'
-                ? 'bg-[#ffe600] text-zinc-950 shadow-brutal-sm'
-                : 'bg-transparent text-zinc-300 hover:text-white border-transparent'
-            }`}
-          >
-            <Clock className="h-4 w-4" />
-            <span>Fresh ⚡</span>
-          </button>
+          {/* Right: Search + View Switcher */}
+          <div className="flex items-center gap-3 w-full lg:w-auto">
+            {/* Real-time Search Input */}
+            <div className="relative flex-1 sm:w-72">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search products, memes, tags..."
+                className="w-full h-10 pl-9 pr-8 bg-zinc-950/70 border border-zinc-700/80 rounded-xl text-xs font-medium text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-[#ffe600] transition-all"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+          </div>
         </div>
 
-        {/* Search & Category Filter Controls */}
-        <div className="flex flex-col sm:flex-row items-center gap-3.5 sm:gap-4 w-full lg:w-auto">
-          {/* Category Dropdown */}
-          <div className="relative w-full sm:w-52">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full h-[46px] px-4 py-2.5 bg-zinc-900 border-2 border-black rounded-2xl text-xs sm:text-sm font-bold uppercase tracking-wider text-zinc-100 focus:outline-none focus:border-[#ffe600] cursor-pointer appearance-none shadow-brutal-sm"
-            >
-              {[
-                'All Categories',
-                'SaaS',
-                'Developer Tools',
-                'AI & Machine Learning',
-                'Mobile Apps',
-                'Design & Creative',
-                'Marketing & Sales',
-                'Productivity',
-                'Crypto & Web3',
-                'E-Commerce',
-                'Hardware',
-                'Other'
-              ].map((cat) => (
-                <option key={cat} value={cat} className="bg-zinc-950 text-zinc-100">
-                  {cat}
-                </option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-zinc-400">
-              <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-              </svg>
-            </div>
-          </div>
-
-          {/* Search bar */}
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search viral products, memes, creators..."
-              className="w-full h-[46px] pl-11 pr-4 py-2.5 bg-zinc-900 border-2 border-black rounded-2xl text-xs sm:text-sm font-bold text-zinc-100 placeholder-zinc-500 shadow-brutal-sm focus:outline-none focus:border-[#ffe600] transition-all"
-            />
-          </div>
+        {/* Category Filter Chips Bar */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-2 border-t border-white/5">
+          {CATEGORIES.map((cat) => {
+            const isSelected = selectedCategory === cat;
+            return (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                  isSelected
+                    ? 'bg-zinc-100 text-zinc-950 shadow-sm'
+                    : 'bg-zinc-900/60 hover:bg-zinc-800/80 text-zinc-400 hover:text-zinc-200 border border-white/5'
+                }`}
+              >
+                {cat}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Main feed content */}
+      {/* --- FEED SECTION HEADER --- */}
+      <div className="flex items-center justify-between pt-2">
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg sm:text-xl font-black uppercase tracking-tight text-zinc-100">
+            {activeTab === 'trending' ? '🔥 Trending Launches' : activeTab === 'new' ? '✨ Fresh Drops' : '🏆 Top 16 Qualifiers'}
+          </h2>
+          <span className="text-xs font-mono text-zinc-500 bg-zinc-900 border border-white/5 px-2 py-0.5 rounded-full">
+            {filteredAndSortedLaunches.length} products
+          </span>
+        </div>
+        
+        {/* Subtle hint for user */}
+        <div className="hidden md:flex items-center gap-1.5 text-xs text-zinc-400">
+          <Sparkles className="w-3.5 h-3.5 text-[#ffe600]" />
+          <span>Hover any product to reveal its meme</span>
+        </div>
+      </div>
+
+      {/* --- MAIN PRODUCT FEED --- */}
       {isLoading ? (
         renderSkeletons()
       ) : errorMsg ? (
-        <div className="flex flex-col items-center justify-center py-16 px-4 bg-zinc-900/20 border border-zinc-800/60 rounded-3xl text-center space-y-3">
+        <div className="flex flex-col items-center justify-center py-16 px-4 glass-panel rounded-3xl text-center space-y-3">
           <AlertCircle className="h-10 w-10 text-rose-500" />
           <h3 className="text-lg font-bold text-zinc-200">Something went wrong</h3>
           <p className="text-zinc-400 max-w-sm text-sm">{errorMsg}</p>
         </div>
       ) : filteredAndSortedLaunches.length === 0 ? (
-        /* Empty State */
-        <div className="flex flex-col items-center justify-center py-20 px-4 bg-zinc-900/10 border border-zinc-800/40 rounded-3xl text-center space-y-6 max-w-xl mx-auto">
-          <div className="h-16 w-16 bg-lime-400/10 border border-lime-400/20 rounded-2xl flex items-center justify-center text-lime-400">
+        <div className="flex flex-col items-center justify-center py-20 px-4 glass-panel rounded-3xl text-center space-y-6 max-w-xl mx-auto">
+          <div className="h-16 w-16 bg-lime-400/10 border border-lime-400/30 rounded-2xl flex items-center justify-center text-lime-400 shadow-[0_0_20px_rgba(163,230,53,0.2)]">
             <Rocket className="h-8 w-8" />
           </div>
-          
           <div className="space-y-2">
             <h3 className="text-2xl font-extrabold text-zinc-100 tracking-tight">
-              {searchQuery ? 'Well, this search came up dry...' : 'Did the founders go back to boring slide decks?'}
+              {searchQuery ? 'No products found...' : 'Be the first to launch!'}
             </h3>
             <p className="text-zinc-400 text-sm max-w-md">
               {searchQuery
-                ? `No memes found matching "${searchQuery}". Try a different search or launch your own product right now!`
-                : 'No memes have been launched yet. Be the first absolute legend to drop a viral meme and claim the #1 spot uncontested!'}
+                ? `No products match "${searchQuery}". Try a different keyword or launch your own!`
+                : 'No products in this category yet. Drop your product pitch with a fire meme!'}
             </p>
           </div>
-
           {!searchQuery && (
             <Link
               href={user ? '/launch' : '/login'}
-              className="px-6 py-3.5 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 font-black uppercase text-xs tracking-wider rounded-xl transition-all border-2 border-black shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5"
+              className="px-6 py-3.5 bg-[#ffe600] hover:bg-yellow-300 text-zinc-950 font-black uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_4px_20px_rgba(255,230,0,0.35)] hover:-translate-y-0.5"
             >
-              Claim the Spotlight 🚀
+              Claim the Spotlight
             </Link>
           )}
         </div>
       ) : (
-        /* Product Grid (Row-by-Row Ranking) */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-8 items-stretch mt-8 sm:mt-10">
+        <div className="space-y-3">
           {paginatedLaunches.map((launch, index) => (
-            <MemeCard
+            <ProductHuntRow
               key={launch.id}
               launch={launch}
               rank={index + 1}
@@ -593,20 +535,28 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
                 setBoostLaunch(l);
                 setIsBoostModalOpen(true);
               }}
-              priority={index < 2}
+              onOpenMemeModal={(l) => setMobileMemeLaunch(l)}
             />
           ))}
         </div>
       )}
 
-      {/* Infinite Scroll trigger target */}
+      {/* Infinite Scroll Trigger */}
       {hasMore && !isLoading && (
         <div ref={observerTarget} className="flex justify-center py-8">
-          <div className="h-8 w-8 border-4 border-lime-400 border-t-transparent rounded-full animate-spin" />
+          <div className="h-7 w-7 border-4 border-[#ffe600] border-t-transparent rounded-full animate-spin" />
         </div>
       )}
 
-      {/* Boost Launch Points Modal */}
+
+      {/* --- MOBILE MEME PREVIEW MODAL --- */}
+      <MemeQuickModal
+        launch={mobileMemeLaunch}
+        isOpen={!!mobileMemeLaunch}
+        onClose={() => setMobileMemeLaunch(null)}
+      />
+
+      {/* --- BOOST MODAL --- */}
       <LaunchBoostModal
         isOpen={isBoostModalOpen}
         onClose={() => {
@@ -614,7 +564,11 @@ export default function HomeFeed({ initialLaunches }: HomeFeedProps) {
           setBoostLaunch(null);
         }}
         launch={boostLaunch}
-        currentRank={boostLaunch ? (paginatedLaunches.findIndex((l) => l.id === boostLaunch.id) + 1 || 1) : 1}
+        currentRank={
+          boostLaunch
+            ? paginatedLaunches.findIndex((l) => l.id === boostLaunch.id) + 1 || 1
+            : 1
+        }
         currentPoints={boostLaunch ? calculateLaunchPoints(boostLaunch) : 0}
         onPointsUpdated={() => {
           fetchLaunches(true);

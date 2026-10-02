@@ -222,23 +222,23 @@ export function EmbedBadgeModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-xl bg-zinc-950 border-4 border-black rounded-3xl p-5 sm:p-7 shadow-brutal-lg max-h-[90vh] overflow-y-auto space-y-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="relative w-full max-w-xl glass-panel-elevated bg-zinc-950/95 border border-white/10 rounded-3xl p-5 sm:p-7 shadow-2xl max-h-[90vh] overflow-y-auto space-y-6">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 bg-zinc-900 border-2 border-black rounded-xl hover:bg-zinc-800 text-zinc-400 hover:text-white transition shadow-brutal-sm z-10"
+          className="absolute top-4 right-4 p-2 bg-zinc-900/80 border border-white/10 rounded-xl hover:bg-zinc-800 text-zinc-400 hover:text-white transition shadow-sm z-10"
         >
           <X className="h-5 w-5" />
         </button>
 
         {/* Header */}
         <div className="space-y-1.5 pr-8">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-lime-400/10 border-2 border-lime-400/30 text-lime-400 rounded-full font-mono text-xs font-bold uppercase">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-lime-400/10 border border-lime-400/30 text-lime-400 rounded-full font-mono text-xs font-bold uppercase">
             <Award className="h-3.5 w-3.5" /> +100 Points Bounty
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black uppercase text-zinc-100 font-impact tracking-tight">
-            Embed <span className="text-lime-400">"Launched on MemeLaunch"</span> Badge
+          <h2 className="text-2xl sm:text-3xl font-black uppercase text-zinc-100 tracking-tight">
+            Embed <span className="text-lime-400">&quot;Launched on MemeLaunch&quot;</span> Badge
           </h2>
           <p className="text-xs text-zinc-400">
             Add this badge to your website or README. Our bot will verify the embed on your live page and award{' '}
@@ -247,11 +247,11 @@ export function EmbedBadgeModal({
         </div>
 
         {/* Badge Live Preview (Exact MemeLaunch Logo) */}
-        <div className="p-5 bg-zinc-900 border-2 border-black rounded-2xl flex flex-col items-center justify-center space-y-3 shadow-brutal-sm">
+        <div className="p-5 bg-zinc-900/60 border border-white/10 rounded-2xl flex flex-col items-center justify-center space-y-3 shadow-md">
           <p className="text-[11px] font-mono text-zinc-400 uppercase font-bold">Live Badge Preview</p>
 
           <div
-            className={`p-4 rounded-2xl border-2 border-black flex items-center justify-center transition-all ${
+            className={`p-4 rounded-2xl border border-white/10 flex items-center justify-center transition-all ${
               theme === 'white' ? 'bg-zinc-200' : 'bg-zinc-950'
             }`}
           >
@@ -262,30 +262,30 @@ export function EmbedBadgeModal({
           <div className="flex flex-wrap gap-2 pt-1 justify-center">
             <button
               onClick={() => setTheme('dark')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase border-2 transition ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase border transition ${
                 theme === 'dark'
-                  ? 'bg-zinc-950 text-white border-lime-400 shadow-brutal-sm'
-                  : 'bg-zinc-800 text-zinc-400 border-black hover:text-white'
+                  ? 'bg-zinc-950 text-white border-lime-400 shadow-md'
+                  : 'bg-zinc-800/80 text-zinc-400 border-white/10 hover:text-white'
               }`}
             >
               Dark Theme
             </button>
             <button
               onClick={() => setTheme('white')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase border-2 transition ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase border transition ${
                 theme === 'white'
-                  ? 'bg-white text-zinc-950 border-black shadow-brutal-sm'
-                  : 'bg-zinc-800 text-zinc-400 border-black hover:text-white'
+                  ? 'bg-white text-zinc-950 border-white shadow-md'
+                  : 'bg-zinc-800/80 text-zinc-400 border-white/10 hover:text-white'
               }`}
             >
               White Theme
             </button>
             <button
               onClick={() => setTheme('gold')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase border-2 transition ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase border transition ${
                 theme === 'gold'
-                  ? 'bg-[#ffe600] text-zinc-950 border-black shadow-brutal-sm'
-                  : 'bg-zinc-800 text-zinc-400 border-black hover:text-white'
+                  ? 'bg-[#ffe600] text-zinc-950 border-[#ffe600] shadow-md'
+                  : 'bg-zinc-800/80 text-zinc-400 border-white/10 hover:text-white'
               }`}
             >
               Gold Theme
@@ -303,8 +303,8 @@ export function EmbedBadgeModal({
                   onClick={() => setCodeType(type)}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition ${
                     codeType === type
-                      ? 'bg-lime-400 text-zinc-950 border border-black font-black'
-                      : 'bg-zinc-900 text-zinc-400 hover:text-white'
+                      ? 'bg-lime-400 text-zinc-950 font-black'
+                      : 'bg-zinc-900/80 text-zinc-400 hover:text-white border border-white/5'
                   }`}
                 >
                   {type}
@@ -314,7 +314,7 @@ export function EmbedBadgeModal({
 
             <button
               onClick={handleCopy}
-              className="inline-flex items-center gap-1 px-3 py-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs font-bold rounded-lg transition shadow-brutal-sm"
+              className="inline-flex items-center gap-1 px-3 py-1 bg-zinc-900/80 hover:bg-zinc-800 border border-white/10 text-zinc-200 text-xs font-bold rounded-lg transition shadow-sm"
             >
               {copied ? (
                 <>
@@ -330,13 +330,13 @@ export function EmbedBadgeModal({
             </button>
           </div>
 
-          <pre className="p-3.5 bg-zinc-950 border-2 border-black rounded-xl text-xs text-lime-400 font-mono overflow-x-auto whitespace-pre">
+          <pre className="p-3.5 bg-zinc-950/90 border border-white/10 rounded-xl text-xs text-lime-400 font-mono overflow-x-auto whitespace-pre">
             {currentSnippet}
           </pre>
         </div>
 
         {/* Step 2: Live Verification Form */}
-        <form onSubmit={handleVerifyEmbed} className="p-4 bg-zinc-900 border-2 border-lime-400/50 rounded-2xl space-y-3">
+        <form onSubmit={handleVerifyEmbed} className="p-4 bg-zinc-900/60 border border-lime-400/40 rounded-2xl space-y-3">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-lime-400" />
             <h3 className="font-heading text-sm font-black uppercase text-zinc-100">
@@ -358,14 +358,14 @@ export function EmbedBadgeModal({
                 onChange={(e) => setWebsiteUrl(e.target.value)}
                 placeholder="https://my-saas-website.com"
                 required
-                className="w-full pl-9 pr-4 py-2.5 bg-zinc-950 border-2 border-black rounded-xl text-xs font-mono text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-lime-400"
+                className="w-full pl-9 pr-4 py-2.5 bg-zinc-950 border border-zinc-700 rounded-xl text-xs font-mono text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-lime-400"
               />
             </div>
 
             <button
               type="submit"
               disabled={isVerifying || isVerified}
-              className="w-full py-3 px-4 bg-lime-400 hover:bg-lime-300 disabled:bg-zinc-800 disabled:text-zinc-600 text-zinc-950 font-black rounded-xl text-xs transition shadow-brutal uppercase font-impact tracking-wider flex items-center justify-center gap-2"
+              className="w-full py-3 px-4 bg-lime-400 hover:bg-lime-300 disabled:bg-zinc-800 disabled:text-zinc-600 text-zinc-950 font-black rounded-xl text-xs transition shadow-lg uppercase tracking-wider flex items-center justify-center gap-2"
             >
               {isVerifying ? (
                 <>
@@ -390,10 +390,10 @@ export function EmbedBadgeModal({
         {/* Feedback Message */}
         {feedback && (
           <div
-            className={`p-3.5 rounded-2xl text-xs font-bold border-2 flex items-center gap-2.5 ${
+            className={`p-3.5 rounded-2xl text-xs font-bold border flex items-center gap-2.5 ${
               feedback.type === 'success'
-                ? 'bg-emerald-950/60 border-emerald-500 text-emerald-300'
-                : 'bg-rose-950/60 border-rose-500 text-rose-300'
+                ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300'
+                : 'bg-rose-950/60 border-rose-500/50 text-rose-300'
             }`}
           >
             {feedback.type === 'success' ? (
@@ -409,7 +409,7 @@ export function EmbedBadgeModal({
         <div className="pt-1 flex justify-end">
           <button
             onClick={onClose}
-            className="py-2.5 px-6 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-bold rounded-xl text-xs border-2 border-black transition"
+            className="py-2.5 px-6 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 font-bold rounded-xl text-xs border border-white/10 transition"
           >
             Done
           </button>

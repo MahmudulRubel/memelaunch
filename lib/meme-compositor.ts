@@ -5,7 +5,7 @@
  * without any ugly dark gradient boxes covering the artwork.
  */
 
-export function wrapMemeLines(text: string, maxCharsPerLine = 24): string[] {
+export function wrapMemeLines(text: string, maxCharsPerLine = 22): string[] {
   const clean = (text || '')
     .toUpperCase()
     .replace(/[<>&"']/g, '')
@@ -25,7 +25,7 @@ export function wrapMemeLines(text: string, maxCharsPerLine = 24): string[] {
     }
   }
   if (currentLine) lines.push(currentLine);
-  return lines.slice(0, 3); // max 3 lines
+  return lines.slice(0, 2); // max 2 lines
 }
 
 export function generateMemeSvgComposite(params: {
@@ -38,9 +38,19 @@ export function generateMemeSvgComposite(params: {
   const topLines = wrapMemeLines(topText, 22);
   const bottomLines = wrapMemeLines(bottomText, 22);
 
-  // Dynamic font sizing: larger for short punchlines, slightly smaller for longer
-  const topFontSize = topLines.length === 1 && (topLines[0]?.length || 0) < 15 ? 56 : topLines.length > 2 ? 42 : 48;
-  const bottomFontSize = bottomLines.length === 1 && (bottomLines[0]?.length || 0) < 15 ? 56 : bottomLines.length > 2 ? 42 : 48;
+  // Dynamic font sizing: larger for short punchlines, slightly smaller for 2+ lines
+  const topFontSize =
+    topLines.length === 1
+      ? (topLines[0]?.length || 0) < 15
+        ? 70
+        : 66
+      : 52;
+  const bottomFontSize =
+    bottomLines.length === 1
+      ? (bottomLines[0]?.length || 0) < 15
+        ? 70
+        : 66
+      : 52;
 
   const topTspans = topLines
     .map(
@@ -73,7 +83,7 @@ export function generateMemeSvgComposite(params: {
   <!-- Top Text: Classic Impact White with Thick Black Stroke -->
   ${
     topLines.length > 0
-      ? `<text x="512" y="${topFontSize + 30}" text-anchor="middle" fill="#ffffff" stroke="#000000" stroke-width="10" stroke-linejoin="round" paint-order="stroke fill" filter="url(#memeShadow)" font-family="Impact, 'Arial Black', -apple-system, sans-serif" font-size="${topFontSize}" font-weight="900" letter-spacing="1.5">
+      ? `<text x="512" y="${topFontSize + 32}" text-anchor="middle" fill="#ffffff" stroke="#000000" stroke-width="14" stroke-linejoin="round" paint-order="stroke fill" filter="url(#memeShadow)" font-family='Impact, Anton, "Arial Black", -apple-system, sans-serif' font-size="${topFontSize}" font-weight="900" letter-spacing="1.5">
     ${topTspans}
   </text>`
       : ''
@@ -82,7 +92,7 @@ export function generateMemeSvgComposite(params: {
   <!-- Bottom Text: Classic Impact White with Thick Black Stroke -->
   ${
     bottomLines.length > 0
-      ? `<text x="512" y="${bottomStartY}" text-anchor="middle" fill="#ffffff" stroke="#000000" stroke-width="10" stroke-linejoin="round" paint-order="stroke fill" filter="url(#memeShadow)" font-family="Impact, 'Arial Black', -apple-system, sans-serif" font-size="${bottomFontSize}" font-weight="900" letter-spacing="1.5">
+      ? `<text x="512" y="${bottomStartY}" text-anchor="middle" fill="#ffffff" stroke="#000000" stroke-width="14" stroke-linejoin="round" paint-order="stroke fill" filter="url(#memeShadow)" font-family='Impact, Anton, "Arial Black", -apple-system, sans-serif' font-size="${bottomFontSize}" font-weight="900" letter-spacing="1.5">
     ${bottomTspans}
   </text>`
       : ''
@@ -140,17 +150,23 @@ export async function renderMemeToCanvas(params: {
           ctx.textAlign = 'center';
           ctx.fillStyle = '#ffffff';
           ctx.strokeStyle = '#000000';
-          ctx.lineWidth = 12;
+          ctx.lineWidth = 14;
           ctx.lineJoin = 'round';
           ctx.miterLimit = 2;
 
           // Draw Top Text
           if (topText.trim()) {
             const topLines = wrapMemeLines(topText, 22);
-            const fontSize = topLines.length > 2 ? 46 : 56;
-            ctx.font = `900 ${fontSize}px Impact, "Arial Black", sans-serif`;
+            const fontSize =
+              topLines.length === 1
+                ? (topLines[0]?.length || 0) < 15
+                  ? 70
+                  : 66
+                : 52;
+            ctx.font = `900 ${fontSize}px Impact, Anton, "Arial Black", -apple-system, sans-serif`;
+            const startY = fontSize + 32;
             topLines.forEach((line, i) => {
-              const y = 90 + i * (fontSize + 12);
+              const y = startY + i * (fontSize + 10);
               ctx.strokeText(line, 512, y);
               ctx.fillText(line, 512, y);
             });
@@ -159,12 +175,17 @@ export async function renderMemeToCanvas(params: {
           // Draw Bottom Text
           if (bottomText.trim()) {
             const botLines = wrapMemeLines(bottomText, 22);
-            const fontSize = botLines.length > 2 ? 46 : 56;
-            ctx.font = `900 ${fontSize}px Impact, "Arial Black", sans-serif`;
-            const totalHeight = botLines.length * (fontSize + 12);
-            const startY = 960 - totalHeight;
+            const fontSize =
+              botLines.length === 1
+                ? (botLines[0]?.length || 0) < 15
+                  ? 70
+                  : 66
+                : 52;
+            ctx.font = `900 ${fontSize}px Impact, Anton, "Arial Black", -apple-system, sans-serif`;
+            const totalHeight = botLines.length * (fontSize + 10);
+            const startY = 970 - totalHeight;
             botLines.forEach((line, i) => {
-              const y = startY + i * (fontSize + 12);
+              const y = startY + i * (fontSize + 10);
               ctx.strokeText(line, 512, y);
               ctx.fillText(line, 512, y);
             });
