@@ -123,6 +123,9 @@ export async function GET() {
   return NextResponse.json({
     status: 'active',
     endpoint: 'MemeLaunch Whop Webhook',
-    plan: 'plan_n03pbhmDAdx0w',
+    account: 'biz_leBJVnKggTQAIL',
+    business: 'Launchme',
+    product: 'prod_hFxtVxSUb2Rcn',
+    plan: 'plan_cn0DH3Zo1VJID',
   });
 }

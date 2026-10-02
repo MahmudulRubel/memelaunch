@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
 
     const whopCheckoutUrl =
       launchTier === 'paid' && !isPaid
-        ? `https://whop.com/checkout/plan_n03pbhmDAdx0w?metadata[launchId]=${launchId}&metadata[userId]=${userId}&metadata[productName]=${encodeURIComponent(
+        ? `https://whop.com/checkout/plan_cn0DH3Zo1VJID?metadata[launchId]=${launchId}&metadata[userId]=${userId}&metadata[productName]=${encodeURIComponent(
             productName.trim()
           )}`
         : null;
